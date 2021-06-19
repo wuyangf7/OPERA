@@ -26,7 +26,7 @@ There are dependencies on your local MKL, BOOST and EIGEN Libraries.
 # Tutorial
 Our OPERA analysis consists of three steps. OPERA first estimates the global frequencies of each possible association patterns, then computes the posterior probability for supporting each configuration by weighting the data likelihood with the estimated prior proportions. We compute the posterior probability of associations (PPA) for any combinatorial sites by summing up the posterior probability of configurations where the site combination present. For results passed the association test with PPA threshold, OPERA performs the heterogeneity analysis test to reject associations that are due to linkage. 
 
-# run OPERA for stage 1 analysis
+# Run OPERA for stage 1 analysis
 > opera --besd-flist mylist --gwas-summary mygwas.ma --bfile mydata --estimate-pi –prior-sigma 0.02,0.02 --out myopera --thread-num 3
 
 * --besd-flist reads a file to get the full paths of the multiple xQTL BESD files. The input format follows that for the SMR analysis (https://cnsgenomics.com/software/smr/#DataManagement). 
@@ -35,7 +35,7 @@ Our OPERA analysis consists of three steps. OPERA first estimates the global fre
 * –prior-sigma the estimated variance of the non-zero mediated effects for each molecular trait on the complex trait.  It can be computed by the variance of the estimated SMR effects at the nominal significance level (i.e., 0.05) adjusting for the estimation errors. 
 * --out saves the estimation of prior proportions from the OPERA stage 1 analysis in .pi file (text format, see below example).
 
-# run OPERA for stage 2 analysis and heterogeneity analysis
+# Run OPERA for stage 2 analysis and heterogeneity analysis
 > opera --besd-flist mylist --gwas-summary mygwas.ma --bfile mydata --prior-pi 0.8,0.09,0.09,0.02 –prior-sigma 0.02,0.02 --out myopera --thread-num 3
 
 * --prior-pi the estimated global proportions of each configuration from the stage 1 analysis. 
