@@ -72,7 +72,7 @@ Iteration	Pi1(0:0)	Pi2(0:1)	Pi3(1:0)	Pi4(1:1)
 * --extract-target-cojo-snps specifies full COJO SNP list for each site of molecular phenotype as the target to compute the joint SMR effect.
 * --thresh-PP specifies significance threshold of PPA to perform heterogeneity test and output the results. 
 
-OPERA inherited the data management function and flags from the SMR, for a full list of option reference, please see [here](https://cnsgenomics.com/software/smr/#OptionsReference). 
+OPERA shares the same data management function and flags with the SMR software, for a full list of option reference, please see [here](https://cnsgenomics.com/software/smr/#OptionsReference). 
 
 
 
