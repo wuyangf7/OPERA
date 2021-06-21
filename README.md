@@ -57,7 +57,7 @@ Iteration	Pi1(0:0)	Pi2(0:1)	Pi3(1:0)	Pi4(1:1)
 
 
 # Run OPERA for stage 2 analysis and heterogeneity analysis
-> opera --besd-flist mylist --gwas-summary mygwas.ma --bfile mydata --prior-pi 0.8,0.09,0.09,0.02 –prior-sigma 0.02,0.02 --out myopera --thread-num 3
+> opera --besd-flist mylist --gwas-summary mygwas.ma --bfile mydata --prior-pi 0.8,0.09,0.09,0.02 --out myopera --thread-num 3
 
 * --prior-pi the estimated global proportions of each configuration from the stage 1 analysis. 
 * --out saves the posterior probability of association for each possible association hypotheses in .ppa file (text format, see below example).
