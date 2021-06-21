@@ -50,16 +50,16 @@ We collected and prepared multiple public available molecular QTL data for users
 * --prior-pi the estimated global proportions of each configuration from the stage 1 analysis. 
 * --out saves the posterior probability of association for each possible association hypotheses in .ppa file (text format, see below example).
 
-* The heterogeneity test (i.e., multi-exposure HEIDI) will be automatically performed for any combinatorial associations passed a PPA threshold (0.8 as default). The heterogeneity test can be turned off by specifying --heidi-off if not interested.
+* The heterogeneity test (i.e., multi-exposure HEIDI) will be automatically performed for any combinatorial associations passed a PPA threshold (0.8 as default). If the heterogeneity test is not interested, it can be turned off by specifying --heidi-off.
 
 # Other parameters for stage 2 analysis
 > opera --besd-flist mylist --gwas-summary mygwas.ma --bfile mydata --extract-exposure-probe myexposure --outcome-wind 1000 --thresh-PP 0.5 --extract-target-cojo-snps mycojo --extract-GWAS-loci myloci --prior-pi 0.8,0.09,0.09,0.02 –prior-sigma 0.02,0.02 --out myopera --thread-num 3 
 
 * --extract-exposure-probe	extracts a subset of exposure probes for analysis
-* --outcome-wind specify the window around each GWAS loci, e.g., 500 (default). 
+* --outcome-wind specifies the window around each GWAS loci, e.g., 500 (default). 
 * --extract-GWAS-loci extracts a subset of GWAS loci for analysis
 * --extract-target-cojo-snps specifies full COJO SNP list for each site of molecular phenotype as the target to compute the joint SMR effect.
-* --thresh-PP significance threshold of PPA to perform heterogeneity test and output the results. 
+* --thresh-PP specifies significance threshold of PPA to perform heterogeneity test and output the results. 
 
 OPERA inherited the data management function from the SMR, for a full list of option reference, please see [here] (https://cnsgenomics.com/software/smr/#OptionsReference). 
 
