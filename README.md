@@ -9,10 +9,10 @@ This software tool implements the OPERA (Omics PlEiotRopic Association) method t
 ## Questions and Help Requests
 If you have any bug reports or questions, please send an email to Yang Wu (y.wu2@uq.edu.au) and Jian Zeng (j.zeng@uq.edu.au) at Institute for Molecular Bioscience, The University of Queensland, and Jian Yang (jian.yang@westlake.edu.cn) at School of Life Sciences, Westlake University.
 
-# Citations
+## Citations
 Wu Y., Qi T., Wray N.R., Visscher P.M., Zeng J. & Yang J. (2021) Joint analysis of multi-omics data reveals molecular mechanisms at GWAS loci. bioRxiv.
 
-# Installation
+## Installation
 To install OPERA, you can download the [opera_Linux.zip](https://github.com/wuyangf7/OPERA/blob/main/opera_Linux.zip) package, which contains a standalone (i.e., statically linked) 64-bit Linux executable file opera_Linux. We strongly recommend using this static executable because it is well-optimized and no further installation is required.
 
 For compiling yourself, you should clone this repository and use the MAKEFILE,  
@@ -28,7 +28,7 @@ Our OPERA analysis consists of three steps. OPERA first estimates the global fre
 
 We collected and prepared multiple public available molecular QTL data for users to perform the OPERA analysis with their specific complex trait of interest, which is available for download [here](https://cnsgenomics.com/software/smr/#DataResource). For illustration purpose, we also provide the demonstration data to run opera command line below. 
 
-# Run OPERA for stage 1 analysis
+## Run OPERA for stage 1 analysis
 > opera --besd-flist mylist --gwas-summary mygwas.ma --bfile mydata --estimate-pi --out myopera --thread-num 3
 
 * --besd-flist reads a file to get the full paths of the multiple xQTL BESD files. The input format follows that for the SMR analysis (https://cnsgenomics.com/software/smr/#DataManagement). 
@@ -48,14 +48,14 @@ Iteration	Pi1(0:0)	Pi2(0:1)	Pi3(1:0)	Pi4(1:1)
 ...
 ```
 
-# Other parameters for stage 1 analysis
+## Other parameters for stage 1 analysis
 > opera --besd-flist mylist --gwas-summary mygwas.ma --bfile mydata --estimate-pi –prior-sigma 0.02,0.02 --pi-wind 100 --out myopera --thread-num 3 
 
 * –-prior-sigma specifies the estimated variance of the non-zero mediated effects for each molecular trait on the complex trait.  It can be computed by the variance of the estimated SMR effects at the nominal significance level (i.e., 0.05) adjusting for the estimation errors, e.g., 0.02 (default).  
 * --pi-wind defines a window centered on the molecular phenotype with smallest number of sites to select no overlap independent loci, e.g., 100 (default). 
 
 
-# Run OPERA for stage 2 analysis and heterogeneity analysis
+## Run OPERA for stage 2 analysis and heterogeneity analysis
 > opera --besd-flist mylist --gwas-summary mygwas.ma --bfile mydata --prior-pi 0.8,0.09,0.09,0.02 --out myopera --thread-num 3
 
 * --prior-pi the estimated global proportions of each configuration from the stage 1 analysis. 
@@ -72,7 +72,7 @@ Chr	Expo1_ID	Expo1_Gene	Expo1_bp	Expo2_ID	Expo2_Gene	Expo2_bp	PPA(0)	PPA(1)	PPA(
 
 * The heterogeneity test (i.e., multi-exposure HEIDI) will be automatically performed for any combinatorial associations passed a PPA threshold (0.8 as default). If the heterogeneity test is not interested, it can be turned off by specifying --heidi-off.
 
-# Other parameters for stage 2 analysis
+## Other parameters for stage 2 analysis
 > opera --besd-flist mylist --gwas-summary mygwas.ma --bfile mydata --extract-exposure-probe myexposure --outcome-wind 1000 --thresh-PP 0.5 --extract-target-cojo-snps mycojo --extract-GWAS-loci myloci --prior-pi 0.8,0.09,0.09,0.02 –prior-sigma 0.02,0.02 --out myopera --thread-num 3 
 
 * --extract-exposure-probe	extracts a subset of exposure sites for analysis
