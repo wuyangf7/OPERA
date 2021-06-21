@@ -13,7 +13,7 @@ If you have any bug reports or questions, please send an email to Yang Wu (y.wu2
 Wu Y., Qi T., Wray N.R., Visscher P.M., Zeng J. & Yang J. (2021) Joint analysis of multi-omics data reveals molecular mechanisms at GWAS loci. bioRxiv.
 
 # Installation
-To install OPERA, you can download the opera_Linux.zip package, which contains a standalone (i.e., statically linked) 64-bit Linux executable file opera_Linux. We strongly recommend using this static executable because it is well-optimized and no further installation is required.
+To install OPERA, you can download the [opera_Linux.zip](https://github.com/wuyangf7/OPERA/blob/main/opera_Linux.zip) package, which contains a standalone (i.e., statically linked) 64-bit Linux executable file opera_Linux. We strongly recommend using this static executable because it is well-optimized and no further installation is required.
 
 For compiling yourself, you should clone this repository and use the MAKEFILE,  
 ```
@@ -26,7 +26,7 @@ There are dependencies on your local MKL, BOOST and EIGEN Libraries.
 # Tutorial
 Our OPERA analysis consists of three steps. OPERA first estimates the global frequencies of each possible association patterns, then computes the posterior probability for supporting each configuration by weighting the data likelihood with the estimated global frequencies. We compute the posterior probability of associations (PPA) for any combinatorial sites by summing up the posterior probability of configurations where the site combination present. For results passed the association test with PPA threshold, OPERA performs the heterogeneity test to reject associations that are due to linkage. 
 
-We collected and prepared multiple public available molecular QTL data for users to perform the OPERA analysis with their specific complex trait of interest, which is available for download [here](https://cnsgenomics.com/software/smr/#DataResource).
+We collected and prepared multiple public available molecular QTL data for users to perform the OPERA analysis with their specific complex trait of interest, which is available for download [here](https://cnsgenomics.com/software/smr/#DataResource). For illustration purpose, we also provide the demonstration data to run opera command line below. 
 
 # Run OPERA for stage 1 analysis
 > opera --besd-flist mylist --gwas-summary mygwas.ma --bfile mydata --estimate-pi --out myopera --thread-num 3
