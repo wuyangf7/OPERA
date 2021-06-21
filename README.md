@@ -17,8 +17,8 @@ To install OPERA, you can download the opera_Linux.zip package, which contains a
 
 For compiling yourself, you should clone this repository and use the MAKEFILE,  
 ```
-git clone https://github.com/Yves-CHEN/DENTIST
-cd DENTIST
+git clone https://github.com/wuyangf7/OPERA
+cd OPERA
 make
 ```
 There are dependencies on your local MKL, BOOST and EIGEN Libraries.
