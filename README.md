@@ -61,7 +61,7 @@ We collected and prepared multiple public available molecular QTL data for users
 * --extract-target-cojo-snps specifies full COJO SNP list for each site of molecular phenotype as the target to compute the joint SMR effect.
 * --thresh-PP specifies significance threshold of PPA to perform heterogeneity test and output the results. 
 
-OPERA inherited the data management function and flags from the SMR, for a full list of option reference, please see [here] (https://cnsgenomics.com/software/smr/#OptionsReference). 
+OPERA inherited the data management function and flags from the SMR, for a full list of option reference, please see [here](https://cnsgenomics.com/software/smr/#OptionsReference). 
 
 
 
