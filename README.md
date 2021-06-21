@@ -40,9 +40,9 @@ To perform the pleiotropic association analysis, there are multiple molecular QT
 # Other parameters for stage 1 analysis
 > opera --besd-flist mylist --gwas-summary mygwas.ma --bfile mydata --estimate-pi –prior-sigma 0.02,0.02 --pi-wind 500 --alpha 0.1 --out myopera --thread-num 3 
 
-* –-prior-sigma the estimated variance of the non-zero mediated effects for each molecular trait on the complex trait.  It can be computed by the variance of the estimated SMR effects at the nominal significance level (i.e., 0.05) adjusting for the estimation errors. 
-* --alpha specifies the hyperparameter for the prior probability distribution (i.e., Dirichlet distribution). 
-* --pi-wind defines a window centered on the molecular phenotype with smallest number of sites to select no overlap independent loci. 
+* –-prior-sigma the estimated variance of the non-zero mediated effects for each molecular trait on the complex trait.  It can be computed by the variance of the estimated SMR effects at the nominal significance level (i.e., 0.05) adjusting for the estimation errors, e.g., 0.02 (default).  
+* --alpha specifies the hyperparameter for the prior probability distribution (i.e., Dirichlet distribution), e.g., 1 (default). 
+* --pi-wind defines a window centered on the molecular phenotype with smallest number of sites to select no overlap independent loci, e.g., 500 (default). 
 
 
 # Run OPERA for stage 2 analysis and heterogeneity analysis
@@ -57,10 +57,11 @@ To perform the pleiotropic association analysis, there are multiple molecular QT
 > opera --besd-flist mylist --gwas-summary mygwas.ma --bfile mydata --extract-exposure-probe myexposure --outcome-wind 1000 --joint-smr --extract-target-cojo-snps mycojo --extract-GWAS-loci myloci --prior-pi 0.8,0.09,0.09,0.02 –prior-sigma 0.02,0.02 --out myopera --thread-num 3 
 
 * --extract-exposure-probe	extracts a subset of exposure probes for analysis
-* --outcome-wind specify the window around each GWAS loci
+* --outcome-wind specify the window around each GWAS loci, e.g., 500 (default). 
 * --extract-GWAS-loci extracts a subset of GWAS loci for analysis
 * --extract-target-cojo-snps specifies full COJO SNP list for each site of molecular phenotype as the target to compute the joint SMR effect.
 
+OPERA inherited the data management function from the SMR, for a full list of option reference, please see [here] (https://cnsgenomics.com/software/smr/#OptionsReference). 
 
 
 
