@@ -61,6 +61,15 @@ Iteration	Pi1(0:0)	Pi2(0:1)	Pi3(1:0)	Pi4(1:1)
 * --prior-pi the estimated global proportions of each configuration from the stage 1 analysis. 
 * --out saves the posterior probability of association for each possible association hypotheses in .ppa file (text format, see below example).
 
+```
+Chr	Expo1_ID	Expo1_Gene	Expo1_bp	Expo2_ID	Expo2_Gene	Expo2_bp	PPA(0)	PPA(1)	PPA(2)	PPA(1:2)	HEIDI(1)	HEIDI(2)	HEIDI(1:2)
+7	ENSG00000238109	AC004893.10	98596857	cg19636519	GJC3	99541626	0.180167	0.00832795	0.818992	0.0074865	NA	1.248951e-05	NA
+7	ENSG00000238109	AC004893.10	98596857	cg08582801	AZGP1P1	99588335	0.135318	0.00809727	0.864083	0.00749766	NA	1.184727e-01	NA
+7	ENSG00000238109	AC004893.10	98596857	cg07693238	AZGP1P1	99595437	0.197766	0.00824852	0.801311	0.00732488	NA	2.194922e-02	NA
+7	ENSG00000085514	PILRA	99981436	cg19116668	PILRB	99932089	4.09321e-15	0.999997	1	0.999997	1.036234e-01	7.709418e-02	1.604312e-01
+...
+```
+
 * The heterogeneity test (i.e., multi-exposure HEIDI) will be automatically performed for any combinatorial associations passed a PPA threshold (0.8 as default). If the heterogeneity test is not interested, it can be turned off by specifying --heidi-off.
 
 # Other parameters for stage 2 analysis
