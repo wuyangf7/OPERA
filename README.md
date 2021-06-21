@@ -29,13 +29,21 @@ Our OPERA analysis consists of three steps. OPERA first estimates the global fre
 To perform the pleiotropic association analysis, there are multiple molecular QTL data resource from large cohorts available [here](https://cnsgenomics.com/software/smr/#DataResource), which is flexible for the users to identify the associated molecular phenotypes for your complex trait of interest.
 
 # Run OPERA for stage 1 analysis
-> opera --besd-flist mylist --gwas-summary mygwas.ma --bfile mydata --estimate-pi –prior-sigma 0.02,0.02 --out myopera --thread-num 3
+> opera --besd-flist mylist --gwas-summary mygwas.ma --bfile mydata --estimate-pi --out myopera --thread-num 3
 
 * --besd-flist reads a file to get the full paths of the multiple xQTL BESD files. The input format follows that for the SMR analysis (https://cnsgenomics.com/software/smr/#DataManagement). 
 * --gwas-summary reads summary-level data from GWAS. The input format follows that for GCTA-COJO analysis (http://cnsgenomics.com/software/gcta/#COJO).
 * --bfile reads individual-level SNP genotype data (in PLINK binary format) from a reference sample for LD estimation, i.e. .bed, .bim, and .fam files.
 * –prior-sigma the estimated variance of the non-zero mediated effects for each molecular trait on the complex trait.  It can be computed by the variance of the estimated SMR effects at the nominal significance level (i.e., 0.05) adjusting for the estimation errors. 
 * --out saves the estimation of prior proportions from the OPERA stage 1 analysis in .pi file (text format, see below example).
+
+# Other parameters for stage 1 analysis
+> opera --besd-flist mylist --gwas-summary mygwas.ma --bfile mydata --estimate-pi –prior-sigma 0.02,0.02 --pi-wind 500 --alpha 0.1 --out myopera --thread-num 3 
+
+* –-prior-sigma the estimated variance of the non-zero mediated effects for each molecular trait on the complex trait.  It can be computed by the variance of the estimated SMR effects at the nominal significance level (i.e., 0.05) adjusting for the estimation errors. 
+* --alpha specifies the hyperparameter for the prior probability distribution (i.e., Dirichlet distribution). 
+* --pi-wind defines a window centered on the molecular phenotype with smallest number of sites to select no overlap independent loci. 
+
 
 # Run OPERA for stage 2 analysis and heterogeneity analysis
 > opera --besd-flist mylist --gwas-summary mygwas.ma --bfile mydata --prior-pi 0.8,0.09,0.09,0.02 –prior-sigma 0.02,0.02 --out myopera --thread-num 3
@@ -45,12 +53,15 @@ To perform the pleiotropic association analysis, there are multiple molecular QT
 
 * The heterogeneity test (i.e., multi-exposure HEIDI) will be automatically performed for any combinatorial associations passed a PPA threshold (0.8 as default). Users can change the PPA threshold by --thresh-PP to define significant associations to perform further heterogeneity test. The heterogeneity test can be turned off by specifying --heidi-off if not interested.
 
-# Other parameters
+# Other parameters for stage 2 analysis
 > opera --besd-flist mylist --gwas-summary mygwas.ma --bfile mydata --extract-exposure-probe myexposure --outcome-wind 1000 --joint-smr --extract-target-cojo-snps mycojo --extract-GWAS-loci myloci --prior-pi 0.8,0.09,0.09,0.02 –prior-sigma 0.02,0.02 --out myopera --thread-num 3 
 
 * --extract-exposure-probe	extracts a subset of exposure probes for analysis
 * --outcome-wind specify the window around each GWAS loci
 * --extract-GWAS-loci extracts a subset of GWAS loci for analysis
+* --extract-target-cojo-snps specifies full COJO SNP list for each site of molecular phenotype as the target to compute the joint SMR effect.
+
+
 
 
 
