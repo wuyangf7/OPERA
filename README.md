@@ -36,6 +36,18 @@ We collected and prepared multiple public available molecular QTL data for users
 * --bfile reads individual-level SNP genotype data (in PLINK binary format) from a reference sample for LD estimation, i.e. .bed, .bim, and .fam files.
 * --out saves the estimation of prior proportions from the OPERA stage 1 analysis in .pi file (text format, see below example).
 
+```
+Iteration	Pi1(0:0)	Pi2(0:1)	Pi3(1:0)	Pi4(1:1)
+0	0.206741	0.618764	0.163905	0.0105903
+1	0.57161	0.390242	0.0271588	0.0109884
+2	0.535602	0.191737	0.272659	1.04125e-06
+3	0.821147	0.0184099	0.160443	1.01198e-08
+4	0.312696	0.583291	0.0777026	0.0263109
+5	0.83348	0.118327	0.000677142	0.0475152
+6	0.611609	0.365378	0.00324214	0.019771
+...
+```
+
 # Other parameters for stage 1 analysis
 > opera --besd-flist mylist --gwas-summary mygwas.ma --bfile mydata --estimate-pi –prior-sigma 0.02,0.02 --pi-wind 100 --alpha 0.1 --out myopera --thread-num 3 
 
