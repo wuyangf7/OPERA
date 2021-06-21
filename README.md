@@ -24,7 +24,7 @@ make
 There are dependencies on your local MKL, BOOST and EIGEN Libraries.
 
 # Tutorial
-Our OPERA analysis consists of three steps. OPERA first estimates the global frequencies of each possible association patterns, then computes the posterior probability supporting each configuration by weighting the data likelihood with the estimated global frequencies. We compute the posterior probability of associations (PPA) for any combinatorial sites by summing up the posterior probability of configurations where the site combination present. For results passed the association test with PPA threshold, OPERA performs the heterogeneity test to reject associations that are due to linkage. 
+Our OPERA analysis consists of three steps. OPERA first estimates the global frequencies of each possible association patterns, then computes the posterior probability supporting each configuration by weighting the data likelihood with the estimated global frequencies. We compute the posterior probability of associations (PPA) for any combinatorial sites by summing up the posterior probability of configurations where the site combination present. For results passed the association test with PPA threshold, OPERA performs the heterogeneity test to reject the associations that are due to linkage. 
 
 We collected and prepared multiple public available molecular QTL data for users to perform the OPERA analysis with their specific complex trait of interest, which is available for download [here](https://cnsgenomics.com/software/smr/#DataResource). For illustration purpose, we also provide the demonstration data to run opera command line below. 
 
@@ -51,7 +51,7 @@ Iteration	Pi1(0:0)	Pi2(0:1)	Pi3(1:0)	Pi4(1:1)
 # Other parameters for stage 1 analysis
 > opera --besd-flist mylist --gwas-summary mygwas.ma --bfile mydata --estimate-pi –prior-sigma 0.02,0.02 --pi-wind 100 --out myopera --thread-num 3 
 
-* –-prior-sigma the estimated variance of the non-zero mediated effects for each molecular trait on the complex trait.  It can be computed by the variance of the estimated SMR effects at the nominal significance level (i.e., 0.05) adjusting for the estimation errors, e.g., 0.02 (default).  
+* –-prior-sigma specifies the estimated variance of the non-zero mediated effects for each molecular trait on the complex trait.  It can be computed by the variance of the estimated SMR effects at the nominal significance level (i.e., 0.05) adjusting for the estimation errors, e.g., 0.02 (default).  
 * --pi-wind defines a window centered on the molecular phenotype with smallest number of sites to select no overlap independent loci, e.g., 100 (default). 
 
 
@@ -75,11 +75,11 @@ Chr	Expo1_ID	Expo1_Gene	Expo1_bp	Expo2_ID	Expo2_Gene	Expo2_bp	PPA(0)	PPA(1)	PPA(
 # Other parameters for stage 2 analysis
 > opera --besd-flist mylist --gwas-summary mygwas.ma --bfile mydata --extract-exposure-probe myexposure --outcome-wind 1000 --thresh-PP 0.5 --extract-target-cojo-snps mycojo --extract-GWAS-loci myloci --prior-pi 0.8,0.09,0.09,0.02 –prior-sigma 0.02,0.02 --out myopera --thread-num 3 
 
-* --extract-exposure-probe	extracts a subset of exposure probes for analysis
-* --outcome-wind specifies the window around each GWAS loci, e.g., 500 (default). 
+* --extract-exposure-probe	extracts a subset of exposure sites for analysis
+* --outcome-wind specifies the window around each GWAS loci for stage 2 analysis, e.g., 500 (default). 
 * --extract-GWAS-loci extracts a subset of GWAS loci for analysis
 * --extract-target-cojo-snps specifies full COJO SNP list for each site of molecular phenotype as the target to compute the joint SMR effect.
-* --thresh-PP specifies significance threshold of PPA to perform heterogeneity test and output the results. 
+* --thresh-PP specifies significance threshold of PPA to perform heterogeneity test and output the significant results. 
 
 OPERA shares the same data management function and flags with the SMR software, for a full list of option reference, please see [here](https://cnsgenomics.com/software/smr/#OptionsReference). 
 
