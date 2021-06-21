@@ -4,7 +4,7 @@ This software tool implements the OPERA (Omics PlEiotRopic Association) method t
 # Credits
 * Yang Wu developed the software tool with the support from Ting Qi, Jian Zeng, and Jian Yang.
 * Yang Wu, Jian Zeng and Jian Yang developed the OPERA methods. 
-* The software is programmed and maintained by Yang Wu.
+* The software is programmed and maintained by [Yang Wu](y.wu2@uq.edu.au).
 
 # Questions and Help Requests
 If you have any bug reports or questions, please send an email to Yang Wu (y.wu2@uq.edu.au), Jian Zeng (j.zeng@uq.edu.au), and Jian Yang (jian.yang@westlake.edu.cn) at Institute for Molecular Bioscience, The University of Queensland.
