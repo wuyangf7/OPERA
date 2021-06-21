@@ -6813,7 +6813,7 @@ namespace SMRDATA
         // this expoNum is the total number of exposures included
         long expoNum;
         expoNum = besdNum;
-        printf("There are %ld exposures and 1 outcome are included in multiple-SMR and multiple-HEIDI test.\n",expoNum);
+        printf("There are %ld exposures and 1 outcome are included in OPERA.\n",expoNum);
         if(expoNum<2) throw("Error: The program can not perform the joint SMR analysis because there is only one exposure included. Please remove the flag --joint-smr to analyze single exposure.");
         // illustrate all the combinations
         vector<vector<int>> idxall;
@@ -6827,7 +6827,14 @@ namespace SMRDATA
         long combNum=combins.size();
         
         // get the priors
+        double sigma_def = 0.02;
         vector<string> sigmasplit;
+        if(sigmastr.size() == 0) {
+            for(int i=0;i<expoNum;i++) {
+                sigmastr+=atos(sigma_def);
+                if(i < (expoNum - 1))  sigmastr+=","; 
+            }            
+        }        
         split_string(sigmastr,sigmasplit);
         if(sigmasplit.size()!=expoNum)
             throw("Error: The number of input prior variances is not consistent with the number of input exposures.");
@@ -7260,7 +7267,7 @@ namespace SMRDATA
         fclose(piiter);
     }
 
-    void multiexposurepi_jointsmr_gwas(char* outFileName, char* bFileName, char* eqtlsmaslstName, char* gwasFileName, double maf,string sigmastr, char* indilstName, char* snplstName,char* problstName, char* oproblstName,char* eproblstName,bool bFlag,double p_hetero,double ld_top,int m_hetero, int opt_hetero,  char* indilst2remove, char* snplst2exclde, char* problst2exclde, char* oproblst2exclde,char* eproblst2exclde,double p_smr,char* refSNP, bool heidioffFlag, bool jointsmrflag, int cis_itvl,int piWind, int snpchr,int prbchr,char* traitlstName,int op_wind, char* oprobe, char* eprobe, char* oprobe2rm, char* eprobe2rm, double threshpsmrest, bool new_het_mth, bool opt, double ld_min,bool cis2all, bool sampleoverlap, double pmecs, int minCor, char* targetcojosnplstName,char* GWAScojosnplstName, char* snpproblstName,double afthresh,double percenthresh)
+    void multiexposurepi_jointsmr_loci(char* outFileName, char* bFileName, char* eqtlsmaslstName, char* gwasFileName, double maf,string sigmastr, char* indilstName, char* snplstName,char* problstName, char* oproblstName,char* eproblstName,bool bFlag,double p_hetero,double ld_top,int m_hetero, int opt_hetero,  char* indilst2remove, char* snplst2exclde, char* problst2exclde, char* oproblst2exclde,char* eproblst2exclde,double p_smr,char* refSNP, bool heidioffFlag, bool jointsmrflag, int cis_itvl,int piWind, int snpchr,int prbchr,char* traitlstName,int op_wind, char* oprobe, char* eprobe, char* oprobe2rm, char* eprobe2rm, double threshpsmrest, bool new_het_mth, bool opt, double ld_min,bool cis2all, bool sampleoverlap, double pmecs, int minCor, char* targetcojosnplstName,char* GWAScojosnplstName, char* snpproblstName,double afthresh,double percenthresh)
     {   
         // eqtlsmaslstName is the included exposure probes and gwasFileName will be the outcome 
         setNbThreads(thread_num);
@@ -7358,7 +7365,7 @@ namespace SMRDATA
         // this expoNum is the total number of exposures included
         long expoNum;
         expoNum = besdNum;
-        printf("There are %ld exposures and 1 outcome are included in multiple-SMR and multiple-HEIDI test.\n",expoNum);
+        printf("There are %ld exposures and 1 outcome are included in OPERA.\n",expoNum);
         if(expoNum<2) throw("Error: The program can not perform the joint SMR analysis because there is only one exposure included. Please remove the flag --joint-smr to analyze single exposure.");
         // illustrate all the combinations
         vector<vector<int>> idxall;
@@ -7372,7 +7379,14 @@ namespace SMRDATA
         long combNum=combins.size();
         
         // get the priors
+        double sigma_def = 0.02;
         vector<string> sigmasplit;
+        if(sigmastr.size() == 0) {
+            for(int i=0;i<expoNum;i++) {
+                sigmastr+=atos(sigma_def);
+                if(i < (expoNum - 1))  sigmastr+=","; 
+            }            
+        }
         split_string(sigmastr,sigmasplit);
         if(sigmasplit.size()!=expoNum)
             throw("Error: The number of input prior variances is not consistent with the number of input exposures.");
@@ -7685,7 +7699,7 @@ namespace SMRDATA
             ////////////////////////////////////////////
             // MCMC iteration start, define variables;//
             ////////////////////////////////////////////
-            int nloops = 1000, nburn_in = 0.2 * nloops;
+            int nloops = 10000, nburn_in = 0.2 * nloops;
             MatrixXd Pr(nloops,combNum);
             VectorXf ngamma(combNum);
             VectorXd alpha(combNum);
@@ -7881,7 +7895,7 @@ namespace SMRDATA
         // this expoNum is the total number of exposures included
         long expoNum;
         expoNum = besdNum;
-        printf("There are %ld exposures and 1 outcome are included in multiple-SMR and multiple-HEIDI test.\n",expoNum);
+        printf("There are %ld exposures and 1 outcome are included in OPERA.\n",expoNum);
         if(expoNum<2) throw("Error: The program can not perform the conditional SMR analysis because there is only one exposure included. Please remove the flag --conditional-smr to analyze single exposure.");
         // illustrate all the combinations
         vector<vector<int>> idxall;
@@ -8409,7 +8423,7 @@ namespace SMRDATA
         // this expoNum is the total number of exposures included
         long expoNum;
         expoNum = besdNum;
-        printf("There are %ld exposures and 1 outcome are included in multiple-SMR and multiple-HEIDI test.\n",expoNum);
+        printf("There are %ld exposures and 1 outcome are included in OPERA.\n",expoNum);
         // illustrate all the combinations
         vector<vector<int>> idxall;
         for(int i=0;i<expoNum;i++){
@@ -8908,7 +8922,7 @@ namespace SMRDATA
         // this expoNum is the total number of exposures 
         long expoNum;
         expoNum = besdNum;
-        printf("There are %ld exposures and 1 outcome are included in multiple-SMR and multiple-HEIDI test.\n",expoNum);
+        printf("There are %ld exposures and 1 outcome are included in OPERA.\n",expoNum);
         // illustrate all the combinations
         vector<vector<int>> idxall;
         for(int i=0;i<expoNum;i++){
@@ -9106,7 +9120,7 @@ namespace SMRDATA
         // }
         // printf("SMR analysis results of %ld exposure probes have been saved in the file %s .\n",itemcount,smrfile0.c_str());
         // fclose(smr0);
-        printf("\nPerforming multiple exposures SMR analysis (multi-SMR and multi-HEIDI tests) ... \n");
+        printf("\nPerforming multiple exposures OPERA analysis (including multi-exposure HEIDI tests) ... \n");
         if(probNum.size()!=expoNum){
             throw("ERROR: The number of exposures with significant instruments are less than the number of specified priors.\n");
             exit(EXIT_FAILURE);
@@ -9271,7 +9285,7 @@ namespace SMRDATA
         fclose(smr0);            
         fclose(smr2);
         printf("\nPairwise SMR and HEIDI analyses for %ld exposure probes have been saved in the file %s .\n",itemcountsmr,smrfile0.c_str());
-        printf("\nMulti-SMR and Multi-HEIDI analyses for %ld exposures and 1 outcome completed.\nPosterior probability and HEIDI results of %ld combinations have been saved in the file %s.\n",expoNum,itercountmlt,smrfile2.c_str());
+        printf("\nOPERA analyses for %ld exposures and 1 outcome completed.\nPosterior probability and HEIDI results of %ld combinations have been saved in the file %s.\n",expoNum,itercountmlt,smrfile2.c_str());
     }
 
     void multiexposuresmr_old(char* outFileName, char* bFileName, char* eqtlsmaslstName, char* gwasFileName, double maf,string priorstr,string sigmastr, char* indilstName, char* snplstName,char* problstName, char* oproblstName,char* eproblstName,bool bFlag,double p_hetero,double ld_top,int m_hetero, int opt_hetero,  char* indilst2remove, char* snplst2exclde, char* problst2exclde, char* oproblst2exclde,char* eproblst2exclde,double p_smr,char* refSNP, bool heidioffFlag,int cis_itvl,int snpchr,int prbchr,char* traitlstName,int op_wind, char* oprobe, char* eprobe, char* oprobe2rm, char* eprobe2rm, double threshpsmrest, bool new_het_mth, bool opt, double ld_min,bool cis2all, bool sampleoverlap, double pmecs, int minCor, char* targetcojosnplstName, char* snpproblstName,double afthresh,double percenthresh)
@@ -9372,7 +9386,7 @@ namespace SMRDATA
         // this outcoNum is the total number of exposures 
         long expoNum;
         expoNum = besdNum;
-        printf("There are %ld exposures and 1 outcome are included in multiple-SMR and multiple-HEIDI test.\n",expoNum);
+        printf("There are %ld exposures and 1 outcome are included in OPERA.\n",expoNum);
         // illustrate all the combinations
         vector<vector<int>> idxall;
         for(int i=0;i<expoNum;i++){
@@ -9769,10 +9783,10 @@ namespace SMRDATA
         fclose(smr0);
         fclose(smr2);
         //printf("\nSMR and HEIDI analyses for molecular traits completed.\nSMR and heterogeneity analysis results of %ld outcome probes (%ld exposure probe) have been saved in the file %s.\n",itemcount,etraitcount,smrfile1.c_str());
-        printf("\nMulti-SMR and Multi-HEIDI analyses for %ld exposures and 1 outcome completed.\nPosterior probability and HEIDI results of %ld combinations (%ld exposure probes) have been saved in the file %s.\n",expoNum,itercountmlt,itemcount,smrfile2.c_str());
+        printf("\nOPERA analyses for %ld exposures and 1 outcome completed.\nPosterior probability and HEIDI results of %ld combinations (%ld exposure probes) have been saved in the file %s.\n",expoNum,itercountmlt,itemcount,smrfile2.c_str());
     }
 
-    void multiexposure_jointsmr(char* outFileName, char* bFileName, char* eqtlsmaslstName, char* gwasFileName, double maf,string priorstr,string sigmastr, char* indilstName, char* snplstName,char* problstName, char* oproblstName,char* eproblstName,bool bFlag,double p_hetero,double ld_top,int m_hetero, int opt_hetero,  char* indilst2remove, char* snplst2exclde, char* problst2exclde, char* oproblst2exclde,char* eproblst2exclde,double p_smr,double thresh_PP,char* refSNP, bool heidioffFlag, bool jointsmrflag, int cis_itvl,int snpchr,int prbchr,char* traitlstName,int op_wind, char* oprobe, char* eprobe, char* oprobe2rm, char* eprobe2rm, double threshpsmrest, bool new_het_mth, bool opt, double ld_min,bool cis2all, bool sampleoverlap, double pmecs, int minCor, char* targetcojosnplstName, char* GWAScojosnplstName, char* snpproblstName,double afthresh,double percenthresh)
+    void multiexposure_jointsmr_loci(char* outFileName, char* bFileName, char* eqtlsmaslstName, char* gwasFileName, double maf,string priorstr,string sigmastr, char* indilstName, char* snplstName,char* problstName, char* oproblstName,char* eproblstName,bool bFlag,double p_hetero,double ld_top,int m_hetero, int opt_hetero,  char* indilst2remove, char* snplst2exclde, char* problst2exclde, char* oproblst2exclde,char* eproblst2exclde,double p_smr,double thresh_PP,char* refSNP, bool heidioffFlag, bool jointsmrflag, int cis_itvl,int snpchr,int prbchr,char* traitlstName,int op_wind, char* oprobe, char* eprobe, char* oprobe2rm, char* eprobe2rm, double threshpsmrest, bool new_het_mth, bool opt, double ld_min,bool cis2all, bool sampleoverlap, double pmecs, int minCor, char* targetcojosnplstName, char* GWAScojosnplstName, char* snpproblstName,double afthresh,double percenthresh)
     {   
         // eqtlsmaslstName is the included exposure probes and gwasFileName will be the outcome 
         setNbThreads(thread_num);
@@ -9870,7 +9884,7 @@ namespace SMRDATA
         // this expoNum is the total number of exposures 
         long expoNum;
         expoNum = besdNum;
-        printf("There are %ld exposures and 1 outcome are included in multiple-SMR and multiple-HEIDI test.\n",expoNum);
+        printf("There are %ld exposures and 1 outcome are included in OPERA.\n",expoNum);
         if(expoNum<2) throw("Error: The program can not perform the joint SMR analysis because there is only one exposure included. Please remove the flag --joint-smr to analyze single exposure.");
         // illustrate all the combinations
         vector<vector<int>> idxall;
@@ -9915,6 +9929,13 @@ namespace SMRDATA
         }
         // get the priors
         vector<string> priorsplit, sigmasplit;
+        double sigma_def = 0.02;
+        if(sigmastr.size() == 0) {
+            for(int i=0;i<expoNum;i++) {
+                sigmastr+=atos(sigma_def);
+                if(i < (expoNum - 1))  sigmastr+=","; 
+            }            
+        }
         split_string(priorstr,priorsplit);
         split_string(sigmastr,sigmasplit);
         if(sigmasplit.size()!=expoNum)
@@ -10031,8 +10052,8 @@ namespace SMRDATA
                 exit(EXIT_FAILURE);
             }
         }
-        // header for .multismr
-        string smrfile2 = string(outFileName)+".multismr";
+        // header for .ppa
+        string smrfile2 = string(outFileName)+".ppa";
         FILE* smr2 = fopen(smrfile2.c_str(), "w");
         if (!(smr2)) {
             printf("ERROR: open error %s\n", smrfile2.c_str());
@@ -10047,7 +10068,7 @@ namespace SMRDATA
         }
         for(int i=0; i<combmarg.size();i++)
         {
-            outstr+="PP(";
+            outstr+="PPA(";
             for(int j=0;j<combmarg[i].size();j++)
             {
                 outstr+=atos(combmarg[i][j]);
@@ -10109,7 +10130,7 @@ namespace SMRDATA
         // }
         // printf("SMR analysis results of %ld exposure probes have been saved in the file %s .\n",itemcountsmr,smrfile0.c_str());
         // fclose(smr0);
-        printf("\nPerforming multiple exposures SMR analysis (multi-SMR and multi-HEIDI tests) ... \n");        
+        printf("\nPerforming multiple exposures OPERA analysis (including multi-exposure HEIDI tests) ... \n");        
         // loop with GWAS COJO loci
         double cr=0;
         for(int ii=0;ii<ldata._include.size();ii++)
@@ -10353,8 +10374,8 @@ namespace SMRDATA
         }        
         fclose(smr0);            
         fclose(smr2);
-        printf("\nPairwise SMR and HEIDI analyses for %ld exposure probes have been saved in the file %s .\n",itemcountsmr,smrfile0.c_str());
-        printf("\nMulti-SMR and Multi-HEIDI analyses for %ld exposures and 1 outcome completed.\nPosterior probability and HEIDI results of %ld combinations have been saved in the file %s .\n",expoNum,itercountmlt,smrfile2.c_str());
+        printf("\nPairwise SMR and HEIDI analyses for %ld exposure probes have been saved in the file %s.\n",itemcountsmr,smrfile0.c_str());
+        printf("\nOPERA analyses for %ld exposures and 1 outcome completed.\nPosterior probability and HEIDI results of %ld combinations have been saved in the file %s.\n",expoNum,itercountmlt,smrfile2.c_str());
     }
     // jointSMR balanced
     void multiexposure_jointsmr_balanced(char* outFileName, char* bFileName, char* eqtlsmaslstName, char* gwasFileName, double maf,string priorstr,string sigmastr, char* indilstName, char* snplstName,char* problstName, char* oproblstName,char* eproblstName,bool bFlag,double p_hetero,double ld_top,int m_hetero, int opt_hetero,  char* indilst2remove, char* snplst2exclde, char* problst2exclde, char* oproblst2exclde,char* eproblst2exclde,double p_smr,char* refSNP, bool heidioffFlag, bool jointsmrflag, int cis_itvl,int snpchr,int prbchr,char* traitlstName,int op_wind, char* oprobe, char* eprobe, char* oprobe2rm, char* eprobe2rm, double threshpsmrest, bool new_het_mth, bool opt, double ld_min,bool cis2all, bool sampleoverlap, double pmecs, int minCor, char* targetcojosnplstName, char* GWAScojosnplstName, char* snpproblstName,double afthresh,double percenthresh)
@@ -10455,7 +10476,7 @@ namespace SMRDATA
         // this expoNum is the total number of exposures 
         long expoNum;
         expoNum = besdNum;
-        printf("There are %ld exposures and 1 outcome are included in multiple-SMR and multiple-HEIDI test.\n",expoNum);
+        printf("There are %ld exposures and 1 outcome are included in OPERA.\n",expoNum);
         if(expoNum<2) throw("Error: The program can not perform the joint SMR analysis because there is only one exposure included. Please remove the flag --joint-smr to analyze single exposure.");
         // illustrate all the combinations
         vector<vector<int>> idxall;
@@ -10586,8 +10607,8 @@ namespace SMRDATA
                 exit(EXIT_FAILURE);
             }
         }
-        // header for .multismr
-        string smrfile2 = string(outFileName)+".multismr";
+        // header for .ppa
+        string smrfile2 = string(outFileName)+".ppa";
         FILE* smr2 = fopen(smrfile2.c_str(), "w");
         if (!(smr2)) {
             printf("ERROR: open error %s\n", smrfile2.c_str());
@@ -10654,7 +10675,7 @@ namespace SMRDATA
         }
         printf("SMR analysis results of %ld exposure probes have been saved in the file %s .\n",itemcount,smrfile0.c_str());
         fclose(smr0);
-        printf("\nPerforming multiple exposures SMR analysis (multi-SMR and multi-HEIDI tests) ... \n");
+        printf("\nPerforming multiple exposures OPERA analysis (including multi-exposure HEIDI tests) ... \n");
         if(probNum.size()!=expoNum) {
             throw("ERROR: The number of exposure probes with significant instruments are less than the number of specified priors.\n");
             exit(EXIT_FAILURE);
@@ -10825,9 +10846,9 @@ namespace SMRDATA
         }         
         fclose(smr2);
         //printf("\nSMR and HEIDI analyses for molecular traits completed.\nSMR and heterogeneity analysis results of %ld outcome probes (%ld exposure probe) have been saved in the file %s.\n",itemcount,etraitcount,smrfile1.c_str());
-        printf("\nMulti-SMR and Multi-HEIDI analyses for %ld exposures and 1 outcome completed.\nPosterior probability and HEIDI results of %ld combinations have been saved in the file %s .\n",expoNum,itercountmlt,smrfile2.c_str());
+        printf("\nOPERA analyses for %ld exposures and 1 outcome completed.\nPosterior probability and HEIDI results of %ld combinations have been saved in the file %s .\n",expoNum,itercountmlt,smrfile2.c_str());
     }
-    void multiexposure_jointsmr_old(char* outFileName, char* bFileName, char* eqtlsmaslstName, char* gwasFileName, double maf,string priorstr,string sigmastr, char* indilstName, char* snplstName,char* problstName, char* oproblstName,char* eproblstName,bool bFlag,double p_hetero,double ld_top,int m_hetero, int opt_hetero,  char* indilst2remove, char* snplst2exclde, char* problst2exclde, char* oproblst2exclde,char* eproblst2exclde,double p_smr,char* refSNP, bool heidioffFlag, bool jointsmrflag, int cis_itvl,int snpchr,int prbchr,char* traitlstName,int op_wind, char* oprobe, char* eprobe, char* oprobe2rm, char* eprobe2rm, double threshpsmrest, bool new_het_mth, bool opt, double ld_min,bool cis2all, bool sampleoverlap, double pmecs, int minCor, char* targetcojosnplstName, char* snpproblstName,double afthresh,double percenthresh)
+    void multiexposure_jointsmr(char* outFileName, char* bFileName, char* eqtlsmaslstName, char* gwasFileName, double maf,string priorstr,string sigmastr, char* indilstName, char* snplstName,char* problstName, char* oproblstName,char* eproblstName,bool bFlag,double p_hetero,double ld_top,int m_hetero, int opt_hetero,  char* indilst2remove, char* snplst2exclde, char* problst2exclde, char* oproblst2exclde,char* eproblst2exclde,double p_smr,double thresh_PP, char* refSNP, bool heidioffFlag, bool jointsmrflag, int cis_itvl,int snpchr,int prbchr,char* traitlstName,int op_wind, char* oprobe, char* eprobe, char* oprobe2rm, char* eprobe2rm, double threshpsmrest, bool new_het_mth, bool opt, double ld_min,bool cis2all, bool sampleoverlap, double pmecs, int minCor, char* targetcojosnplstName, char* snpproblstName,double afthresh,double percenthresh)
     {   
         // eqtlsmaslstName is the included exposure probes and gwasFileName will be the outcome 
         setNbThreads(thread_num);
@@ -10925,7 +10946,7 @@ namespace SMRDATA
         // this expoNum is the total number of exposures 
         long expoNum;
         expoNum = besdNum;
-        printf("There are %ld exposures and 1 outcome are included in multiple-SMR and multiple-HEIDI test.\n",expoNum);
+        printf("There are %ld exposures and 1 outcome are included in OPERA.\n",expoNum);
         if(expoNum<2) throw("Error: The program can not perform the joint SMR analysis because there is only one exposure included. Please remove the flag --joint-smr to analyze single exposure.");
         // illustrate all the combinations
         vector<vector<int>> idxall;
@@ -10938,8 +10959,45 @@ namespace SMRDATA
         permute_vector(idxall, combins);
         long combNum=combins.size();
         
+        // list marginal PIP combins
+        vector<vector<int>> combmarg, comborg(combins.size()), idxmarg(combins.size());
+        comborg[0].push_back(0); idxmarg[0].push_back(0);
+        for(int i=1;i<combNum;i++) {
+            for(int j=0;j<expoNum;j++) {
+                if(combins[i][j] == 1) comborg[i].push_back(j+1);
+            }
+        }
+        // reorder the output PIP
+        for(int i=1;i<=expoNum;i++) {
+            vector<vector<int>> combtmp;
+            for(int j=0;j<combNum;j++) {
+                if(comborg[j].size()==i) combtmp.push_back(comborg[j]);
+            }
+            sort(combtmp.begin(),combtmp.end());
+            for(int k=0;k<combtmp.size();k++) {
+                combmarg.push_back(combtmp[k]);
+            }
+        }
+        // find the PIP correspoding configuration index
+        for(int i=1;i<combmarg.size();i++) {
+            for(int c=0;c<combNum;c++) {
+                int sumcount=0;
+                for(int j=0;j<combmarg[i].size();j++) {
+                    int tmpidx = combmarg[i][j] - 1;
+                    sumcount += combins[c][tmpidx];
+                }
+                if(sumcount==combmarg[i].size()) idxmarg[i].push_back(c);
+            }
+        }
         // get the priors
         vector<string> priorsplit, sigmasplit;
+        double sigma_def = 0.02;
+        if(sigmastr.size() == 0) {
+            for(int i=0;i<expoNum;i++) {
+                sigmastr+=atos(sigma_def);
+                if(i < (expoNum - 1))  sigmastr+=","; 
+            }            
+        }
         split_string(priorstr,priorsplit);
         split_string(sigmastr,sigmasplit);
         if(sigmasplit.size()!=expoNum)
@@ -11051,8 +11109,8 @@ namespace SMRDATA
                 exit(EXIT_FAILURE);
             }
         }
-        // header for .multismr
-        string smrfile2 = string(outFileName)+".multismr";
+        // header for .ppa
+        string smrfile2 = string(outFileName)+".ppa";
         FILE* smr2 = fopen(smrfile2.c_str(), "w");
         if (!(smr2)) {
             printf("ERROR: open error %s\n", smrfile2.c_str());
@@ -11065,17 +11123,27 @@ namespace SMRDATA
             j = i+1;
             outstr+="Expo"+atos(j)+"_ID"+'\t'+"Expo"+atos(j)+"_Gene"+'\t'+"Expo"+atos(j)+"_bp"+'\t';
         }
-        for(int i=0; i<combins.size();i++)
+        for(int i=0; i<combmarg.size();i++)
         {
-            outstr+="PP"+atos(i+1)+"(";
-            for(int j=0;j<expoNum;j++)
+            outstr+="PPA(";
+            for(int j=0;j<combmarg[i].size();j++)
             {
-                outstr+=atos(combins[i][j]);
-                if(j<expoNum-1) outstr+=":";
+                outstr+=atos(combmarg[i][j]);
+                if(j<combmarg[i].size()-1) outstr+=":";
             }
-            if(i<(combins.size()-1)) outstr+=")\t";
+            outstr+=")\t";
         }
-        outstr+=")\tp_HEIDI\tnsnp_HEIDI\n";
+        for(int i=1; i<combmarg.size();i++)
+        {
+            outstr+="HEIDI(";
+            for(int j=0;j<combmarg[i].size();j++)
+            {
+                outstr+=atos(combmarg[i][j]);
+                if(j<combmarg[i].size()-1) outstr+=":";
+            }
+            if(i<(combmarg.size()-1)) outstr+=")\t";
+        }
+        outstr+=")\n";
         if(fputs_checked(outstr.c_str(),smr2))
         {
             printf("ERROR: in writing file %s .\n", smrfile2.c_str());
@@ -11119,7 +11187,7 @@ namespace SMRDATA
         }
         printf("SMR analysis results of %ld exposure probes have been saved in the file %s .\n",itemcount,smrfile0.c_str());
         fclose(smr0);
-        printf("\nPerforming multiple exposures SMR analysis (multi-SMR and multi-HEIDI tests) ... \n");
+        printf("\nPerforming multiple exposures OPERA analysis (including multi-exposure HEIDI tests) ... \n");
         if(probNum.size()!=expoNum) {
             throw("ERROR: The number of exposure probes with significant instruments are less than the number of specified priors.\n");
             exit(EXIT_FAILURE);
@@ -11140,36 +11208,12 @@ namespace SMRDATA
             }
             vector<SMRRLT> smrrltsbf;
             vector<long> probNumbf;
+            vector<long> expoNumbf;
+
             smrrltsbf.push_back(smrrlts[0][ii]); 
             probNumbf.push_back(1);
-            string traitname=smrrlts[0][ii].ProbeID;
             int traitchr=smrrlts[0][ii].ProbeChr;
-            string traitgene=smrrlts[0][ii].Gene;
             int traitbp=smrrlts[0][ii].Probe_bp;
-            vector<eqtlInfo> esdatabf(expoNum);
-            vector<vector<string>> prb_cojolist(expoNum);
-            
-            if(!heidioffFlag || jointsmrflag) {
-                map<string, int>::iterator itt;
-                eqtlInfo esdatatmp;
-                esdata[0]._include.clear();
-                itt = esdata[0]._probe_name_map.find(traitname);
-                if(itt != esdata[0]._probe_name_map.end()) {
-                    esdata[0]._include.push_back(itt->second);
-                    e2econvert(&esdata[0], &esdatatmp);
-                    esdatabf[0]=esdatatmp;
-                } else {
-                    continue;
-                }
-                if(targetcojosnplstName!=NULL) {
-                    map<string, vector<string>>::iterator prb_pos;
-                    prb_pos = prb_cojosnps.find(traitname);
-                    vector<string> navector; navector.push_back("");
-                    if(prb_pos!=prb_cojosnps.end()) {
-                        prb_cojolist[0]=prb_pos->second;
-                    } else { prb_cojolist[0]=navector; }
-                }
-            }
 
             int lowerbounder=(traitbp-exposure_probe_wind)>0?(traitbp-exposure_probe_wind):0;
             int upperbounder=traitbp+exposure_probe_wind;
@@ -11190,59 +11234,74 @@ namespace SMRDATA
 
             int expocout = 0; 
             for(int i=0;i<probNumbf.size();i++) {
-                if(probNumbf[i]>0) expocout+=1;
+                if(probNumbf[i]>0) { expocout+=1; expoNumbf.push_back(i);}
             }
 
-            if(expocout==expoNum) {
+            if(expocout == 0) {
+                continue;
+            } else {
                 // illustrate all the combinations
                 vector<vector<int>> indexall;
                 for(int i=0;i<probNumbf.size();i++) {
-                    vector<int> index(probNumbf[i]);
-                    std::iota(index.begin(),index.end(),0);
-                    indexall.push_back(index);
+                    if(probNumbf[i] > 0) {
+                        vector<int> index(probNumbf[i]);
+                        std::iota(index.begin(),index.end(),0);
+                        indexall.push_back(index);
+                    } else {
+                        vector<int> index;
+                        index.push_back(0);
+                        indexall.push_back(index);
+                    }
                 }
                 vector<vector<int>> combines;
                 permute_vector(indexall, combines);
                 //if (combines.size()==0) printf("\nWARNING: Less than %ld outcomes included in the analysis. \nThe multi-SMR and multi-HEIDI test will skip for exposure probe %s\n",expoNum,traitname.c_str());
                 for(int i=0; i<combines.size();i++)
                 {
+                    vector<eqtlInfo> esdatabf;
+                    vector<vector<string>> prb_cojolist;
                     vector<float> bxy(expoNum), sigma_e(expoNum), c(expoNum);
                     vector<string> outconamec(besdNum), outcogenec(besdNum);
                     vector<long> outcobpc(besdNum);
-                    vector<float> Pr(combNum),HH(combNum),PO(combNum),PP(combNum);
+                    vector<float> Pr(combNum),HH(combNum),PO(combNum),PP(combNum),PIP(combNum);
                     vector<gwasData> esdatain(expoNum);
                     MatrixXd lh(2,expoNum);
                     // get the probe and gene information for output
-                    outstr=atos(traitchr)+'\t'+traitname+'\t'+traitgene+'\t'+atos(traitbp)+'\t';
-                    long postmp=1;
-                    
-                    for(int t=1; t<besdNum; t++)
+                    outstr=atos(traitchr)+'\t';
+                    long postmp=0;                    
+                    for(int t=0; t<besdNum; t++)
                     {   
-                        long idxtmp = combines[i][t]+postmp;
-                        outconamec[t] = smrrltsbf[idxtmp].ProbeID;
-                        outcogenec[t] = smrrltsbf[idxtmp].Gene;
-                        outcobpc[t] = smrrltsbf[idxtmp].Probe_bp;
-                        postmp = postmp + probNumbf[t];
-                        if(!heidioffFlag || jointsmrflag) {
-                            esdata[t]._include.clear();
-                            map<string, int>::iterator itt;
-                            eqtlInfo esdatatmp;
-                            itt = esdata[t]._probe_name_map.find(outconamec[t]);
-                            if(itt != esdata[t]._probe_name_map.end()) {
-                                esdata[t]._include.push_back(itt->second);
-                                e2econvert(&esdata[t], &esdatatmp);
-                                esdatabf[t] = esdatatmp;
+                        if(probNumbf[t] > 0) {
+                            long idxtmp = combines[i][t]+postmp;
+                            outconamec[t] = smrrltsbf[idxtmp].ProbeID;
+                            outcogenec[t] = smrrltsbf[idxtmp].Gene;
+                            outcobpc[t] = smrrltsbf[idxtmp].Probe_bp;
+                            postmp = postmp + probNumbf[t];
+
+                            if(!heidioffFlag || jointsmrflag) {
+                                esdata[t]._include.clear();
+                                map<string, int>::iterator itt;
+                                eqtlInfo esdatatmp;
+                                itt = esdata[t]._probe_name_map.find(outconamec[t]);
+                                if(itt != esdata[t]._probe_name_map.end()) {
+                                    esdata[t]._include.push_back(itt->second);
+                                    e2econvert(&esdata[t], &esdatatmp);
+                                    esdatabf.push_back(esdatatmp);
+                                }
+                                if(targetcojosnplstName!=NULL) {
+                                    // find the target probe COJO signals
+                                    map<string, vector<string>>::iterator prb_pos;
+                                    prb_pos = prb_cojosnps.find(outconamec[t]);
+                                    vector<string> navector; navector.push_back("");
+                                    if(prb_pos!=prb_cojosnps.end()) {
+                                        prb_cojolist.push_back(prb_pos->second);
+                                    } else { prb_cojolist.push_back(navector); }
+                                }
                             }
-                            if(targetcojosnplstName!=NULL) {
-                                // find the target probe COJO signals
-                                map<string, vector<string>>::iterator prb_pos;
-                                prb_pos = prb_cojosnps.find(outconamec[t]);
-                                vector<string> navector; navector.push_back("");
-                                if(prb_pos!=prb_cojosnps.end()) {
-                                    prb_cojolist[t]=prb_pos->second;
-                                } else { prb_cojolist[t]=navector; }
-                            }
-                        }
+                        
+                        } else {
+                            outconamec[t] = "NA"; outcogenec[t] = "NA"; outcobpc[t] = 0;
+                        }                        
                         outstr+=outconamec[t]+'\t'+outcogenec[t]+'\t'+atos(outcobpc[t])+'\t';
                     }
                     vector<SMRRLT> smrrlts_joint;
@@ -11251,71 +11310,103 @@ namespace SMRDATA
                             multi_joint_smr_func(smrrlts_joint, NULL, &bdata, &gdata1, esdatabf, prb_cojolist, cis_itvl, heidioffFlag,refSNP,p_hetero,ld_top,m_hetero,p_smr,threshpsmrest,new_het_mth,opt,ld_min,opt_hetero,sampleoverlap,pmecs,minCor);
                         } else { multi_joint_smr_func(smrrlts_joint, NULL, &bdata, &gdata1, esdatabf, cis_itvl, heidioffFlag,refSNP,p_hetero,ld_top,m_hetero,p_smr,threshpsmrest,new_het_mth,opt,ld_min,opt_hetero,sampleoverlap,pmecs,minCor); }                        
                     }
-                    if(smrrlts_joint.size() == expoNum) {
-                        //get the bxy, sigma_b and sigma_e from joint-SMR
-                        for(int t=0; t<expoNum; t++)
-                        {
-                            bxy[t] = smrrlts_joint[t].b_SMR;
-                            sigma_e[t] = pow(smrrlts_joint[t].se_SMR,2);
+                    //get the bxy, sigma_b and sigma_e from joint-SMR
+                    int k_joint = 0;
+                    for(int t=0; t<expoNum; t++)
+                    {
+                        if(probNumbf[t] > 0) {
+                            bxy[t] = smrrlts_joint[k_joint].b_SMR;
+                            sigma_e[t] = pow(smrrlts_joint[k_joint].se_SMR,2);
                             c[t] = 1+sigma_e[t]/sigma_b[t];
+                            k_joint = k_joint + 1;
+                        } else {
+                            bxy[t] = 0; sigma_e[t] = 0; c[t] = 0;
                         }
-                        // multi-HEIDI test
-                        vector<SMRRLT> smrrltsheidi;
-                        if(! heidioffFlag){
-                            multi_heidi_func(smrrltsheidi, NULL, &bdata, &gdata1, esdatabf, cis_itvl, heidioffFlag, refSNP,p_hetero,ld_top, m_hetero, p_smr, threshpsmrest,new_het_mth,opt,ld_min,opt_hetero,sampleoverlap,pmecs,minCor);
-                        }
-                        // get the H0 and H1 prior pi and likelihood
-                        const double PI = 3.141592653589793238463;
-                        for(int t=0;t<expoNum;t++) {
+                    }
+                    // get the H0 and H1 prior pi and likelihood
+                    const double PI = 3.141592653589793238463;
+                    for(int t=0;t<expoNum;t++) {
+                        if(probNumbf[t] > 0) {
                             lh(0,t)=pow(2*PI,-0.5)*pow(sigma_e[t],-0.5)*exp(-1*pow(bxy[t],2)/(2*sigma_e[t]));
                             lh(1,t)=pow(2*PI,-0.5)*pow(c[t]*sigma_b[t],-0.5)*exp((1/c[t]-1)*pow(bxy[t],2)/(2*sigma_e[t]));
-                        }
-                        // caculate the posterier probablity
-                        for(int i=0;i<combNum;i++){
-                            HH[i]=1.0;
-                            for(int t=0;t<expoNum;t++)
-                            {
-                                HH[i] *= lh(combins[i][t],t);
-                            }
-                        }
-                        float POall = 0;
-                        for(int i=0;i<combNum;i++) {
-                            PO[i] = HH[i]*prior[i];
-                            POall+=PO[i];
-                        }
-                        for(int i=0;i<combNum;i++) {
-                            PP[i] = PO[i]/POall;
-                            outstr = outstr + atos(PP[i])+'\t';
-                        }
-                        bool sigflag = false;
-                        for(int i=1;i<combNum;i++) {
-                            if(PP[i]>=0.8) sigflag = true;
-                        }
-                        if(! heidioffFlag) {
-                            outstr=outstr+(smrrltsheidi[0].p_HET >= 0 ? dtos(smrrltsheidi[0].p_HET) : "NA") + '\t' + (smrrltsheidi[0].nsnp > 0 ? atos(smrrltsheidi[0].nsnp+1) : "NA") + '\n';
                         } else {
-                            outstr=outstr + "NA" + '\t' + "NA" + '\n';
+                            lh(0,t) = 1; lh(1,t) = 0;
                         }
-                        if(sigflag) {
-                            itercountmlt+=1;
-                            if(fputs_checked(outstr.c_str(),smr2))
-                            {
-                                printf("ERROR: in writing file %s .\n", smrfile2.c_str());
-                                exit(EXIT_FAILURE);
+                    }
+                    // caculate the posterier probablity
+                    for(int i=0;i<combNum;i++){
+                        HH[i]=1.0;
+                        for(int t=0;t<expoNum;t++)
+                        {
+                            HH[i] *= lh(combins[i][t],t);
+                        }
+                    }
+                    float POall = 0;
+                    for(int i=0;i<combNum;i++) {
+                        PO[i] = HH[i]*prior[i];
+                        POall+=PO[i];
+                    }
+                    for(int i=0;i<combNum;i++) {
+                        PP[i] = PO[i]/POall;
+                        //outstr = outstr + atos(PP[i])+'\t';
+                    }
+                    for(int i=0;i<combmarg.size();i++) {
+                        for(int j=0;j<idxmarg[i].size();j++) {
+                            PIP[i] += PP[idxmarg[i][j]];
+                        }
+                    }
+                    for(int i=0;i<PIP.size();i++) {
+                        outstr = outstr + atos(PIP[i])+'\t';
+                    }
+                    bool sigflag = false; vector<int> sigcomb;  
+                    for(int i=1;i<combmarg.size();i++) {
+                        if(PIP[i]>=thresh_PP) { sigflag = true; sigcomb.push_back(i); }
+                    }
+                    // multi-HEIDI test
+                    vector<vector<SMRRLT>> smrrltsheidi(combmarg.size());
+                    if(! heidioffFlag && sigflag) {
+                        for(int h=0;h<sigcomb.size();h++) {
+                            vector<eqtlInfo> esdataheidi;
+                            int tmpidx = sigcomb[h];
+                            for(int c=0;c<combmarg[tmpidx].size();c++) {
+                                int combidx = combmarg[tmpidx][c]-1;
+                                for(int k=0;k<expoNumbf.size();k++) {
+                                    if(expoNumbf[k] == combidx) esdataheidi.push_back(esdatabf[k]);
+                                }                                                            
                             }
+                            multi_heidi_func(smrrltsheidi[tmpidx], NULL, &bdata, &gdata1, esdataheidi, cis_itvl, heidioffFlag, refSNP,p_hetero,ld_top, m_hetero, p_smr, threshpsmrest,new_het_mth,opt,ld_min,opt_hetero,sampleoverlap,pmecs,minCor);
+                        }
+                        // output
+                        for(int i=1;i<combmarg.size();i++) {
+                            if(smrrltsheidi[i].size()>0) {
+                                if(i<(combmarg.size()-1)) {outstr=outstr+(smrrltsheidi[i][0].p_HET >= 0 ? dtos(smrrltsheidi[i][0].p_HET) : "NA") + '\t' ;
+                                } else {outstr=outstr+(smrrltsheidi[i][0].p_HET >= 0 ? dtos(smrrltsheidi[i][0].p_HET) : "NA") + '\n';}
+                            } else {
+                                if(i<(combmarg.size()-1)) {outstr=outstr + "NA" + '\t';
+                                } else {outstr=outstr + "NA" + '\n';}
+                            }
+                        }                
+                    } else {
+                         for(int i=1;i<combmarg.size();i++) {
+                             if(i<(combmarg.size()-1)) { outstr=outstr + "NA" + '\t';
+                             } else { outstr=outstr + "NA" + '\n'; }
+                        }
+                    }
+                    if(sigflag) {
+                        itercountmlt+=1;
+                        if(fputs_checked(outstr.c_str(),smr2))
+                        {
+                            printf("ERROR: in writing file %s .\n", smrfile2.c_str());
+                            exit(EXIT_FAILURE);
                         }
                     }
                 
                 }
-
-            } else {
-                continue;
             }
             
         }         
         fclose(smr2);
-        //printf("\nSMR and HEIDI analyses for molecular traits completed.\nSMR and heterogeneity analysis results of %ld outcome probes (%ld exposure probe) have been saved in the file %s.\n",itemcount,etraitcount,smrfile1.c_str());
-        printf("\nMulti-SMR and Multi-HEIDI analyses for %ld exposures and 1 outcome completed.\nPosterior probability and HEIDI results of %ld combinations have been saved in the file %s .\n",expoNum,itercountmlt,smrfile2.c_str());
+        printf("\nOPERA analyses for %ld exposures and 1 outcome completed.\nPosterior probability and HEIDI results of %ld combinations have been saved in the file %s.\n",expoNum,itercountmlt,smrfile2.c_str());
     }
     void multioutcomesmr(char* outFileName, char* bFileName, char* eqtlFileName, char* eqtlsmaslstName, char* gwasFileName, double maf,string priorstr,string sigmastr, char* indilstName, char* snplstName,char* problstName, char* oproblstName,char* eproblstName,bool bFlag,double p_hetero,double ld_top,int m_hetero, int opt_hetero,  char* indilst2remove, char* snplst2exclde, char* problst2exclde, char* oproblst2exclde,char* eproblst2exclde,double p_smr,char* refSNP, bool heidioffFlag,int cis_itvl,int snpchr,int prbchr,char* traitlstName,int op_wind, char* oprobe, char* eprobe, char* oprobe2rm, char* eprobe2rm, double threshpsmrest, bool new_het_mth, bool opt, double ld_min,bool cis2all, bool sampleoverlap, double pmecs, int minCor, char* targetcojosnplstName, char* snpproblstName,double afthresh,double percenthresh)
     {   
