@@ -47,6 +47,8 @@ Iteration	Pi1(0:0)	Pi2(0:1)	Pi3(1:0)	Pi4(1:1)
 6	0.611609	0.365378	0.00324214	0.019771
 ...
 ```
+Columns are iteration numbers from MCMC and posterior samples for each configuration from the MCMC.  
+
 
 ## Other parameters for stage 1 analysis
 > opera --besd-flist mylist --gwas-summary mygwas.ma --bfile mydata --estimate-pi --prior-sigma 0.02,0.02 --pi-wind 100 --out myopera --thread-num 3 
@@ -68,6 +70,8 @@ Chr	Expo1_ID	Expo1_Gene	Expo1_bp	Expo2_ID	Expo2_Gene	Expo2_bp	PPA(0)	PPA(1)	PPA(
 7	ENSG00000085514	PILRA	99981436	cg19116668	PILRB	99932089	4.09321e-15	0.999997	1	0.999997	1.036234e-01	7.709418e-02	1.604312e-01
 ...
 ```
+Columns are chromosome,probe ID for the 1st exposure, gene name for the 1st exposure, probe position for the 1st exposure, probe ID for the 2nd exposure, gene name for the 2nd exposure, probe position for the 2nd exposure, PPA for no associations, PPA for the 1st probe association, PPA for the 2nd probe association, PPA for the 1st and 2nd probes joint association, p-value from HEIDI for the 1st probe association, p-value from HEIDI for the 2nd probe association, and p-value from HEIDI for the 1st and 2nd probes joint association.  
+Missing Value is represented by "NA".
 
 ```
 ProbeID    Probe_Chr   Gene    Probe_bp    SNP SNP_Chr SNP_bp  A1  A2  Freq    b_GWAS  se_GWAS p_GWAS  b_eQTL  se_eQTL p_eQTL  b_SMR   se_SMR  p_SMR   p_HEIDI nsnp_HEIDI
@@ -75,6 +79,7 @@ prb01    1   Gene1   1001    rs01    1   1011    C   T   0.95    -0.024  0.0063 
 prb02    1   Gene2   2001    rs02    1   2011    G   C   0.0747  0.0034  0.0062  5.8e-01 0.62    0.0396  2e-55   0.0055  0.01    5.8e-01 4.17e-01    28
 ...
 ```
+Columns are probe ID, probe chromosome, gene name, probe position, SNP name, SNP chromosome, SNP position, the effect (coded) allele, the other allele, frequency of the effect allele (estimated from the reference samples), effect size from GWAS, SE from GWAS, p-value from GWAS, effect size from eQTL study, SE from eQTL study, p-value from eQTL study, effect size from SMR, SE from SMR, p-value from SMR, p-value from HEIDI (HEterogeneity In Depedent Instruments) test, and number of SNPs used in the HEIDI test.
 
 * The heterogeneity test (i.e., multi-exposure HEIDI) will be automatically performed for any combinatorial associations passed a PPA threshold (0.8 as default). If the heterogeneity test is not interested, it can be turned off by specifying --heidi-off.
 
