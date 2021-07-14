@@ -70,7 +70,7 @@ Chr	Expo1_ID	Expo1_Gene	Expo1_bp	Expo2_ID	Expo2_Gene	Expo2_bp	PPA(0)	PPA(1)	PPA(
 7	ENSG00000085514	PILRA	99981436	cg19116668	PILRB	99932089	4.09321e-15	0.999997	1	0.999997	1.036234e-01	7.709418e-02	1.604312e-01
 ...
 ```
-Columns are chromosome, probe ID for the 1st exposure, gene name for the 1st exposure, probe position for the 1st exposure, probe ID for the 2nd exposure, gene name for the 2nd exposure, probe position for the 2nd exposure, PPA for no associations, PPA for the 1st probe association, PPA for the 2nd probe association, PPA for the 1st and 2nd probes joint association, p-value from HEIDI for the 1st probe association, p-value from HEIDI for the 2nd probe association, and p-value from HEIDI for the 1st and 2nd probes joint association. Missing Value is represented by "NA".  
+Columns are chromosome, probe ID for the 1st exposure, gene name for the 1st exposure, probe position for the 1st exposure, probe ID for the 2nd exposure, gene name for the 2nd exposure, probe position for the 2nd exposure, PPA for no associations, PPA for the 1st probe association, PPA for the 2nd probe association, PPA for the 1st and 2nd probes joint association, p-value from HEIDI for the 1st probe association, p-value from HEIDI for the 2nd probe association, and p-value from HEIDI for the 1st and 2nd probes joint association. Missing value is represented by "NA".  
 
 ```
 ProbeID    Probe_Chr   Gene    Probe_bp    SNP SNP_Chr SNP_bp  A1  A2  Freq    b_GWAS  se_GWAS p_GWAS  b_eQTL  se_eQTL p_eQTL  b_SMR   se_SMR  p_SMR   p_HEIDI nsnp_HEIDI
