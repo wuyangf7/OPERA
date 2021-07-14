@@ -58,7 +58,7 @@ Iteration	Pi1(0:0)	Pi2(0:1)	Pi3(1:0)	Pi4(1:1)
 > opera --besd-flist mylist --gwas-summary mygwas.ma --bfile mydata --prior-pi 0.8,0.09,0.09,0.02 --out myopera --thread-num 3
 
 * --prior-pi the estimated global proportions of each configuration from the stage 1 analysis. 
-* --out saves the PPA and multi-exposure HEIDI test P-values for each possible association hypotheses in .ppa file (text format, see below example).
+* --out saves the PPA and multi-exposure HEIDI test P-values for each possible association hypotheses in .ppa file (text format, see below example), and saves the results from the pairwise SMR analysis in .smr file
 
 ```
 Chr	Expo1_ID	Expo1_Gene	Expo1_bp	Expo2_ID	Expo2_Gene	Expo2_bp	PPA(0)	PPA(1)	PPA(2)	PPA(1:2)	HEIDI(1)	HEIDI(2)	HEIDI(1:2)
@@ -66,6 +66,13 @@ Chr	Expo1_ID	Expo1_Gene	Expo1_bp	Expo2_ID	Expo2_Gene	Expo2_bp	PPA(0)	PPA(1)	PPA(
 7	ENSG00000238109	AC004893.10	98596857	cg08582801	AZGP1P1	99588335	0.135318	0.00809727	0.864083	0.00749766	NA	1.184727e-01	NA
 7	ENSG00000238109	AC004893.10	98596857	cg07693238	AZGP1P1	99595437	0.197766	0.00824852	0.801311	0.00732488	NA	2.194922e-02	NA
 7	ENSG00000085514	PILRA	99981436	cg19116668	PILRB	99932089	4.09321e-15	0.999997	1	0.999997	1.036234e-01	7.709418e-02	1.604312e-01
+...
+```
+
+```
+ProbeID    Probe_Chr   Gene    Probe_bp    SNP SNP_Chr SNP_bp  A1  A2  Freq    b_GWAS  se_GWAS p_GWAS  b_eQTL  se_eQTL p_eQTL  b_SMR   se_SMR  p_SMR   p_HEIDI nsnp_HEIDI
+prb01    1   Gene1   1001    rs01    1   1011    C   T   0.95    -0.024  0.0063  1.4e-04 0.36    0.048   6.4e-14 -0.0668 0.0197  6.8e-04 NA  NA
+prb02    1   Gene2   2001    rs02    1   2011    G   C   0.0747  0.0034  0.0062  5.8e-01 0.62    0.0396  2e-55   0.0055  0.01    5.8e-01 4.17e-01    28
 ...
 ```
 
