@@ -24,7 +24,7 @@ make
 There are dependencies on your local MKL, BOOST and EIGEN Libraries.
 
 # Tutorial
-Our OPERA analysis consists of three steps. OPERA first estimates the global frequencies of each possible association patterns, then computes the posterior probability supporting each configuration by weighting the data likelihood with the estimated global frequencies. We compute the posterior probability of associations (PPA) for any combinatorial sites by summing up the posterior probability of configurations where the site combination present. For results passed the association test with a PPA threshold, OPERA performs the heterogeneity test to reject the associations that are due to linkage. 
+Our OPERA analysis consists of three steps. OPERA first estimates the global frequencies of each possible association pattern, then computes the posterior probability supporting each configuration by weighting the data likelihood with the estimated global frequencies. We compute the posterior probability of associations (PPA) for any combinatorial sites by summing up the posterior probability of configurations where the site combination present. For results passed the association test with a PPA threshold (e.g., 0.8 by default), OPERA performs the heterogeneity test to reject the associations that are due to linkage. 
 
 We collected and prepared multiple public available molecular QTL data for users to perform the OPERA analysis with their specific complex trait of interest, which is available for download [here](https://cnsgenomics.com/software/smr/#DataResource). For illustration purpose, we also provide the demonstration [data](https://github.com/wuyangf7/OPERA/tree/main/demo) to run opera analysis with command line below. 
 
@@ -34,20 +34,26 @@ We collected and prepared multiple public available molecular QTL data for users
 * --besd-flist reads a file to get the full paths of the multiple xQTL BESD files. The input format follows that for the SMR analysis (https://cnsgenomics.com/software/smr/#DataManagement). 
 * --gwas-summary reads summary-level data from GWAS. The input format follows that for GCTA-COJO analysis (http://cnsgenomics.com/software/gcta/#COJO).
 * --bfile reads individual-level SNP genotype data (in PLINK binary format) from a reference sample for LD estimation, i.e. .bed, .bim, and .fam files.
-* --out saves the estimation of prior proportions from the OPERA stage 1 analysis in .pi file (text format, see below example).
+* --out saves the estimation of prior proportions from the OPERA stage 1 analysis in .pi file (text format, see example from demo data below).
 
 ```
-Iteration	Pi1(0:0)	Pi2(0:1)	Pi3(1:0)	Pi4(1:1)
-0	0.206741	0.618764	0.163905	0.0105903
-1	0.57161	0.390242	0.0271588	0.0109884
-2	0.535602	0.191737	0.272659	1.04125e-06
-3	0.821147	0.0184099	0.160443	1.01198e-08
-4	0.312696	0.583291	0.0777026	0.0263109
-5	0.83348	0.118327	0.000677142	0.0475152
-6	0.611609	0.365378	0.00324214	0.019771
+Posteriors      Pi1(0:0)        Pi2(0:1)        Pi3(1:0)        Pi4(1:1)
+Mean    0.605441        0.168855        0.0743364       0.151368
+SD      0.20765 0.186273        0.134037        0.16549
+```
+The output includes the posterior mean and SD from MCMC for each possible configuration. We also print the posterior samples from MCMC in the log file, for example, 
+```
+Iteration       Pi1(0:0)        Pi2(0:1)        Pi3(1:0)        Pi4(1:1)
+0       0.0557406       0.319719        0.0834392       0.541101
+100     0.163492        0.422161        0.413673        0.000673509
+200     0.661116        0.338883        2.4066e-07      6.7008e-15
+300     0.587679        0.412321        5.49276e-11     3.1432e-09
+400     0.814359        0.101207        0.0586814       0.0257529
+500     0.430485        8.37885e-05     0.0929275       0.476504
+600     0.282069        0.657061        0.017055        0.0438149
 ...
 ```
-Columns are iteration numbers from MCMC and posterior samples for each configuration from the MCMC.  
+Columns are iteration numbers and posterior samples for each configuration from the MCMC.  
 
 
 ## Other parameters for stage 1 analysis
@@ -63,19 +69,22 @@ Columns are iteration numbers from MCMC and posterior samples for each configura
 * --out saves the PPA and multi-exposure HEIDI test P-values for each possible association hypotheses in .ppa file (text format, see below example), and saves the results from the pairwise SMR analysis in .smr file
 
 ```
-Chr	Expo1_ID	Expo1_Gene	Expo1_bp	Expo2_ID	Expo2_Gene	Expo2_bp	PPA(0)	PPA(1)	PPA(2)	PPA(1:2)	HEIDI(1)	HEIDI(2)	HEIDI(1:2)
-7	ENSG00000238109	AC004893.10	98596857	cg19636519	GJC3	99541626	0.180167	0.00832795	0.818992	0.0074865	NA	1.248951e-05	NA
-7	ENSG00000238109	AC004893.10	98596857	cg08582801	AZGP1P1	99588335	0.135318	0.00809727	0.864083	0.00749766	NA	1.184727e-01	NA
-7	ENSG00000238109	AC004893.10	98596857	cg07693238	AZGP1P1	99595437	0.197766	0.00824852	0.801311	0.00732488	NA	2.194922e-02	NA
-7	ENSG00000085514	PILRA	99981436	cg19116668	PILRB	99932089	4.09321e-15	0.999997	1	0.999997	1.036234e-01	7.709418e-02	1.604312e-01
+Chr	Expo1_ID	Expo1_bp	Expo2_ID	Expo2_bp	PPA(0)	PPA(1)	PPA(2)	PPA(1,2)	p_HEIDI(1)	p_HEIDI(2)	p_HEIDI(1,2)
+7	ENSG00000238109	98596857	cg19636519	99541626	0.180166	0.00832795	0.818993	0.00748651	NA	2.148958e-04	NA
+7	ENSG00000238109	98596857	cg26429636	99573747	0.142143	0.00790015	0.857241	0.00728351	NA	5.926392e-02	NA
+7	ENSG00000146833	99495902	cg08552401	99728793	0.111909	0.0112747	0.887406	0.0105904	NA	9.326696e-06	NA
+7	ENSG00000213413	99817488	cg10547843	99601692	1.58132e-09	1	0.901598	0.901598	7.199497e-03	2.671772e-03	2.200594e-02
 ...
 ```
-Columns are chromosome, probe ID for the 1st exposure, gene name for the 1st exposure, probe position for the 1st exposure, probe ID for the 2nd exposure, gene name for the 2nd exposure, probe position for the 2nd exposure, PPA for no associations, PPA for the 1st probe association, PPA for the 2nd probe association, PPA for the 1st and 2nd probes joint association, p-value from HEIDI for the 1st probe association, p-value from HEIDI for the 2nd probe association, and p-value from HEIDI for the 1st and 2nd probes joint association. Missing value is represented by "NA".  
+Columns are chromosome, probe ID for the 1st exposure, probe position for the 1st exposure, probe ID for the 2nd exposure, probe position for the 2nd exposure, PPA for no associations, PPA for the 1st exposure marginal association, PPA for the 2nd exposure marginal association, PPA for the 1st and 2nd exposures joint association, p-value from HEIDI for the 1st exposure association, p-value from HEIDI for the 2nd exposure association, and p-value from HEIDI for the 1st and 2nd exposures joint association. Missing value is represented by "NA".  
 
 ```
-ProbeID    Probe_Chr   Gene    Probe_bp    SNP SNP_Chr SNP_bp  A1  A2  Freq    b_GWAS  se_GWAS p_GWAS  b_eQTL  se_eQTL p_eQTL  b_SMR   se_SMR  p_SMR   p_HEIDI nsnp_HEIDI
-prb01    1   Gene1   1001    rs01    1   1011    C   T   0.95    -0.024  0.0063  1.4e-04 0.36    0.048   6.4e-14 -0.0668 0.0197  6.8e-04 NA  NA
-prb02    1   Gene2   2001    rs02    1   2011    G   C   0.0747  0.0034  0.0062  5.8e-01 0.62    0.0396  2e-55   0.0055  0.01    5.8e-01 4.17e-01    28
+probeID	ProbeChr	Gene	Probe_bp	topSNP	topSNP_chr	topSNP_bp	A1	A2	Freq	b_GWAS	se_GWAS	p_GWAS	b_eQTL	se_eQTL	p_eQTL	b_SMR	se_SMR	p_SMR	p_HEIDI	nsnp_HEIDI
+ENSG00000238109	7	AC004893.10	98596857	rs2283015	7	98600839	G	C	0.0847203	-0.00193708	0.00365864	5.964895e-01	0.711699	0.0382071	1.926562e-77	-0.00272178	0.00514278	5.966378e-01	7.575220e-01	20
+ENSG00000146833	7	TRIM4	99495902	rs2571997	7	99514417	A	C	0.410541	0.00614763	0.00213414	3.969059e-03	-0.690266	0.00715596	0.000000e+00	-0.00890618	0.00309315	3.985252e-03	8.417932e-05	20
+ENSG00000166526	7	ZNF3	99670913	rs67110214	7	99633739	C	G	0.28583	0.00401872	0.0024395	9.948536e-02	-0.0968669	0.0088226	4.801025e-28	-0.041487	0.0254659	1.032880e-01	4.811370e-05	20
+cg03856969	7	AK001533	98600799	rs4729505	7	98601025	C	T	0.0844313	-0.0024541	0.00373076	5.106651e-01	-0.431667	0.0598434	5.462031e-13	0.00568517	0.00867854	5.124136e-01	6.233012e-01	20
+cg10154880	7	AK001533	98603502	rs17720576	7	98616657	A	G	0.0865118	-0.0018608	0.00371972	6.168967e-01	0.489588	0.05912	1.218873e-16	-0.00380076	0.00761151	6.175377e-01	8.987915e-01	20
 ...
 ```
 Columns are probe ID, probe chromosome, gene name, probe position, SNP name, SNP chromosome, SNP position, the effect (coded) allele, the other allele, frequency of the effect allele (estimated from the reference samples), effect size from GWAS, SE from GWAS, p-value from GWAS, effect size from eQTL study, SE from eQTL study, p-value from eQTL study, effect size from SMR, SE from SMR, p-value from SMR, p-value from HEIDI (HEterogeneity In Depedent Instruments) test, and number of SNPs used in the HEIDI test.
