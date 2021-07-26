@@ -87,7 +87,7 @@ cg03856969	7	AK001533	98600799	rs4729505	7	98601025	C	T	0.0844313	-0.0024541	0.0
 cg10154880	7	AK001533	98603502	rs17720576	7	98616657	A	G	0.0865118	-0.0018608	0.00371972	6.168967e-01	0.489588	0.05912	1.218873e-16	-0.00380076	0.00761151	6.175377e-01	8.987915e-01	20
 ...
 ```
-Columns are probe ID, probe chromosome, gene name, probe position, SNP name, SNP chromosome, SNP position, the effect (coded) allele, the other allele, frequency of the effect allele (estimated from the reference samples), effect size from GWAS, SE from GWAS, p-value from GWAS, effect size from eQTL study, SE from eQTL study, p-value from eQTL study, effect size from SMR, SE from SMR, p-value from SMR, p-value from HEIDI (HEterogeneity In Depedent Instruments) test, and number of SNPs used in the HEIDI test.
+Columns are probe ID, probe chromosome, gene name, probe position, SNP name, SNP chromosome, SNP position, the effect (coded) allele, the other allele, frequency of the effect allele (estimated from the reference samples), effect size from GWAS, SE from GWAS, p-value from GWAS, effect size from eQTL study, SE from eQTL study, p-value from eQTL study, effect size from SMR, SE from SMR, p-value from SMR, p-value from HEIDI test, and number of SNPs used in the HEIDI test.
 
 * The heterogeneity test (i.e., multi-exposure HEIDI) will be automatically performed for any combinatorial associations passed a PPA threshold (0.8 as default). If the heterogeneity test is not interested, it can be turned off by specifying --heidi-off.
 
@@ -96,10 +96,20 @@ Columns are probe ID, probe chromosome, gene name, probe position, SNP name, SNP
 
 * --extract-exposure-probe	extracts a subset of exposure sites for analysis
 * --outcome-wind specifies the window around each GWAS loci for stage 2 analysis, e.g., 500 (default). 
-* --extract-GWAS-loci extracts a subset of GWAS loci for analysis
-* --extract-target-cojo-snps specifies full COJO SNP list for each site of molecular phenotype as the target to compute the joint SMR effect.
+* --extract-GWAS-loci extracts a subset of GWAS COJO loci for analysis. The input file format is
+```
+Chr     SNP     bp
+7       rs1859788       99971834
+7       rs7810606       143108158
+```
+* --extract-target-cojo-snps specifies full COJO SNP list for each site of molecular phenotype as the target to compute the joint SMR effect. The input file format is
+```
+ENSG00000196367 rs182325057,rs12532598,rs17638906,rs62472014,rs219843,rs183732601,rs150746244
+ENSG00000238109 rs2283015,rs142345619,rs117749026,rs117295696,rs139511767
+ENSG00000242687 rs34631688,rs187375676,rs149211972,rs219813,rs6976207,rs7789895,rs10264067,rs150746244
+```
 * --thresh-PP specifies significance threshold of PPA to perform heterogeneity test and output the significant results. 
-* --thresh-SMR specifies significance threshold of SMR to perform the OPERA analysis.
+* --thresh-SMR specifies significance threshold of SMR to perform the OPERA analysis, e.g., 0.05 (default).
 
 OPERA shares the same data management function and flags with the SMR software, for a full list of option reference, please see [here](https://cnsgenomics.com/software/smr/#OptionsReference). 
 
