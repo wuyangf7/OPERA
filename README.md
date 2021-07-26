@@ -66,7 +66,7 @@ Columns are iteration numbers and posterior samples for each configuration from 
 > opera --besd-flist mylist --gwas-summary mygwas.ma --bfile mydata --prior-pi 0.8,0.09,0.09,0.02 --out myopera --thread-num 3
 
 * --prior-pi the estimated global proportions of each configuration from the stage 1 analysis. 
-* --out saves the PPA and multi-exposure HEIDI test P-values for each possible association hypotheses in .ppa file (text format, see below example), and saves the results from the pairwise SMR analysis in .smr file
+* --out saves the PPA and multi-exposure HEIDI test P-values for each possible association hypothesis in .ppa file (text format, see below example), and also saves the results from the pairwise SMR analysis in .smr file
 
 ```
 Chr	Expo1_ID	Expo1_bp	Expo2_ID	Expo2_bp	PPA(0)	PPA(1)	PPA(2)	PPA(1,2)	p_HEIDI(1)	p_HEIDI(2)	p_HEIDI(1,2)
