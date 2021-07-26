@@ -55,7 +55,7 @@ Iteration       Pi1(0:0)        Pi2(0:1)        Pi3(1:0)        Pi4(1:1)
 ```
 Columns are iteration numbers and posterior samples for each configuration from the MCMC.  
 
-# Other parameters for stage 1 analysis
+### Other parameters for stage 1 analysis
 > opera --besd-flist mylist --gwas-summary mygwas.ma --bfile mydata --estimate-pi --prior-sigma 0.02,0.02 --pi-wind 100 --out myopera --thread-num 3 
 
 * –-prior-sigma specifies the estimated variance of the non-zero mediated effects for each molecular trait on the complex trait.  It can be computed by the variance of the estimated SMR effects at the nominal significance level (i.e., 0.05) adjusting for the estimation errors, e.g., 0.02 (default).
@@ -91,7 +91,7 @@ Columns are probe ID, probe chromosome, gene name, probe position, SNP name, SNP
 
 * The heterogeneity test (i.e., multi-exposure HEIDI) will be automatically performed for any combinatorial associations passed a PPA threshold (0.8 as default). If the heterogeneity test is not interested, it can be turned off by specifying --heidi-off.
 
-## Other parameters for stage 2 analysis
+### Other parameters for stage 2 analysis
 > opera --besd-flist mylist --gwas-summary mygwas.ma --bfile mydata --extract-exposure-probe myexposure --outcome-wind 1000 --thresh-PP 0.5 --thresh-SMR 0.05 --extract-target-cojo-snps mycojo --extract-GWAS-loci myloci --prior-pi 0.8,0.09,0.09,0.02 --prior-sigma 0.02,0.02 --out myopera --thread-num 3 
 
 * --extract-exposure-probe	extracts a subset of exposure sites for analysis
