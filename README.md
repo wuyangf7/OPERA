@@ -56,16 +56,17 @@ Iteration       Pi1(0:0)        Pi2(0:1)        Pi3(1:0)        Pi4(1:1)
 Columns are iteration numbers and posterior samples for each configuration from the MCMC.  
 
 ### Other parameters for stage 1 analysis
-> opera --besd-flist mylist --gwas-summary mygwas.ma --bfile mydata --estimate-pi --prior-sigma 0.02,0.02 --pi-wind 100 --out myopera
+> opera --besd-flist mylist --gwas-summary mygwas.ma --bfile mydata --estimate-pi --prior-sigma 0.02,0.02 --pi-wind 100 --out myopera --thread-num 3
 
 * –-prior-sigma specifies the estimated variance of the non-zero mediated effects for each molecular trait on the complex trait.  It can be computed by the variance of the estimated SMR effects at the nominal significance level (i.e., 0.05) adjusting for the estimation errors, e.g., 0.02 (default).
 * --opera-smr turns on the flag of using the estimated smr effect rather than the estimated joint smr effect to run the stage 1 analysis.  
 * --pi-wind defines a window centered on the molecular phenotype with smallest number of sites to select no overlap independent loci, e.g., 100 (default). 
+* --thread-num specifies the number of OpenMP threads for parallel computing. 
 
 ## Run OPERA for stage 2 analysis and heterogeneity analysis
 > opera --besd-flist mylist --gwas-summary mygwas.ma --bfile mydata --prior-pi 0.8,0.09,0.09,0.02 --out myopera
 * --prior-pi the estimated global proportions of each configuration from the stage 1 analysis. 
-* --out saves the PPA and multi-exposure HEIDI test P-values for each possible association hypothesis in .ppa file (text format, see below example), and also saves the results from the pairwise SMR analysis in .smr file
+* --out saves the PPA and multi-exposure HEIDI test P-values for each possible association hypothesis in .ppa file (text format, see below example).
 
 ```
 Chr	Expo1_ID	Expo1_bp	Expo2_ID	Expo2_bp	PPA(0)	PPA(1)	PPA(2)	PPA(1,2)	p_HEIDI(1)	p_HEIDI(2)	p_HEIDI(1,2)
@@ -75,8 +76,10 @@ Chr	Expo1_ID	Expo1_bp	Expo2_ID	Expo2_bp	PPA(0)	PPA(1)	PPA(2)	PPA(1,2)	p_HEIDI(1)
 7	ENSG00000213413	99817488	cg10547843	99601692	1.58132e-09	1	0.901598	0.901598	7.199497e-03	2.671772e-03	2.200594e-02
 ...
 ```
-Columns are chromosome, probe ID for the 1st exposure, probe position for the 1st exposure, probe ID for the 2nd exposure, probe position for the 2nd exposure, PPA for no associations, PPA for the 1st exposure marginal association, PPA for the 2nd exposure marginal association, PPA for the 1st and 2nd exposures joint association, p-value from HEIDI for the 1st exposure association, p-value from HEIDI for the 2nd exposure association, and p-value from HEIDI for the 1st and 2nd exposures joint association. Missing value is represented by "NA".  
+Columns are chromosome, probe ID for the 1st exposure, probe position for the 1st exposure, probe ID for the 2nd exposure, probe position for the 2nd exposure, PPA for no associations, PPA for the 1st exposure marginal association, PPA for the 2nd exposure marginal association, PPA for the 1st and 2nd exposures joint association, p-value from HEIDI for the 1st exposure association, p-value from HEIDI for the 2nd exposure association, and p-value from HEIDI for the 1st and 2nd exposures joint association. Missing value is represented by "NA". 
 
+Opera also automatically outputs the results from the pairwise SMR analysis in .smr file
+ 
 ```
 probeID	ProbeChr	Gene	Probe_bp	topSNP	topSNP_chr	topSNP_bp	A1	A2	Freq	b_GWAS	se_GWAS	p_GWAS	b_eQTL	se_eQTL	p_eQTL	b_SMR	se_SMR	p_SMR	p_HEIDI	nsnp_HEIDI
 ENSG00000238109	7	AC004893.10	98596857	rs2283015	7	98600839	G	C	0.0847203	-0.00193708	0.00365864	5.964895e-01	0.711699	0.0382071	1.926562e-77	-0.00272178	0.00514278	5.966378e-01	7.575220e-01	20
@@ -91,7 +94,7 @@ Columns are probe ID, probe chromosome, gene name, probe position, SNP name, SNP
 The heterogeneity test (i.e., multi-exposure HEIDI) will be automatically performed for any combinatorial associations passed a PPA threshold (0.8 as default). If the heterogeneity test is not interested, it can be turned off by specifying --heidi-off.
 
 ### Other parameters for stage 2 analysis
-> opera --besd-flist mylist --gwas-summary mygwas.ma --bfile mydata --extract-exposure-probe myexposure --outcome-wind 1000 --thresh-PP 0.5 --thresh-SMR 0.05 --extract-target-cojo-snps mycojo --extract-GWAS-loci myloci --prior-pi 0.8,0.09,0.09,0.02 --prior-sigma 0.02,0.02 --out myopera
+> opera --besd-flist mylist --gwas-summary mygwas.ma --bfile mydata --extract-exposure-probe myexposure --outcome-wind 1000 --thresh-PP 0.5 --thresh-SMR 0.05 --extract-target-cojo-snps mycojo --extract-GWAS-loci myloci --prior-pi 0.8,0.09,0.09,0.02 --prior-sigma 0.02,0.02 --out myopera --thread-num 3
 
 * --extract-exposure-probe	extracts a subset of exposure sites for analysis
 * --outcome-wind specifies the window around each GWAS loci for stage 2 analysis, e.g., 500 (default). 
@@ -110,6 +113,7 @@ ENSG00000242687 rs34631688,rs187375676,rs149211972,rs219813,rs6976207,rs7789895,
 * --thresh-PP specifies significance threshold of PPA to perform heterogeneity test and output the significant results. 
 * --thresh-SMR specifies significance threshold of SMR to perform the OPERA analysis, e.g., 0.05 (default).
 * --opera-smr turn on the flag of runing OPERA analysis using the estimated SMR effect rather than estimated joint-SMR effect. 
+* --thread-num specifies the number of OpenMP threads for parallel computing. 
 
 OPERA shares the same data management function and flags with the SMR software, for a full list of option reference, please see [here](https://cnsgenomics.com/software/smr/#OptionsReference). 
 
