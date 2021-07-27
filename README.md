@@ -29,7 +29,7 @@ The OPERA analysis consists of three steps. OPERA first estimates the global fre
 We collected and prepared multiple public available molecular QTL data for users to perform the OPERA analysis with their specific complex trait of interest, which is available for download [here](https://cnsgenomics.com/software/smr/#DataResource). For illustration purpose, we also provide the demonstration [data](https://github.com/wuyangf7/OPERA/tree/main/demo) to run opera analysis with command line below. 
 
 ## Run OPERA for stage 1 analysis
-> opera --besd-flist mylist --gwas-summary mygwas.ma --bfile mydata --estimate-pi --out myopera --thread-num 3
+> opera --besd-flist mylist --gwas-summary mygwas.ma --bfile mydata --estimate-pi --out myopera
 
 * --besd-flist reads a file to get the full paths of the multiple xQTL BESD files. The input format follows that for the SMR analysis (https://cnsgenomics.com/software/smr/#DataManagement). 
 * --gwas-summary reads summary-level data from GWAS. The input format follows that for GCTA-COJO analysis (http://cnsgenomics.com/software/gcta/#COJO).
@@ -56,15 +56,14 @@ Iteration       Pi1(0:0)        Pi2(0:1)        Pi3(1:0)        Pi4(1:1)
 Columns are iteration numbers and posterior samples for each configuration from the MCMC.  
 
 ### Other parameters for stage 1 analysis
-> opera --besd-flist mylist --gwas-summary mygwas.ma --bfile mydata --estimate-pi --prior-sigma 0.02,0.02 --pi-wind 100 --out myopera --thread-num 3 
+> opera --besd-flist mylist --gwas-summary mygwas.ma --bfile mydata --estimate-pi --prior-sigma 0.02,0.02 --pi-wind 100 --out myopera
 
 * –-prior-sigma specifies the estimated variance of the non-zero mediated effects for each molecular trait on the complex trait.  It can be computed by the variance of the estimated SMR effects at the nominal significance level (i.e., 0.05) adjusting for the estimation errors, e.g., 0.02 (default).
 * --opera-smr turns on the flag of using the estimated smr effect rather than the estimated joint smr effect to run the stage 1 analysis.  
 * --pi-wind defines a window centered on the molecular phenotype with smallest number of sites to select no overlap independent loci, e.g., 100 (default). 
 
 ## Run OPERA for stage 2 analysis and heterogeneity analysis
-> opera --besd-flist mylist --gwas-summary mygwas.ma --bfile mydata --prior-pi 0.8,0.09,0.09,0.02 --out myopera --thread-num 3
-
+> opera --besd-flist mylist --gwas-summary mygwas.ma --bfile mydata --prior-pi 0.8,0.09,0.09,0.02 --out myopera
 * --prior-pi the estimated global proportions of each configuration from the stage 1 analysis. 
 * --out saves the PPA and multi-exposure HEIDI test P-values for each possible association hypothesis in .ppa file (text format, see below example), and also saves the results from the pairwise SMR analysis in .smr file
 
@@ -92,7 +91,7 @@ Columns are probe ID, probe chromosome, gene name, probe position, SNP name, SNP
 The heterogeneity test (i.e., multi-exposure HEIDI) will be automatically performed for any combinatorial associations passed a PPA threshold (0.8 as default). If the heterogeneity test is not interested, it can be turned off by specifying --heidi-off.
 
 ### Other parameters for stage 2 analysis
-> opera --besd-flist mylist --gwas-summary mygwas.ma --bfile mydata --extract-exposure-probe myexposure --outcome-wind 1000 --thresh-PP 0.5 --thresh-SMR 0.05 --extract-target-cojo-snps mycojo --extract-GWAS-loci myloci --prior-pi 0.8,0.09,0.09,0.02 --prior-sigma 0.02,0.02 --out myopera --thread-num 3 
+> opera --besd-flist mylist --gwas-summary mygwas.ma --bfile mydata --extract-exposure-probe myexposure --outcome-wind 1000 --thresh-PP 0.5 --thresh-SMR 0.05 --extract-target-cojo-snps mycojo --extract-GWAS-loci myloci --prior-pi 0.8,0.09,0.09,0.02 --prior-sigma 0.02,0.02 --out myopera
 
 * --extract-exposure-probe	extracts a subset of exposure sites for analysis
 * --outcome-wind specifies the window around each GWAS loci for stage 2 analysis, e.g., 500 (default). 
