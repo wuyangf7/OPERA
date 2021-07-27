@@ -46,6 +46,16 @@ double CommFunc::median(const vector<double> &x)
     else return (b[size/2]+b[size/2-1])/2;
 }
 
+double CommFunc::median(vector<uint32_t> &x)
+{
+    vector<uint32_t> b(x);
+    int size = b.size();
+    if(size==1) return b[0];
+    stable_sort(b.begin(), b.end());
+    if(size%2==1) return b[(size-1)/2];
+    else return (b[size/2]+b[size/2-1])/2;
+}
+
 double CommFunc::var(const vector<double> &x)
 {
     int size = x.size();

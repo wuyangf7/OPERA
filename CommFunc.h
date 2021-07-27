@@ -85,6 +85,7 @@ namespace CommFunc
 	double sum(const vector<double> &x);
     double mean(const vector<double> &x);
     double median(const vector<double> &x);
+    double median(vector<uint32_t> &x);
     double var(const vector<double> &x);
     double cov(const vector<double> &x, const vector<double> &y);
 	bool FloatEqual(double lhs, double rhs);
