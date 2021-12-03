@@ -10,7 +10,7 @@ This software tool implements the OPERA (Omics PlEiotRopic Association) method t
 If you have any bug reports or questions, please send an email to Yang Wu (y.wu2@uq.edu.au) and Jian Zeng (j.zeng@uq.edu.au) at Institute for Molecular Bioscience, The University of Queensland, and Jian Yang (jian.yang@westlake.edu.cn) at School of Life Sciences, Westlake University.
 
 ## Citations
-Wu Y., Qi T., Wray N.R., Visscher P.M., Zeng J. & Yang J. (2021) Joint analysis of multi-omics data reveals molecular mechanisms at GWAS loci. In preparation.
+Wu Y., Qi T., Wray N.R., Visscher P.M., Zeng J. & Yang J. (2021) Joint analysis of GWAS and multi-omics QTL summary statistics reveals a large fraction of GWAS signals shared with molecular phenotypes. Under review.
 
 ## Installation
 To install OPERA, you can download the [opera_Linux.zip](https://github.com/wuyangf7/OPERA/blob/main/opera_Linux.zip) package, which contains a standalone (i.e., statically linked) 64-bit Linux executable file opera_Linux. We strongly recommend using this static executable because it is well-optimized and no further installation is required.
@@ -29,11 +29,11 @@ The OPERA analysis consists of three steps. OPERA first estimates the global fre
 We collected and prepared multiple public available molecular QTL data for users to perform the OPERA analysis with their specific complex trait of interest, which is available for download [here](https://cnsgenomics.com/software/smr/#DataResource). For illustration purpose, we also provide the demonstration [data](https://github.com/wuyangf7/OPERA/tree/main/demo) to run opera analysis with command line below. 
 
 ## Run OPERA for stage 1 analysis
-> opera --besd-flist mylist --gwas-summary mygwas.ma --bfile mydata --estimate-pi --out myopera
+> opera --besd-flist mylist --gwas-summary mygwas.ma --mbfile mybdatalist --estimate-pi --out myopera
 
 * --besd-flist reads a file to get the full paths of the multiple xQTL BESD files. The input format follows that for the SMR analysis (https://cnsgenomics.com/software/smr/#DataManagement). 
 * --gwas-summary reads summary-level data from GWAS. The input format follows that for GCTA-COJO analysis (http://cnsgenomics.com/software/gcta/#COJO).
-* --bfile reads individual-level SNP genotype data (in PLINK binary format) from a reference sample for LD estimation, i.e. .bed, .bim, and .fam files.
+* --mbfile reads a text file with each row representing a PLINK binary file (e.g. one for each chromosome) from a reference sample for LD estimation, i.e. .bed, .bim, and .fam files.. If the genome-wide genotype data is ready (containing the genotype data for each chromosome), please switch the flag --bfile to read the LD reference gentoypes. 
 * --out saves the estimation of prior proportions from the OPERA stage 1 analysis in .pi file (text format, see example from demo data below).
 
 ```
@@ -61,7 +61,8 @@ Columns are iteration numbers and posterior samples for each configuration from 
 * –-prior-sigma specifies the estimated variance of the non-zero mediated effects for each molecular trait on the complex trait.  It can be computed by the variance of the estimated SMR effects at the nominal significance level (i.e., 0.05) adjusting for the estimation errors, e.g., 0.02 (default).
 * --opera-smr turns on the flag of using the estimated smr effect rather than the estimated joint smr effect to run the stage 1 analysis.  
 * --pi-wind defines a window centered on the molecular phenotype with smallest number of sites to select no overlap independent loci, e.g., 100 (default). 
-* --thread-num specifies the number of OpenMP threads for parallel computing. 
+* --thread-num specifies the number of OpenMP threads for parallel computing.
+* --bfile reads individual-level SNP genotype data (in PLINK binary format) from a reference sample for LD estimation, i.e. .bed, .bim, and .fam files. 
 
 ## Run OPERA for stage 2 analysis and heterogeneity analysis
 > opera --besd-flist mylist --gwas-summary mygwas.ma --bfile mydata --prior-pi 0.8,0.09,0.09,0.02 --out myopera
