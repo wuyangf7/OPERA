@@ -117,6 +117,26 @@ namespace CommFunc
     int readint(FILE *f);
     double cor(vector<double> &y, vector<double> &x);
     double cor(VectorXd &Y, VectorXd &X, bool centered=false);
+    void update_map_kp(const vector<string> &id_list, map<string, int> &id_map, vector<int> &keep);
+    void update_map_rm(const vector<string> &id_list, map<string, int> &id_map, vector<int> &keep);
+    
+    template <typename T>
+    inline string atos (T const& a)
+    {
+        stringstream ss;
+        ss << a;
+        return(ss.str());
+    }
+        
+    string dtos(double value);
+    string dtosf(double value);
+    string itos(int value);
+    string ltos(long value);
+    void update_id_map_kp(const vector<string> &id_list, map<string, int> &id_map, vector<int> &keep);
+    void update_id_map_rm(const vector<string> &id_list, map<string, int> &id_map, vector<int> &keep);
+    void read_indi_list(string indi_list_file, vector<string> &indi_list);
+    void read_msglist(string msglistfile, vector<string> &msglist, string msg);
+    void progress(int &cur, double &disp, int ttl);
 }
 
 #endif

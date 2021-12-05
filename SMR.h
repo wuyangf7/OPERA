@@ -15,7 +15,7 @@ static inline bool not_in_flags(vector<string> &flags, string str)
 }
 static inline void FLAGS_VALID_CK(int option_num, char* option_str[])
 {
-    const char *flgs[] = { "--bfile","--gwas-summary","--beqtl-summary","--maf","--keep","--remove","--extract-snp","--exclude-snp","--extract-probe","--extract-outcome-probe","--extract-exposure-probe",
+    const char *flgs[] = { "--bfile","--mbfile","--gwas-summary","--beqtl-summary","--maf","--keep","--remove","--extract-snp","--exclude-snp","--extract-probe","--extract-outcome-probe","--extract-exposure-probe",
         "--exclude-probe","--exclude-outcome-probe","--exclude-exposure-probe","--eqtl-summary","--ld-upper-limit","--peqtl-heidi","--heidi-min-m","--make-besd","--out", "--peqtl-smr","--smr",
         "--cis-wind","--peqtl-trans","--peqtl-other","--efile","--query","--heidi-off","--target-snp","--extract-trait","--thread-num","--besd-flist",
         "--trans-wind","--plot","--eqtl-flist","--outcome-wind","--smr-format","--merlin-fastassoc-format","--plink-qassoc-format","--gemma-format","--update-freq","--genes","--smr-wind", "--smr-file",

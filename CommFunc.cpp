@@ -10,6 +10,86 @@
 
 #include "CommFunc.h"
 
+void CommFunc::update_id_map_kp(const vector<string> &id_list, map<string, int> &id_map, vector<int> &keep)
+{
+    int i=0;
+    map<string, int> id_map_buf(id_map);
+    for(i=0; i<id_list.size(); i++) id_map_buf.erase(id_list[i]);
+    map<string, int>::iterator iter;
+    for(iter=id_map_buf.begin(); iter!=id_map_buf.end(); iter++) id_map.erase(iter->first);
+    
+    keep.clear();
+    for(iter=id_map.begin(); iter!=id_map.end(); iter++) keep.push_back(iter->second);
+    stable_sort(keep.begin(), keep.end());
+}
+void CommFunc::update_id_map_rm(const vector<string> &id_list, map<string, int> &id_map, vector<int> &keep)
+{
+    int i = 0;
+    for (i = 0; i < id_list.size(); i++) id_map.erase(id_list[i]);
+    
+    keep.clear();
+    map<string, int>::iterator iter;
+    for (iter = id_map.begin(); iter != id_map.end(); iter++) keep.push_back(iter->second);
+    stable_sort(keep.begin(), keep.end());
+}
+void CommFunc::read_indi_list(string indi_list_file, vector<string> &indi_list)
+{
+    ifstream i_indi_list(indi_list_file.c_str());
+    if(!i_indi_list) throw("Error: can not open the file ["+indi_list_file+"] to read.");
+    string str_buf, id_buf;
+    indi_list.clear();
+    while(i_indi_list){
+        i_indi_list>>str_buf;
+        if(i_indi_list.eof()) break;
+        id_buf=str_buf+":";
+        i_indi_list>>str_buf;
+        id_buf+=str_buf;
+        indi_list.push_back(id_buf);
+        getline(i_indi_list, str_buf);
+    }
+    i_indi_list.close();
+}
+void CommFunc::read_msglist(string msglistfile, vector<string> &msglist, string msg)
+{
+    // Read msglist file
+    msglist.clear();
+    string StrBuf;
+    ifstream i_msglist(msglistfile.c_str());
+    if(!i_msglist) throw("Error: can not open the file ["+msglistfile+"] to read.");
+    cout<<"Reading a list of "<<msg<<" from ["+msglistfile+"]."<<endl;
+    while(i_msglist>>StrBuf){
+        msglist.push_back(StrBuf);
+        getline(i_msglist, StrBuf);
+    }
+    i_msglist.close();
+}
+
+string CommFunc::dtos(double value)
+{
+    stringstream ss;
+    ss << scientific<< value;
+    // ss << fixed << setprecision(400) << __value;
+    return(ss.str());
+}
+string CommFunc::dtosf(double value)
+{
+    stringstream ss;
+    ss << fixed << value;
+    return(ss.str());
+}
+string CommFunc::itos(int value)
+{
+    stringstream ss;
+    ss << value;
+    return(ss.str());
+}
+string CommFunc::ltos(long value)
+{
+    stringstream ss;
+    ss << value;
+    return(ss.str());
+}
+
 double CommFunc::Abs(const double &x)
 {
 	complex<double> cld(x);
@@ -352,3 +432,39 @@ double CommFunc::cor(vector<double> &y, vector<double> &x)
     return (r);
 }
 
+void  CommFunc::update_map_kp(const vector<string> &id_list, map<string, int> &id_map, vector<int> &keep)
+{
+    int i=0;
+    map<string, int> id_map_buf(id_map);
+    for(i=0; i<id_list.size(); i++) id_map_buf.erase(id_list[i]);
+    map<string, int>::iterator iter;
+    for(iter=id_map_buf.begin(); iter!=id_map_buf.end(); iter++) id_map.erase(iter->first);
+    
+    keep.clear();
+    for(iter=id_map.begin(); iter!=id_map.end(); iter++) keep.push_back(iter->second);
+    stable_sort(keep.begin(), keep.end());
+}
+void CommFunc::update_map_rm(const vector<string> &id_list, map<string, int> &id_map, vector<int> &keep)
+{
+    int i = 0;
+    for (i = 0; i < id_list.size(); i++) id_map.erase(id_list[i]);
+    
+    keep.clear();
+    map<string, int>::iterator iter;
+    for (iter = id_map.begin(); iter != id_map.end(); iter++) keep.push_back(iter->second);
+    stable_sort(keep.begin(), keep.end());
+}
+
+void CommFunc::progress(int &cur, double &disp, int ttl)
+{
+    double desti=1.0*cur/(ttl-1);
+    if(desti>=disp)
+    {
+        printf("%3.0f%%\r", 100.0*desti);
+        fflush(stdout);
+        if(disp==0) disp+=0.05;
+        else if(disp==0.05) disp+=0.2;
+        else if(disp==0.25) disp+=0.5;
+        else disp+=0.25;
+    }
+}
