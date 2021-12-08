@@ -67,7 +67,7 @@ Columns are iteration numbers and posterior samples for each configuration from 
 
 ## Run OPERA for stage 2 analysis and heterogeneity analysis
 > opera --besd-flist mylist --gwas-summary mygwas.ma --bfile mydata --prior-pi 0.8,0.09,0.09,0.02 --out myopera
-* --prior-pi the estimated global proportions of each configuration from the stage 1 analysis. 
+* --prior-pi the estimated global proportions of each configuration from the stage 1 analysis (i.e., the posterior Mean from stage 1 output). 
 * --out saves the PPA and multi-exposure HEIDI test P-values for each possible association hypothesis in .ppa file (text format, see below example).
 
 ```
