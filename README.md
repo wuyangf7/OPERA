@@ -53,7 +53,7 @@ Iteration       Pi1(0:0)        Pi2(0:1)        Pi3(1:0)        Pi4(1:1)
 600     0.282069        0.657061        0.017055        0.0438149
 ...
 ```
-Rows are iteration numbers and posterior samples for each configuration from the MCMC.  
+Columns are iteration numbers and posterior samples for each configuration from the MCMC.  
 
 ### Other parameters for stage 1 analysis
 > opera --besd-flist mylist --gwas-summary mygwas.ma --bfile mydata --estimate-pi --extract-snp mysnplist --prior-sigma 0.02,0.02 --pi-wind 100 --out myopera --thread-num 3
