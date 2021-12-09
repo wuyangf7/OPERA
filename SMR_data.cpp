@@ -2481,6 +2481,43 @@ namespace SMRDATA
         cout <<"There are "<<ldata->_include.size() << " independent GWAS COJO loci information to be included from [" + string(lociFileName) + "]." << endl;
         lociFile.close();
     }
+
+    void read_pifile(string piFilename, vector<string> &priorsplit)
+    {
+        // Read prior probabilities file
+        priorsplit.clear();
+        FILE* rfile=fopen(piFilename.c_str(),"r");
+        if(!rfile) {
+            printf("File %s open failed.\n",piFilename.c_str());
+            exit(EXIT_FAILURE);
+        }
+        printf("\nReading the estimated prior probabilities from %s ...\n", piFilename.c_str());
+        char Tbuf[MAX_LINE_SIZE];
+        int line_idx=0;
+        vector<string> strlist;
+        while(fgets(Tbuf, MAX_LINE_SIZE, rfile))
+        {
+            split_string(Tbuf, strlist, ", \t\n");
+            if(line_idx == 0 && strlist[0]!="Posteriors") 
+            {
+                printf("ERROR: The input file %s doesn't follow the output file format from the stage 1 analysis of OPERA! Please check.\n", piFilename.c_str());
+                exit(EXIT_FAILURE);
+            }
+            line_idx++;
+            if(line_idx == 2) {
+                for(int i=1;i<strlist.size();i++) {
+                    priorsplit.push_back(strlist[i]);
+                }                
+            }
+        }
+        if(line_idx != 3)
+        {
+            printf("ERROR: The input file %s doesn't follow the output file format from the stage 1 analysis of OPERA! Please check.\n", piFilename.c_str());
+            exit(EXIT_FAILURE);
+        }
+        fclose(rfile);
+        printf("There are %d prior probabilities included in %s.\n",priorsplit.size(),piFilename.c_str());
+    }
  
     void extract_targets(eqtlInfo* eqtlinfo, string snpprblistfile, map<string, string> &prb_snp)
     {
@@ -10134,7 +10171,7 @@ namespace SMRDATA
         printf("\nOPERA analyses for %ld exposures and 1 outcome completed.\nPosterior probability and HEIDI results of %ld combinations (%ld exposure probes) have been saved in the file %s.\n",expoNum,itercountmlt,itemcount,smrfile2.c_str());
     }
 
-    void multiexposure_jointsmr_loci(char* outFileName, char* bFileName, char* mbFileName, char* eqtlsmaslstName, char* gwasFileName, double maf,string priorstr,string sigmastr, char* indilstName, char* snplstName,char* problstName, char* oproblstName,char* eproblstName,bool bFlag,double p_hetero,double ld_top,int m_hetero, int opt_hetero,  char* indilst2remove, char* snplst2exclde, char* problst2exclde, char* oproblst2exclde,char* eproblst2exclde,double p_smr,double thresh_PP, double thresh_smr,char* refSNP, bool heidioffFlag, bool jointsmrflag, bool operasmrflag, int cis_itvl,int snpchr,int prbchr,char* traitlstName,int op_wind, char* oprobe, char* eprobe, char* oprobe2rm, char* eprobe2rm, double threshpsmrest, bool new_het_mth, bool opt, double ld_min,bool cis2all, bool sampleoverlap, double pmecs, int minCor, char* targetcojosnplstName, char* GWAScojosnplstName, char* snpproblstName,double afthresh,double percenthresh)
+    void multiexposure_jointsmr_loci(char* outFileName, char* bFileName, char* mbFileName, char* piFileName, char* eqtlsmaslstName, char* gwasFileName, double maf,string priorstr,string sigmastr, char* indilstName, char* snplstName,char* problstName, char* oproblstName,char* eproblstName,bool bFlag,double p_hetero,double ld_top,int m_hetero, int opt_hetero,  char* indilst2remove, char* snplst2exclde, char* problst2exclde, char* oproblst2exclde,char* eproblst2exclde,double p_smr,double thresh_PP, double thresh_smr,char* refSNP, bool heidioffFlag, bool jointsmrflag, bool operasmrflag, int cis_itvl,int snpchr,int prbchr,char* traitlstName,int op_wind, char* oprobe, char* eprobe, char* oprobe2rm, char* eprobe2rm, double threshpsmrest, bool new_het_mth, bool opt, double ld_min,bool cis2all, bool sampleoverlap, double pmecs, int minCor, char* targetcojosnplstName, char* GWAScojosnplstName, char* snpproblstName,double afthresh,double percenthresh)
     {   
         // 1. check flags; eqtlsmaslstName is the included exposure probes and gwasFileName will be the outcome 
         setNbThreads(thread_num);
@@ -10297,7 +10334,11 @@ namespace SMRDATA
                 if(i < (expoNum - 1))  sigmastr+=","; 
             }            
         }
-        split_string(priorstr,priorsplit);
+        if(piFileName!=NULL) {
+            
+        } else {
+            split_string(priorstr,priorsplit);
+        }
         split_string(sigmastr,sigmasplit);
         if(sigmasplit.size()!=expoNum)
             throw("Error: The number of input prior variances is not consistent with the number of input exposures.");
@@ -11235,7 +11276,7 @@ namespace SMRDATA
         printf("\nOPERA analyses for %ld exposures and 1 outcome completed.\nPosterior probability and HEIDI results of %ld combinations have been saved in the file %s .\n",expoNum,itercountmlt,smrfile2.c_str());
     }
 
-    void multiexposure_jointsmr(char* outFileName, char* bFileName, char* mbFileName, char* eqtlsmaslstName, char* gwasFileName, double maf,string priorstr,string sigmastr, char* indilstName, char* snplstName,char* problstName, char* oproblstName,char* eproblstName,bool bFlag,double p_hetero,double ld_top,int m_hetero, int opt_hetero,  char* indilst2remove, char* snplst2exclde, char* problst2exclde, char* oproblst2exclde,char* eproblst2exclde,double p_smr,double thresh_PP, double thresh_smr, char* refSNP, bool heidioffFlag, bool jointsmrflag, bool operasmrflag, int cis_itvl,int snpchr,int prbchr,char* traitlstName,int op_wind, char* oprobe, char* eprobe, char* oprobe2rm, char* eprobe2rm, double threshpsmrest, bool new_het_mth, bool opt, double ld_min,bool cis2all, bool sampleoverlap, double pmecs, int minCor, char* targetcojosnplstName, char* snpproblstName,double afthresh,double percenthresh)
+    void multiexposure_jointsmr(char* outFileName, char* bFileName, char* mbFileName, char* piFileName, char* eqtlsmaslstName, char* gwasFileName, double maf,string priorstr,string sigmastr, char* indilstName, char* snplstName,char* problstName, char* oproblstName,char* eproblstName,bool bFlag,double p_hetero,double ld_top,int m_hetero, int opt_hetero,  char* indilst2remove, char* snplst2exclde, char* problst2exclde, char* oproblst2exclde,char* eproblst2exclde,double p_smr,double thresh_PP, double thresh_smr, char* refSNP, bool heidioffFlag, bool jointsmrflag, bool operasmrflag, int cis_itvl,int snpchr,int prbchr,char* traitlstName,int op_wind, char* oprobe, char* eprobe, char* oprobe2rm, char* eprobe2rm, double threshpsmrest, bool new_het_mth, bool opt, double ld_min,bool cis2all, bool sampleoverlap, double pmecs, int minCor, char* targetcojosnplstName, char* snpproblstName,double afthresh,double percenthresh)
     {   
         // 1. check flags; eqtlsmaslstName is the included exposure probes and gwasFileName will be the outcome 
         setNbThreads(thread_num);
@@ -11350,7 +11391,7 @@ namespace SMRDATA
 
         // illustrate all the combinations
         vector<vector<int>> idxall;
-        for(int i=0;i<expoNum;i++){
+        for(int i=0;i<expoNum;i++) {
             vector<int> index(2);
             std::iota(index.begin(),index.end(),0);
             idxall.push_back(index);
@@ -11398,7 +11439,11 @@ namespace SMRDATA
                 if(i < (expoNum - 1))  sigmastr+=","; 
             }            
         }
-        split_string(priorstr,priorsplit);
+        if(piFileName!=NULL) {
+            read_pifile(piFileName, priorsplit);
+        } else {
+            split_string(priorstr,priorsplit);
+        }        
         split_string(sigmastr,sigmasplit);
         if(sigmasplit.size()!=expoNum)
             throw("Error: The number of input prior variances is not consistent with the number of input exposures.");
@@ -11844,7 +11889,7 @@ namespace SMRDATA
         printf("\nOPERA analyses for %ld exposures and 1 outcome completed.\nPosterior probability and HEIDI results of %ld combinations have been saved in the file %s.\n",expoNum,itercountmlt,smrfile2.c_str());
     }
 
-    void multioutcomesmr(char* outFileName, char* bFileName, char* mbFileName, char* eqtlFileName, char* eqtlsmaslstName, char* gwasFileName, double maf,string priorstr,string sigmastr, char* indilstName, char* snplstName,char* problstName, char* oproblstName,char* eproblstName,bool bFlag,double p_hetero,double ld_top,int m_hetero, int opt_hetero,  char* indilst2remove, char* snplst2exclde, char* problst2exclde, char* oproblst2exclde,char* eproblst2exclde,double p_smr,char* refSNP, bool heidioffFlag,int cis_itvl,int snpchr,int prbchr,char* traitlstName,int op_wind, char* oprobe, char* eprobe, char* oprobe2rm, char* eprobe2rm, double threshpsmrest, bool new_het_mth, bool opt, double ld_min,bool cis2all, bool sampleoverlap, double pmecs, int minCor, char* targetcojosnplstName, char* snpproblstName,double afthresh,double percenthresh)
+    void multioutcomesmr(char* outFileName, char* bFileName, char* mbFileName, char* piFileName, char* eqtlFileName, char* eqtlsmaslstName, char* gwasFileName, double maf,string priorstr,string sigmastr, char* indilstName, char* snplstName,char* problstName, char* oproblstName,char* eproblstName,bool bFlag,double p_hetero,double ld_top,int m_hetero, int opt_hetero,  char* indilst2remove, char* snplst2exclde, char* problst2exclde, char* oproblst2exclde,char* eproblst2exclde,double p_smr,char* refSNP, bool heidioffFlag,int cis_itvl,int snpchr,int prbchr,char* traitlstName,int op_wind, char* oprobe, char* eprobe, char* oprobe2rm, char* eprobe2rm, double threshpsmrest, bool new_het_mth, bool opt, double ld_min,bool cis2all, bool sampleoverlap, double pmecs, int minCor, char* targetcojosnplstName, char* snpproblstName,double afthresh,double percenthresh)
     {   
         //here eqtlFileName is the outcome and eqtlFileName2 is the exposure. in the main we pass the outcome (eqtlFileName2) to eqtlFileName and the exposure (eqtlFileName) to eqtlFileName2
         setNbThreads(thread_num);
