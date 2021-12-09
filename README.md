@@ -24,7 +24,7 @@ make
 There are dependencies on your local MKL, BOOST and EIGEN Libraries.
 
 # Tutorial
-The OPERA analysis consists of three steps. OPERA first estimates the global frequencies of each possible association pattern, then computes the posterior probability supporting each configuration by weighting the data likelihood with the estimated global frequencies. We compute the posterior probability of associations (PPA) for any combinatorial sites by summing up the posterior probability of configurations where the site combination present. For results passed the association test with a PPA threshold (e.g., 0.8 by default), OPERA performs the heterogeneity test to reject the associations that are due to linkage. 
+The OPERA analysis consists of three steps. OPERA first estimates the global frequencies of each possible association pattern, then computes the posterior probability supporting each configuration by weighting the data likelihood with the estimated global frequencies. We compute the posterior probability of associations (PPA) for any combinatorial sites by summing up the posterior probability of configurations where the site combination present. For results passed the association test with a PPA threshold (e.g., 0.9 by default), OPERA performs the heterogeneity test to reject the associations that are due to linkage. 
 
 We collected and prepared multiple public available molecular QTL data for users to perform the OPERA analysis with their specific complex trait of interest, which is available for download [here](https://cnsgenomics.com/software/smr/#DataResource). For illustration purpose, we also provide the demonstration [data](https://github.com/wuyangf7/OPERA/tree/main/demo) to run opera analysis with command line below. 
 
@@ -33,7 +33,7 @@ We collected and prepared multiple public available molecular QTL data for users
 
 * --besd-flist reads a file to get the full paths of the multiple xQTL BESD files. The input format follows that for the SMR analysis (https://cnsgenomics.com/software/smr/#DataManagement). 
 * --gwas-summary reads summary-level data from GWAS. The input format follows that for GCTA-COJO analysis (http://cnsgenomics.com/software/gcta/#COJO).
-* --mbfile reads a text file with each row representing a PLINK binary file (e.g. one for each chromosome) from a reference sample for LD estimation, i.e. .bed, .bim, and .fam files.. If the genome-wide genotype data is ready (containing the genotype data for each chromosome), please switch the flag --bfile to read the LD reference gentoypes. 
+* --mbfile reads a text file with each row representing a PLINK binary file (e.g., one for each chromosome) from a reference sample for LD estimation, i.e. .bed, .bim, and .fam files.. Note that stage 1 analysis requires the genome-wide LD reference to estimate the global parameters. If the genome-wide genotype data (containing the genotype data for each chromosome) is ready, please switch the flag --bfile to read the standard PLINK bonary file as LD reference. 
 * --out saves the estimation of prior proportions from the OPERA stage 1 analysis in .pi file (text format, see example from demo data below).
 
 ```
@@ -53,21 +53,21 @@ Iteration       Pi1(0:0)        Pi2(0:1)        Pi3(1:0)        Pi4(1:1)
 600     0.282069        0.657061        0.017055        0.0438149
 ...
 ```
-Columns are iteration numbers and posterior samples for each configuration from the MCMC.  
+Rows are iteration numbers and posterior samples for each configuration from the MCMC.  
 
 ### Other parameters for stage 1 analysis
 > opera --besd-flist mylist --gwas-summary mygwas.ma --bfile mydata --estimate-pi --extract-snp mysnplist --prior-sigma 0.02,0.02 --pi-wind 100 --out myopera --thread-num 3
 
-* --extract-snp specifies a snplist (e.g., Hapmap3 SNP list) to be extracted and used for stage-1 analysis. 
-* –-prior-sigma specifies the estimated variance of the non-zero mediated effects for each molecular trait on the complex trait.  It can be computed by the variance of the estimated SMR effects at the nominal significance level (i.e., 0.05) adjusting for the estimation errors, e.g., 0.02 (default).
+* --bfile reads individual-level SNP genotype data (in PLINK binary format) from a reference sample for LD estimation, i.e. .bed, .bim, and .fam files. 
+* --extract-snp specifies a snplist (e.g., Hapmap3 SNP list) to be extracted across LD reference, xQTL data and GWAS summary data, and used for stage 1 analysis. 
+* –-prior-sigma specifies the estimated variance of the non-zero mediated effects for each molecular trait on the complex trait. It can be computed by the variance of the estimated SMR effects of each molecular trait on complex trait at the nominal significance level (i.e., 0.05) adjusting for the estimation errors, e.g., 0.02 (default).
 * --opera-smr turns on the flag of using the estimated smr effect rather than the estimated joint smr effect to run the stage 1 analysis.  
 * --pi-wind defines a window centered on the molecular phenotype with smallest number of sites to select no overlap independent loci, e.g., 100 (default). 
 * --thread-num specifies the number of OpenMP threads for parallel computing.
-* --bfile reads individual-level SNP genotype data (in PLINK binary format) from a reference sample for LD estimation, i.e. .bed, .bim, and .fam files. 
 
 ## Run OPERA for stage 2 analysis and heterogeneity analysis
-> opera --besd-flist mylist --gwas-summary mygwas.ma --bfile mydata --prior-pi 0.8,0.09,0.09,0.02 --out myopera
-* --prior-pi the estimated global proportions of each configuration from the stage 1 analysis (i.e., the posterior Mean from stage 1 output, seperated by comma). 
+> opera --besd-flist mylist --gwas-summary mygwas.ma --bfile mydata --prior-pi-file myoper.pi  --out myopera
+* --prior-pi-file reads the prior probabilities estimated from the stage 1 analysis (i.e., the posterior Mean from stage 1 analysis).  
 * --out saves the PPA and multi-exposure HEIDI test P-values for each possible association hypothesis in .ppa file (text format, see below example).
 
 ```
@@ -93,12 +93,13 @@ cg10154880	7	AK001533	98603502	rs17720576	7	98616657	A	G	0.0865118	-0.0018608	0.
 ```
 Columns are probe ID, probe chromosome, gene name, probe position, SNP name, SNP chromosome, SNP position, the effect (coded) allele, the other allele, frequency of the effect allele (estimated from the reference samples), effect size from GWAS, SE from GWAS, p-value from GWAS, effect size from eQTL study, SE from eQTL study, p-value from eQTL study, effect size from SMR, SE from SMR, p-value from SMR, p-value from HEIDI test, and number of SNPs used in the HEIDI test.
 
-The heterogeneity test (i.e., multi-exposure HEIDI) will be automatically performed for any combinatorial associations passed a PPA threshold (0.8 as default). If the heterogeneity test is not interested, it can be turned off by specifying --heidi-off.
+The heterogeneity test (i.e., multi-exposure HEIDI) will be automatically performed for any combinatorial associations passed a PPA threshold (0.9 as default). If the heterogeneity test is not interested, it can be turned off by specifying --heidi-off.
 
 ### Other parameters for stage 2 analysis
 > opera --besd-flist mylist --gwas-summary mygwas.ma --bfile mydata --extract-exposure-probe myexposure --outcome-wind 1000 --thresh-PP 0.5 --thresh-SMR 0.05 --extract-target-cojo-snps mycojo --extract-GWAS-loci myloci --prior-pi 0.8,0.09,0.09,0.02 --prior-sigma 0.02,0.02 --out myopera --thread-num 3
 
-* --extract-exposure-probe	extracts a subset of exposure sites for analysis
+* --prior-pi specifies the estimated prior probalities from the stage 1 analysis (i.e., the posterior Mean from stage 1 output, seperated by comma).
+* --extract-exposure-probe	extracts a subset of exposure sites for analysis.
 * --outcome-wind specifies the window around each GWAS loci for stage 2 analysis, e.g., 500 (default). 
 * --extract-GWAS-loci extracts a subset of GWAS COJO loci for analysis. The input file format is
 ```
