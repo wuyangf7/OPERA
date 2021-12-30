@@ -66,7 +66,7 @@ Columns are iteration numbers and posterior samples for each configuration from 
 * --thread-num specifies the number of OpenMP threads for parallel computing.
 
 ## Run OPERA for stage 2 analysis and heterogeneity analysis
-> opera --besd-flist mylist --gwas-summary mygwas.ma --bfile mydata --prior-pi-file myoper.pi  --out myopera
+> opera --besd-flist mylist --gwas-summary mygwas.ma --bfile mydata --prior-pi-file myopera.pi  --out myopera
 * --prior-pi-file reads the prior probabilities estimated from the stage 1 analysis (i.e., the posterior Mean from stage 1 analysis).  
 * --out saves the PPA and multi-exposure HEIDI test P-values for each possible association hypothesis in .ppa file (text format, see below example).
 
