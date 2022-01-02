@@ -392,6 +392,7 @@ namespace SMRDATA
     void multioutcomesmr(char* outFileName, char* bFileName, char* mbFileName, char* piFileName, char* eqtlFileName, char* eqtlsmaslstName, char* gwasFileName, double maf,string priorstr,string sigmastr, char* indilstName, char* snplstName,char* problstName, char* oproblstName,char* eproblstName,bool bFlag,double p_hetero,double ld_top,int m_hetero, int opt_hetero,  char* indilst2remove, char* snplst2exclde, char* problst2exclde, char* oproblst2exclde,char* eproblst2exclde,double p_smr,char* refSNP, bool heidioffFlag,int cis_itvl,int snpchr,int prbchr,char* traitlstName,int op_wind, char* oprobe, char* eprobe, char* oprobe2rm, char* eprobe2rm, double threshpsmrest, bool new_het_mth, bool opt, double ld_min,bool cis2all, bool sampleoverlap, double pmecs, int minCor,char* targetcojosnplstName, char* snpproblstName,double afthresh,double percenthresh);
     void read_GWAS_cojo_snplist(lociData* ldata, char* lociFileName);
     void read_pifile(string piFilename, vector<string> &priorsplit);
+    void cis_xqtl_probe_include_only(eqtlInfo* eqtlinfo, double p_smr, int cis_itvl, string eqtlFileName);
     void e2gconvert(eqtlInfo* etrait, gwasData* gdata, int &ii);
     void e2econvert(eqtlInfo* etrait, eqtlInfo* esdata);
     void allele_check_multi(bInfo* bdata, vector<eqtlInfo> &etrait, gwasData* gdata, eqtlInfo* esdata);
@@ -420,6 +421,7 @@ namespace SMRDATA
     int max_zsmr_id(MTSMRWKEXP *smrwk , double p_smr);
     long fill_smr_wk_mlt(bInfo* bdata,vector<gwasData> &gdata,eqtlInfo* esdata,MTSMRWK* smrwk, const char* refSNP, int lowerbp,int upperbp,bool heidioffFlag);
     long fill_smr_wk_mlt(bInfo* bdata,vector<gwasData> &gdata,eqtlInfo* esdata,MTSMRWK* smrwk, const char* refSNP,int cis_itvl,bool heidioffFlag);
+    long fill_smr_wk_mlt_old(bInfo* bdata,gwasData* gdata,vector<eqtlInfo> &esdata,MTSMRWKEXP* smrwk, const char* refSNP,int cis_itvl,bool heidioffFlag);
     long fill_smr_wk_mlt(bInfo* bdata,gwasData* gdata,vector<eqtlInfo> &esdata,MTSMRWKEXP* smrwk, const char* refSNP,int cis_itvl,bool heidioffFlag);
     double multi_heidi_test_new(bInfo* bdata,MTSMRWK* smrwk,double ldr2_top, double threshold, int m_hetero,long &nsnp ,double ld_min,int opt_hetero, bool sampleoverlap, vector<double> theta);
     double multi_heidi_test_new(bInfo* bdata,MTSMRWKEXP* smrwk,double ldr2_top, double threshold, int m_hetero,long &nsnp ,double ld_min,int opt_hetero, bool sampleoverlap, vector<double> theta);

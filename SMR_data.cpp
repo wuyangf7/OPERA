@@ -7202,7 +7202,7 @@ namespace SMRDATA
         
         // 3. expoNum = besdNum will be used; get prior variance 
         long expoNum; expoNum = besdNum;
-        printf("There are %ld exposure(s) and 1 outcome are included in OPERA analysis.\n",expoNum);
+        printf("There are %ld exposure(s) and 1 outcome included in the OPERA analysis.\n",expoNum);
         bool operasmrflag = false;
         if(expoNum < 2) {
             printf("\nWARNING: The program can not perform the OPERA analsyis with joint SMR effect because there is only one exposure included.\nThe SMR effect will be used for OPERA analysis.\n");
@@ -7238,7 +7238,7 @@ namespace SMRDATA
         }
 
         // 4. define global variables and extract the snp and probe data                
-        vector<eqtlInfo> etrait(besdNum);
+        vector<eqtlInfo> etrait(besdNum), etrait_sig(besdNum);
         vector<eqtlInfo> esdata(besdNum);
         bInfo bdata;
         gwasData gdata1;
@@ -7257,7 +7257,6 @@ namespace SMRDATA
             if(snplst2exclde != NULL) exclude_eqtl_snp(&etrait[i], snplst2exclde);
             if(snpchr!=0) extract_eqtl_by_chr(&etrait[i], snpchr);
         }
-
         //extract the probe list
         for(int i=0;i<besdNum;i++) {
             read_epifile(&etrait[i], string(besds[i])+".epi");
@@ -7268,6 +7267,17 @@ namespace SMRDATA
             if(eproblst2exclde != NULL) exclude_prob(&etrait[i], eproblst2exclde);
             else if(eprobe2rm != NULL) exclude_eqtl_single_probe(&etrait[i], eprobe2rm);
             if(prbchr!=0) extract_epi_by_chr(&etrait[i],prbchr);
+        }
+        //read the besd
+        for(int i=0;i<besdNum;i++) {
+           read_besdfile(&etrait[i], string(besds[i])+".besd");
+           if(etrait[i]._rowid.empty() && etrait[i]._bxz.empty())
+           {
+               printf("ERROR: no data included in the analysis.\n");
+               exit(EXIT_FAILURE);
+           }
+           // extract probe with a xQTL
+           cis_xqtl_probe_include_only(&etrait[i], p_smr, cis_itvl, besds[i]);
         }
         
         // 5. select the indepedent (no overlap) genomic loci for stage 1 analysis
@@ -7359,15 +7369,23 @@ namespace SMRDATA
             }
             stable_sort(etrait[i]._esi_include.begin(),etrait[i]._esi_include.end());
         }
+
         // read the final besd file with updated esi_include and _include
+        // for(int i=0;i<besdNum;i++) {
+        //    read_besdfile(&etrait[i], string(besds[i])+".besd");
+        //    if(etrait[i]._rowid.empty() && etrait[i]._bxz.empty())
+        //    {
+        //        printf("ERROR: no data included in the analysis.\n");
+        //        exit(EXIT_FAILURE);
+        //    }
+        // }
+        
+        // extract probes that have at least a xQTL < p_smr
         for(int i=0;i<besdNum;i++) {
-           read_besdfile(&etrait[i], string(besds[i])+".besd");
-           if(etrait[i]._rowid.empty() && etrait[i]._bxz.empty())
-           {
-               printf("ERROR: no data included in the analysis.\n");
-               exit(EXIT_FAILURE);
-           }
+            e2econvert(&etrait[i], &etrait_sig[i]);
         }
+        etrait.clear();
+
         // read gwas
         if(gwasFileName!=NULL) {
             read_gwas_data(&gdata1, gwasFileName);
@@ -7391,24 +7409,24 @@ namespace SMRDATA
             if(indilst2remove != NULL) remove_indi(&bdata, indilst2remove);
             if(bFileName!=NULL) read_bimfile(&bdata, string(bFileName)+".bim");
             if(mbFileName!=NULL) read_multi_bimfiles(&bdata, multi_bfiles, snp_name_per_chr);
-            allele_check_multi_opt(&bdata, etrait, &gdata1);
-            //  allele_check_multi(&bdata, etrait, &gdata1);
+            allele_check_multi_opt(&bdata, etrait_sig, &gdata1);
+            //  allele_check_multi(&bdata, etrait_sig, &gdata1);
             if(bFileName!=NULL) read_bedfile(&bdata, string(bFileName)+".bed");
             if(mbFileName!=NULL) read_multi_bedfiles(&bdata, multi_bfiles, snp_name_per_chr);
             if (bdata._mu.empty()) calcu_mu(&bdata);
             if (maf > 0)
             {
                 filter_snp_maf(&bdata, maf);
-                update_geIndx(&bdata, etrait, &gdata1);
+                update_geIndx(&bdata, etrait_sig, &gdata1);
             }
         } else
         {
-            allele_check_multi(etrait,&gdata1);
+            allele_check_multi(etrait_sig,&gdata1);
         }
         if(gwasFileName!=NULL)  update_gwas(&gdata1);
         // update the SNPs after allele checking 
         for(int i=0;i<besdNum;i++) {
-            e2econvert(&etrait[i], &esdata[i]);
+            e2econvert(&etrait_sig[i], &esdata[i]);
         }
 
         // 7. open the output file for pi estimate and sd
@@ -7755,7 +7773,7 @@ namespace SMRDATA
         
         // 3. expoNum = besdNum will be used; get prior variance 
         long expoNum; expoNum = besdNum;
-        printf("There are %ld exposure(s) and 1 outcome are included in OPERA.\n",expoNum);
+        printf("There are %ld exposure(s) and 1 outcome included in the OPERA analysis.\n",expoNum);
         bool operasmrflag = false;
         if(expoNum < 2) {
             printf("\nWARNING: The program can not perform the OPERA analsyis with joint SMR effect because there is only one exposure included.\nThe SMR effect will be used for OPERA analysis.\n");
@@ -7792,7 +7810,7 @@ namespace SMRDATA
         }
 
         // 4. define global variables and extract the snp and probe data                
-        vector<eqtlInfo> etrait(besdNum);
+        vector<eqtlInfo> etrait(besdNum), etrait_sig(besdNum);
         vector<eqtlInfo> esdata(besdNum);
         bInfo bdata;
         gwasData gdata1;
@@ -7811,7 +7829,6 @@ namespace SMRDATA
             if(snplst2exclde != NULL) exclude_eqtl_snp(&etrait[i], snplst2exclde);
             if(snpchr!=0) extract_eqtl_by_chr(&etrait[i], snpchr);
         }
-
         //extract the probe list
         for(int i=0;i<besdNum;i++) {
             read_epifile(&etrait[i], string(besds[i])+".epi");
@@ -7823,6 +7840,17 @@ namespace SMRDATA
             else if(eprobe2rm != NULL) exclude_eqtl_single_probe(&etrait[i], eprobe2rm);
             if(prbchr!=0) extract_epi_by_chr(&etrait[i],prbchr);
         }
+        //read the besd
+        for(int i=0;i<besdNum;i++) {
+           read_besdfile(&etrait[i], string(besds[i])+".besd");
+           if(etrait[i]._rowid.empty() && etrait[i]._bxz.empty())
+           {
+               printf("ERROR: no data included in the analysis.\n");
+               exit(EXIT_FAILURE);
+           }
+           cis_xqtl_probe_include_only(&etrait[i], p_smr, cis_itvl, besds[i]);
+        }
+
         // read the GWAS cojo signals
         lociData ldata;
         if(GWAScojosnplstName!=NULL) {
@@ -7895,15 +7923,22 @@ namespace SMRDATA
             stable_sort(etrait[i]._esi_include.begin(),etrait[i]._esi_include.end());
         }
         // read the final besd file with updated esi_include and _include
+        // for(int i=0;i<besdNum;i++) {
+        //     //cout<<"Reading eQTL summary data..."<<endl;
+        //    read_besdfile(&etrait[i], string(besds[i])+".besd");
+        //    if(etrait[i]._rowid.empty() && etrait[i]._bxz.empty())
+        //    {
+        //        printf("ERROR: no data included in the analysis.\n");
+        //        exit(EXIT_FAILURE);
+        //    }
+        // }
+
+        // extract probes that have at least a xQTL < p_smr
         for(int i=0;i<besdNum;i++) {
-            //cout<<"Reading eQTL summary data..."<<endl;
-           read_besdfile(&etrait[i], string(besds[i])+".besd");
-           if(etrait[i]._rowid.empty() && etrait[i]._bxz.empty())
-           {
-               printf("ERROR: no data included in the analysis.\n");
-               exit(EXIT_FAILURE);
-           }
+            e2econvert(&etrait[i], &etrait_sig[i]);
         }
+        etrait.clear();
+
         // read gwas
         if(gwasFileName!=NULL) {
             read_gwas_data(&gdata1, gwasFileName);
@@ -7927,23 +7962,23 @@ namespace SMRDATA
             if(indilst2remove != NULL) remove_indi(&bdata, indilst2remove);
             if(bFileName!=NULL) read_bimfile(&bdata, string(bFileName)+".bim");
             if(mbFileName!=NULL) read_multi_bimfiles(&bdata, multi_bfiles, snp_name_per_chr);
-            allele_check_multi_opt(&bdata, etrait, &gdata1);
+            allele_check_multi_opt(&bdata, etrait_sig, &gdata1);
             if(bFileName!=NULL) read_bedfile(&bdata, string(bFileName)+".bed");
             if(mbFileName!=NULL) read_multi_bedfiles(&bdata, multi_bfiles, snp_name_per_chr);
             if (bdata._mu.empty()) calcu_mu(&bdata);
             if (maf > 0)
             {
                 filter_snp_maf(&bdata, maf);
-                update_geIndx(&bdata, etrait, &gdata1);
+                update_geIndx(&bdata, etrait_sig, &gdata1);
             }
         } else
         {
-              allele_check_multi(etrait,&gdata1);
+              allele_check_multi(etrait_sig,&gdata1);
         }
         if(gwasFileName!=NULL)  update_gwas(&gdata1);
         // update the SNPs after allele checking 
         for(int i=0;i<besdNum;i++) {
-            e2econvert(&etrait[i], &esdata[i]);
+            e2econvert(&etrait_sig[i], &esdata[i]);
         }
 
         // 7. open the output file for pi estimate and sd
@@ -8183,7 +8218,518 @@ namespace SMRDATA
          
     }
 
-    // not used, so no updated anymore ....
+    void multiexposurepi(char* outFileName, char* bFileName, char* mbFileName, char* eqtlsmaslstName, char* gwasFileName, double maf,string sigmastr, char* indilstName, char* snplstName,char* problstName, char* oproblstName,char* eproblstName,bool bFlag,double p_hetero,double ld_top,int m_hetero, int opt_hetero,  char* indilst2remove, char* snplst2exclde, char* problst2exclde, char* oproblst2exclde,char* eproblst2exclde,double p_smr,char* refSNP, bool heidioffFlag,int cis_itvl,int piWind, int snpchr,int prbchr,char* traitlstName,int op_wind, char* oprobe, char* eprobe, char* oprobe2rm, char* eprobe2rm, double threshpsmrest, bool new_het_mth, bool opt, double ld_min,bool cis2all, bool sampleoverlap, double pmecs, int minCor, char* targetcojosnplstName, char* snpproblstName,double afthresh,double percenthresh)
+    {   
+        // 1. check flags; eqtlsmaslstName is the included exposure probes and gwasFileName will be the outcome 
+        setNbThreads(thread_num);
+        string logstr;
+        if(oproblstName!=NULL && oprobe!=NULL)
+        {
+            logstr="WARNING: --extract-single-outcome-probe is not surpposed to use together with --extract-outcome-probe. --extract-single-outcome-probe will be disabled.\n";
+            oprobe=NULL;
+            fputs(logstr.c_str(), stdout);
+        }
+        if(eproblstName!=NULL && eprobe!=NULL)
+        {
+            logstr="WARNING: --extract-single-exposure-probe is not surpposed to use together with --extract-exposure-probe. --extract-single-exposure-probe will be disabled.\n";
+            eprobe=NULL;
+            fputs(logstr.c_str(), stdout);
+        }
+        if(oproblst2exclde!=NULL && oprobe2rm!=NULL)
+        {
+            logstr="WARNING: --exclude-single-outcome-probe is not surpposed to use together with --exclude-outcome-probe. --exclude-single-outcome-probe will be disabled.\n";
+            oprobe2rm=NULL;
+            fputs(logstr.c_str(), stdout);
+        }
+        if(eproblst2exclde!=NULL && eprobe2rm!=NULL)
+        {
+            logstr="WARNING: --exclude-single-exposure-probe is not surpposed to use together with --exclude-exposure-probe. --exclude-single-exposure-probe will be disabled.\n";
+            eprobe2rm=NULL;
+            fputs(logstr.c_str(), stdout);
+        }
+        if(ld_min>ld_top) {
+            printf("ERROR: --ld-min %f is larger than --ld-top %f.\n",ld_min,ld_top);
+            exit(EXIT_FAILURE);
+        }
+        if(refSNP && targetcojosnplstName)
+        {
+            printf("ERROR: --target-snp and --target-snp-probe-list both found in your command. please disable one.\n");
+            exit(EXIT_FAILURE);
+        }
+        if(snpproblstName && targetcojosnplstName)
+        {
+            printf("ERROR: --extract-target-snp-probe and --extract-snp-probe both found in your command. please disable one.\n");
+            exit(EXIT_FAILURE);
+        }
+
+        // 2. check input besd file format
+        vector<string> besds, multi_bfiles;
+        vector<smr_snpinfo> snpinfo;
+        vector<smr_probeinfo> probeinfo;
+        vector<uint64_t> nprb,nsnp;
+        vector< vector<int> > lookup;
+        
+        read_msglist(eqtlsmaslstName, besds,"xQTL summary file names");
+        if(besds.size()<1) {
+            printf("Less than 1 BESD files list in %s.\n",eqtlsmaslstName);
+            exit(EXIT_FAILURE);
+        }
+        printf("%ld xQTL summary file names are included.\n",besds.size());
+
+        // check multiple bfiles input
+        if(mbFileName!=NULL) {
+            read_msglist(mbFileName, multi_bfiles,"PLINK bed file names");
+            if(multi_bfiles.size()<1) {
+                printf("Less than 1 PLINK bed file list in %s.\n",mbFileName);
+                exit(EXIT_FAILURE);
+            }
+            printf("%ld PLINK genotype files are included.\n",multi_bfiles.size());
+        }        
+        
+        vector<int> format, smpsize;
+        check_besds_format(besds, format, smpsize);
+        int label=-1;
+        for(int i=0;i<format.size();i++)
+        {
+            if(format[i]==DENSE_FILE_TYPE_1 || format[i]==DENSE_FILE_TYPE_3 ) {
+                if(label==-1) {
+                    label=0;
+                } else if(label==1) {
+                    label=2;
+                    break;
+                }
+                
+            } else if (format[i]==SPARSE_FILE_TYPE_3F || format[i]==SPARSE_FILE_TYPE_3 ) {
+                if(label==-1) {
+                    label=1;
+                } else if(label==0) {
+                    label=2;
+                    break;
+                }
+            } else {
+                printf("Some BESDs are from old sparse format. please use SMR to re-make it.\n");
+                exit(EXIT_FAILURE);
+            }
+        }
+        long besdNum=besds.size();
+        
+        FILE** fptrs = (FILE**)malloc(sizeof(FILE*) * besds.size());
+        for(int i=0;i<besdNum;i++) {
+            string besdFileName=besds[i]+".besd";
+            fptrs[i]=fopen(besdFileName.c_str(),"rb");
+            if(fptrs[i]==NULL) {
+                printf("ERROR: in opening file %s .\n", besdFileName.c_str());
+                exit(EXIT_FAILURE);
+            }
+        }
+        
+        // 3. expoNum = besdNum will be used; get prior variance 
+        long expoNum; expoNum = besdNum;
+        printf("There are %ld exposure(s) and 1 outcome are included in OPERA.\n",expoNum);
+        
+        // illustrate all the combinations
+        vector<vector<int>> idxall;
+        for(int i=0;i<expoNum;i++) {
+            vector<int> index(2);
+            std::iota(index.begin(),index.end(),0);
+            idxall.push_back(index);
+        }
+        vector<vector<int>> combins;
+        permute_vector(idxall, combins);
+        long combNum=combins.size();        
+        // get the priors
+        double sigma_def = 0.02;
+        vector<string> sigmasplit;
+        if(sigmastr.size() == 0) {
+            for(int i=0;i<expoNum;i++) {
+                sigmastr+=atos(sigma_def);
+                if(i < (expoNum - 1))  sigmastr+=","; 
+            }            
+        }        
+        split_string(sigmastr,sigmasplit);
+        if(sigmasplit.size()!=expoNum) throw("Error: The number of input prior variances is not consistent with the number of input exposures.");
+        vector<double> sigma_b;
+        for(int t=0; t<expoNum; t++)
+        {
+            sigma_b.push_back(atof(sigmasplit[t].c_str()));
+            if(sigma_b[t]<0 || sigma_b[t]>1) throw("Error: --prior-sigma. Prior variance values should be betweeen 0 and 1.");
+        }
+
+        // 4. define global variables and extract the snp and probe data        
+        vector<eqtlInfo> etrait(besdNum), etrait_sig(besdNum);
+        vector<eqtlInfo> esdata(besdNum);
+        bInfo bdata;
+        gwasData gdata1;
+        map<string, string> prb_snp;
+        bool heidiFlag=false, targetLstflg=false;
+        
+        printf("\nReading the xQTL summary data file ...\n");
+        if(!heidioffFlag && bFileName == NULL && mbFileName == NULL) throw("Error: please input Plink file for SMR analysis by either the flag --bfile or --mbfile.");
+        if(refSNP!=NULL) heidiFlag=true;
+        if(problstName != NULL) cout<<"WARNING: --extract-probe works when the probes are used as either exposures dataset or outcomes.\n"<<endl;
+      
+        //extract the SNP list for exposures
+        for(int i=0;i<besdNum;i++) {
+            read_esifile(&etrait[i], string(besds[i])+".esi");
+            if (snplstName != NULL) extract_eqtl_snp(&etrait[i], snplstName);
+            if(snplst2exclde != NULL) exclude_eqtl_snp(&etrait[i], snplst2exclde);
+            if(snpchr!=0) extract_eqtl_by_chr(&etrait[i], snpchr);
+        }
+        //extract the probe list
+        for(int i=0;i<besdNum;i++) {
+            read_epifile(&etrait[i], string(besds[i])+".epi");
+            if(problstName != NULL) extract_prob(&etrait[i], problstName);
+            if(problst2exclde != NULL) exclude_prob(&etrait[i], problst2exclde);
+            if(eproblstName != NULL ) extract_prob(&etrait[i], eproblstName);
+            else if(eprobe != NULL) extract_eqtl_single_probe(&etrait[i], eprobe);
+            if(eproblst2exclde != NULL) exclude_prob(&etrait[i], eproblst2exclde);
+            else if(eprobe2rm != NULL) exclude_eqtl_single_probe(&etrait[i], eprobe2rm);
+            if(prbchr!=0) extract_epi_by_chr(&etrait[i],prbchr);
+        }
+        //read the besd
+        for(int i=0;i<besdNum;i++) {
+           read_besdfile(&etrait[i], string(besds[i])+".besd");
+           if(etrait[i]._rowid.empty() && etrait[i]._bxz.empty())
+           {
+               printf("ERROR: no data included in the analysis.\n");
+               exit(EXIT_FAILURE);
+           }
+           cis_xqtl_probe_include_only(&etrait[i], p_smr, cis_itvl, besds[i]);
+        }
+        
+        // 5. select the indepedent (no overlap) genomic loci for stage 1 analysis
+        // find the molecular trait with minimum num. of probes
+        long minprbnum=etrait[0]._include.size();
+        int minexpnum=0;
+        for(int i=0;i<besdNum;i++) {
+            stable_sort(etrait[i]._include.begin(),etrait[i]._include.end());
+            if(etrait[i]._include.size() < minprbnum) {
+                minprbnum = etrait[i]._include.size();
+                minexpnum = i;
+            }
+        }
+        // find the num. of independent loci as the num. of no overlap probes for the smallest exposure
+        int exposure_probe_wind=op_wind*1000;
+        int indwin = piWind*1000;  // the epi_bp are required to be sorted
+        vector<vector<int>> includepi(besdNum);
+        includepi[minexpnum].push_back(etrait[minexpnum]._include[0]);
+        int tmpbp = etrait[minexpnum]._epi_bp[etrait[minexpnum]._include[0]];
+        for(int b=0;b<(etrait[minexpnum]._include.size()-1);b++) {
+            int incldidx = etrait[minexpnum]._include[b+1];
+            int distbp = abs(etrait[minexpnum]._epi_bp[incldidx] - tmpbp);
+            if(distbp > indwin) {
+                includepi[minexpnum].push_back(incldidx);
+                tmpbp = etrait[minexpnum]._epi_bp[incldidx];
+            }
+        }
+        // find the probes for each exposure that are within the window of the target probes
+        for( int ii=0;ii<includepi[minexpnum].size();ii++)
+        {
+            int idxincld=includepi[minexpnum][ii];
+            int probechr=etrait[minexpnum]._epi_chr[idxincld];
+            int probebp=etrait[minexpnum]._epi_bp[idxincld];
+            int lowerbounder=(probebp-indwin/2)>0?(probebp-indwin/2):0;
+            int upperbounder=probebp+indwin/2;
+           for(int i=0;i<besdNum;i++)
+           {
+               if(i!=minexpnum) {
+                   for(int j=0;j<etrait[i]._include.size();j++)
+                   {
+                       int idxtmp = etrait[i]._include[j];
+                       int bptmp = etrait[i]._epi_bp[idxtmp];
+                       if(etrait[i]._epi_chr[idxtmp]==probechr && bptmp>=lowerbounder && bptmp<=upperbounder) {
+                            includepi[i].push_back(idxtmp);
+                        }
+                   }
+               }
+               
+            }
+        }
+        // update the _include epi probes list for etrait
+        for(int i=0;i<besdNum;i++) {
+            getUnique(includepi[i]);
+            printf("There are %ld probes included for exposure %ld.\n",includepi[i].size(),i);
+            etrait[i]._include.clear();
+            for(int l=0;l<includepi[i].size();l++) {
+                    etrait[i]._include.push_back(includepi[i][l]);
+            }
+            stable_sort(etrait[i]._include.begin(),etrait[i]._include.end());
+        }
+        // select _esi_include SNPs that are within 2Mb window of the target probes
+        vector<vector<int>> slctsnpidx(besdNum);
+        for(int i=0;i<besdNum;i++) {
+            for( int k=0;k<etrait[i]._include.size();k++)
+            {
+                int idxtmp=etrait[i]._include[k];
+                int probechr=etrait[i]._epi_chr[idxtmp];
+                int probebp=etrait[i]._epi_bp[idxtmp];
+                int lowerbounder=(probebp-exposure_probe_wind)>0?(probebp-exposure_probe_wind):0;
+                int upperbounder=probebp+exposure_probe_wind;
+               for(int j=0;j<etrait[i]._esi_include.size();j++)
+               {
+                   int idxtmp = etrait[i]._esi_include[j];
+                   int bptmp = etrait[i]._esi_bp[idxtmp];
+                   if(etrait[i]._esi_chr[idxtmp]==probechr && bptmp>=lowerbounder && bptmp<=upperbounder) {
+                        slctsnpidx[i].push_back(idxtmp);}
+               }
+            }
+        }
+
+        // 6. allele checking between data
+        // update the _esi_include SNPs
+        for(int i=0;i<besdNum;i++) {
+            getUnique(slctsnpidx[i]);
+            printf("There are %ld SNPs included for exposure %ld.\n",slctsnpidx[i].size(),i);
+            etrait[i]._esi_include.clear();
+            for(int m=0;m<slctsnpidx[i].size();m++) {
+                    etrait[i]._esi_include.push_back(slctsnpidx[i][m]);
+            }
+            stable_sort(etrait[i]._esi_include.begin(),etrait[i]._esi_include.end());
+        }
+        // read the final besd file with updated esi_include and _include
+        // for(int i=0;i<besdNum;i++) {
+        //    read_besdfile(&etrait[i], string(besds[i])+".besd");
+        //    if(etrait[i]._rowid.empty() && etrait[i]._bxz.empty())
+        //    {
+        //        printf("ERROR: no data included in the analysis.\n");
+        //        exit(EXIT_FAILURE);
+        //    }
+        // }
+
+        // extract probes that have at least a xQTL < p_smr
+        for(int i=0;i<besdNum;i++) {
+            e2econvert(&etrait[i], &etrait_sig[i]);
+        }
+        etrait.clear();
+
+        // read gwas
+        if(gwasFileName!=NULL) {
+            read_gwas_data(&gdata1, gwasFileName);
+            if (snplstName!= NULL) {
+                extract_gwas_snp(&gdata1, snplstName);
+                update_gwas(&gdata1);
+            }
+        }        
+        // allele checking between data
+        if(!heidioffFlag)
+        {
+            map<string, string> snp_name_per_chr;
+            if(bFileName!=NULL) read_famfile(&bdata, string(bFileName)+".fam");
+            if(mbFileName!=NULL) read_multi_famfiles(&bdata, multi_bfiles);
+            if(indilstName != NULL) keep_indi(&bdata,indilstName);
+            if(indilst2remove != NULL) remove_indi(&bdata, indilst2remove);
+            if(bFileName!=NULL) read_bimfile(&bdata, string(bFileName)+".bim");
+            if(mbFileName!=NULL) read_multi_bimfiles(&bdata, multi_bfiles, snp_name_per_chr);
+            allele_check_multi_opt(&bdata, etrait_sig, &gdata1);
+            if(bFileName!=NULL) read_bedfile(&bdata, string(bFileName)+".bed");
+            if(mbFileName!=NULL) read_multi_bedfiles(&bdata, multi_bfiles, snp_name_per_chr);
+            if (bdata._mu.empty()) calcu_mu(&bdata);
+            if (maf > 0)
+            {
+                filter_snp_maf(&bdata, maf);
+                update_geIndx(&bdata, etrait_sig, &gdata1);
+            }
+        } else
+        {
+            allele_check_multi(etrait_sig,&gdata1);
+        }
+        if(gwasFileName!=NULL)  update_gwas(&gdata1);
+        // update the SNPs after allele checking 
+        for(int i=0;i<besdNum;i++) {
+            e2econvert(&etrait_sig[i], &esdata[i]);
+        }
+
+        // 7. open the output file for pi estimate and sd
+        string outstr = "", logpistr = "";
+        string pifile = string(outFileName)+".pi";
+        FILE* piiter = fopen(pifile.c_str(), "w");
+        outstr="Posteriors\t"; logpistr = "Iteration\t";
+        for(int i=0; i<combNum;i++)
+        {
+            outstr+="Pi"+atos(i+1)+"(";
+            logpistr+="Pi"+atos(i+1)+"(";
+            for(int j=0;j<expoNum;j++)
+            {
+                outstr+=atos(combins[i][j]);
+                if(j<expoNum-1) outstr+=":";
+                logpistr+=atos(combins[i][j]);
+                if(j<expoNum-1) logpistr+=":";
+            }
+            if(i<(combNum-1)) outstr+=")\t";
+            if(i<(combNum-1)) logpistr+=")\t";
+        }
+        outstr+=")\n"; logpistr+=")\n";
+        if (!(piiter)) {
+            printf("ERROR: open error %s\n", pifile.c_str());
+            exit(1);
+        }
+
+        // 8. compute the pairwise SMR effect for all exposure probes
+        vector<vector<SMRRLT>> smrrlts;
+        vector<long> probNum;
+        vector<string> outconame;
+        vector<int> outcochr;
+        vector<string> outcogene;
+        vector<int> outcobp;
+        for(int i=0;i<besdNum;i++)
+        {
+            vector<SMRRLT> smrrltstmp;
+            if(esdata[i]._val.size()>0) {
+                smr_heidi_func(smrrltstmp, NULL, &bdata,&gdata1,&esdata[i],cis_itvl, heidioffFlag, refSNP,p_hetero,ld_top, m_hetero , p_smr, threshpsmrest,new_het_mth,opt,ld_min,opt_hetero,sampleoverlap,pmecs,minCor,prb_snp,targetLstflg);
+            }
+            if(smrrltstmp.size()>0)
+            {                
+                probNum.push_back(smrrltstmp.size());
+                smrrlts.push_back(smrrltstmp);
+            }
+        }
+        if(probNum.size()!=expoNum) {
+            throw("ERROR: The number of exposures with significant instruments are less than the number of specified priors.\n");
+            exit(EXIT_FAILURE);
+        } 
+
+        // 9. sample a combination of exposure probes from each indepedent loci
+        vector<vector<int>> includetmp(expoNum);
+        vector<int> NAidx(probNum[minexpnum]);
+        for( int ii=0;ii<probNum[minexpnum];ii++)
+        {
+            int traitchr=smrrlts[minexpnum][ii].ProbeChr;
+            int traitbp=smrrlts[minexpnum][ii].Probe_bp;
+            int lowerbounder=(traitbp-indwin/2)>0?(traitbp-indwin/2):0;
+            int upperbounder=traitbp+indwin/2;
+            NAidx[ii] = 0;
+            for(int i=0;i<expoNum;i++)
+            {
+               vector<int> slctprbidx;
+               for(int j=0;j<probNum[i];j++)
+               {
+                   int bptmp=smrrlts[i][j].Probe_bp;
+                   if(smrrlts[i][j].ProbeChr==traitchr && bptmp>=lowerbounder && bptmp<=upperbounder) {
+                        slctprbidx.push_back(j); 
+                    }
+               }
+               if(slctprbidx.size()>0) {
+                int randomIndex = rand()%slctprbidx.size();
+                includetmp[i].push_back(slctprbidx[randomIndex]);
+               } else { 
+                    includetmp[i].push_back(-1);
+                    NAidx[ii] = 1;
+               }
+            }
+        }
+        // remove these loci with missing exposures
+        vector<vector<int>> includesmr(expoNum);
+        for(int i=0;i<expoNum;i++) {
+            for(int l=0;l<includetmp[minexpnum].size();l++) {
+                if(NAidx[l]!=1) {
+                    includesmr[i].push_back(includetmp[i][l]);
+                }
+            }
+        }            
+        printf("\nThere are %ld independent loci included in the estimation of the global pi.\n",includesmr[0].size());
+        
+        // 10. start the MCMC sampling with the indepedent loci SMR data
+        // MCMC iteration start, define variables;//
+        int nloops = 10000, nburn_in = 0.2 * nloops, nsamples = nloops - nburn_in;
+        MatrixXd Pr(nloops,combNum);
+        VectorXf ngamma(combNum);
+        VectorXd alpha(combNum);
+        VectorXf Pripi(combNum);
+        VectorXd Primean(combNum), Prisd(combNum);
+        Stat::Dirichlet Prob;
+        printf("\nMCMC sampling start ...\n");
+        //initialize the alpha value as 0.1
+        double sumalpha = 0;
+        for(int i=0;i<combNum;i++) {
+            alpha[i] = 0.1;
+            sumalpha += 0.1;
+        }
+        // output the posterior samples in log file
+        printf("\n%s", logpistr.c_str());
+        for(int l=0;l<nloops;l++) {
+            if(l==0) { //initialize the Pripi as even prior
+                for(int i=0;i<combNum;i++) {
+                    Pripi[i] = (float)1/combNum;
+                }
+            }
+            // set starting values of ngamma as alpha, where ngamma is the sum of PP after sampling pi and alpha is the hyperparamenter
+            for(int i=0;i<combNum;i++) {
+                ngamma[i] = alpha[i];
+            }
+            // find the SMR summary data for independent loci exposure combinations
+            MatrixXd PP(includesmr[minexpnum].size(),combNum);
+            for(int ii=0;ii<includesmr[minexpnum].size();ii++) {
+                // Only one combination at each independent locus
+                vector<float> bxy(expoNum), sigma_e(expoNum), c(expoNum);
+                vector<double> HH(combNum),PO(combNum);
+                MatrixXd lh(2,expoNum);                    
+                // get the summary-level SMR data
+                for(int t=0; t<expoNum; t++) {
+                    long idx = includesmr[t][ii];
+                    bxy[t]=smrrlts[t][idx].b_SMR;
+                    sigma_e[t]=pow(smrrlts[t][idx].se_SMR,2);
+                    c[t]=1+sigma_e[t]/sigma_b[t];
+                }
+                // compute the marginal likelood under H0 and H1
+                const double PI = 3.141592653589793238463;
+                for(int t=0;t<expoNum;t++) {
+                    lh(0,t)=pow(2*PI,-0.5)*pow(sigma_e[t],-0.5)*exp(-1*pow(bxy[t],2)/(2*sigma_e[t]));
+                    lh(1,t)=pow(2*PI,-0.5)*pow(c[t]*sigma_b[t],-0.5)*exp((1/c[t]-1)*pow(bxy[t],2)/(2*sigma_e[t]));
+                }
+                // compute the joint data likelihood for H_gamma
+                for(int i=0;i<combNum;i++) {
+                    HH[i]=1.0;
+                    for(int t=0;t<expoNum;t++)
+                    {
+                        HH[i] *= lh(combins[i][t],t);
+                    }
+                }
+                // compute the normalizing constant
+                double POall = 0;
+                for(int i=0;i<combNum;i++) {
+                    PO[i]=HH[i]*Pripi[i];
+                    POall+=PO[i];
+                }
+                // compute the posterior probability
+                if(POall > 0) {
+                    for(int i=0;i<combNum;i++) {
+                        PP(ii,i)=PO[i]/POall;
+                        ngamma[i]+=PP(ii,i);
+                    }
+                }                            
+            }
+            Pripi=Prob.sample(combNum,ngamma);
+            logpistr=atos(l);
+            for(int c=0;c<combNum;c++) {
+                Pr(l,c)=Pripi[c];
+                logpistr+='\t'+atos(Pr(l,c));
+            }
+            logpistr=logpistr+'\n';
+            // output the sampled global pi each 100 iteration               
+            if(l%100==0) {                                        
+                printf("%s",(logpistr).c_str());
+            }
+            
+        }
+
+        // 11. output the posterior mean and SD
+        Primean = Pr.bottomRows(nsamples).colwise().mean();
+        for(int c=0;c<combNum;c++) {
+            ArrayXd vectmp = Pr.bottomRows(nsamples).col(c);
+            Prisd[c] = sqrt((vectmp - vectmp.mean()).square().sum()/(vectmp.size()-1));
+        }
+        outstr=outstr+"Mean"; for(int c=0;c<combNum;c++) { outstr+='\t'+atos(Primean[c]);}; outstr=outstr+'\n';
+        outstr=outstr+"SD"; for(int c=0;c<combNum;c++) { outstr+='\t'+atos(Prisd[c]);}; outstr=outstr+'\n';
+        if(fputs_checked(outstr.c_str(),piiter))
+        {
+            printf("ERROR: in writing file %s .\n", pifile.c_str());
+            exit(EXIT_FAILURE);
+        }
+        fclose(piiter);
+
+    }
+
+    // not updated anymore
     void multiexposurepi_condsmr(char* outFileName, char* bFileName, char* eqtlsmaslstName, char* gwasFileName, double maf,string sigmastr, char* indilstName, char* snplstName,char* problstName, char* oproblstName,char* eproblstName,bool bFlag,double p_hetero,double ld_top,int m_hetero, int opt_hetero,  char* indilst2remove, char* snplst2exclde, char* problst2exclde, char* oproblst2exclde,char* eproblst2exclde,double p_smr,char* refSNP, bool heidioffFlag, bool condismrflag, int cis_itvl,int piWind, int snpchr,int prbchr,char* traitlstName,int op_wind, char* oprobe, char* eprobe, char* oprobe2rm, char* eprobe2rm, double threshpsmrest, bool new_het_mth, bool opt, double ld_min,bool cis2all, bool sampleoverlap, double pmecs, int minCor, char* targetcojosnplstName, char* snpproblstName,double afthresh,double percenthresh)
     {   
         // eqtlsmaslstName is the included exposure probes and gwasFileName will be the outcome 
@@ -8466,9 +9012,6 @@ namespace SMRDATA
         } else
         {
               allele_check_multi(etrait,&gdata1);
-//            for(int i=0;i<besdNum;i++) {
-//                allele_check(&gdata1, &etrait[i]);
-//            }
         }
         if(gwasFileName!=NULL)  update_gwas(&gdata1);
         // update the SNPs after allele checking 
@@ -8522,15 +9065,6 @@ namespace SMRDATA
                 continue;
             }
         }
-        // debug start
-        // for(int i=0;i<besdNum;i++)
-        // {
-        //     for(int j=0;j<smrrlts[i].size();j++)
-        //     {   
-        //         cout<<smrrlts[i][j].ProbeID<<endl;
-        //     }
-        // }
-        // debug end
         if(probNum.size()!=expoNum) {
             throw("ERROR: The number of exposures with significant instruments are less than the number of specified priors.\n");
             // exit(EXIT_FAILURE);
@@ -8602,14 +9136,6 @@ namespace SMRDATA
                     }
                 }
             }
-            // debug start
-//            for(int i=0; i<expoNum; i++) {
-//                for(int j=0;j<includesmr[minexpnum].size();j++)
-//                {
-//                    cout<<includesmr[i][j]<<endl;
-//                }
-//            }
-            // debug end
             printf("\nThere are %ld independent loci included in the estimation of the global pi.\n",smrrlts_condi_all.size());
             ////////////////////////////////////////////
             // MCMC iteration start, define variables;//
@@ -8624,7 +9150,7 @@ namespace SMRDATA
             //initialize the alpha value as 1
             double sumalpha = 0;
             for(int i=0;i<combNum;i++) {
-//                  alpha[i] = (rand()%10 + 1);
+                //alpha[i] = (rand()%10 + 1);
                 alpha[i] = 0.1;
                 sumalpha += 0.1;
             }
@@ -8654,14 +9180,13 @@ namespace SMRDATA
                     // get the summary-level SMR data
                     string sampled_prb_name;
                     for(int t=0; t<expoNum; t++) {
-//                        long idx = includesmr[t][ii];
+                        //long idx = includesmr[t][ii];
                         bxy[t]=smrrlts_condi_all[ii][t].b_SMR;
                         sigma_e[t]=pow(smrrlts_condi_all[ii][t].se_SMR,2);
                         c[t]=1+sigma_e[t]/sigma_b[t];
                         // debug code
-//                        sampled_prb_name += smrrlts[t][idx].ProbeID + '\t';
+                      // sampled_prb_name += smrrlts[t][idx].ProbeID + '\t';
                     }
-//                    cout<<sampled_prb_name<<endl;
                         // compute the marginal likelood under H0 and H1
                         const double PI = 3.141592653589793238463;
                         for(int t=0;t<expoNum;t++) {
@@ -8683,13 +9208,11 @@ namespace SMRDATA
                             POall+=PO[i];
                         }
                         // compute the posterior probability
-//                    if(POall>0){
+                     // if(POall>0){
                         for(int i=0;i<combNum;i++) {
                             PP(ii,i)=PO[i]/POall;
                             ngamma[i]+=PP(ii,i);
                         }
-                    // }  else {
-                    //    continue; 
                     // }
                             
                 }
@@ -8710,501 +9233,6 @@ namespace SMRDATA
             }
         }         
         fclose(piiter);
-    }
-
-    void multiexposurepi(char* outFileName, char* bFileName, char* mbFileName, char* eqtlsmaslstName, char* gwasFileName, double maf,string sigmastr, char* indilstName, char* snplstName,char* problstName, char* oproblstName,char* eproblstName,bool bFlag,double p_hetero,double ld_top,int m_hetero, int opt_hetero,  char* indilst2remove, char* snplst2exclde, char* problst2exclde, char* oproblst2exclde,char* eproblst2exclde,double p_smr,char* refSNP, bool heidioffFlag,int cis_itvl,int piWind, int snpchr,int prbchr,char* traitlstName,int op_wind, char* oprobe, char* eprobe, char* oprobe2rm, char* eprobe2rm, double threshpsmrest, bool new_het_mth, bool opt, double ld_min,bool cis2all, bool sampleoverlap, double pmecs, int minCor, char* targetcojosnplstName, char* snpproblstName,double afthresh,double percenthresh)
-    {   
-        // 1. check flags; eqtlsmaslstName is the included exposure probes and gwasFileName will be the outcome 
-        setNbThreads(thread_num);
-        string logstr;
-        if(oproblstName!=NULL && oprobe!=NULL)
-        {
-            logstr="WARNING: --extract-single-outcome-probe is not surpposed to use together with --extract-outcome-probe. --extract-single-outcome-probe will be disabled.\n";
-            oprobe=NULL;
-            fputs(logstr.c_str(), stdout);
-        }
-        if(eproblstName!=NULL && eprobe!=NULL)
-        {
-            logstr="WARNING: --extract-single-exposure-probe is not surpposed to use together with --extract-exposure-probe. --extract-single-exposure-probe will be disabled.\n";
-            eprobe=NULL;
-            fputs(logstr.c_str(), stdout);
-        }
-        if(oproblst2exclde!=NULL && oprobe2rm!=NULL)
-        {
-            logstr="WARNING: --exclude-single-outcome-probe is not surpposed to use together with --exclude-outcome-probe. --exclude-single-outcome-probe will be disabled.\n";
-            oprobe2rm=NULL;
-            fputs(logstr.c_str(), stdout);
-        }
-        if(eproblst2exclde!=NULL && eprobe2rm!=NULL)
-        {
-            logstr="WARNING: --exclude-single-exposure-probe is not surpposed to use together with --exclude-exposure-probe. --exclude-single-exposure-probe will be disabled.\n";
-            eprobe2rm=NULL;
-            fputs(logstr.c_str(), stdout);
-        }
-        if(ld_min>ld_top) {
-            printf("ERROR: --ld-min %f is larger than --ld-top %f.\n",ld_min,ld_top);
-            exit(EXIT_FAILURE);
-        }
-        if(refSNP && targetcojosnplstName)
-        {
-            printf("ERROR: --target-snp and --target-snp-probe-list both found in your command. please disable one.\n");
-            exit(EXIT_FAILURE);
-        }
-        if(snpproblstName && targetcojosnplstName)
-        {
-            printf("ERROR: --extract-target-snp-probe and --extract-snp-probe both found in your command. please disable one.\n");
-            exit(EXIT_FAILURE);
-        }
-
-        // 2. check input besd file format
-        vector<string> besds, multi_bfiles;
-        vector<smr_snpinfo> snpinfo;
-        vector<smr_probeinfo> probeinfo;
-        vector<uint64_t> nprb,nsnp;
-        vector< vector<int> > lookup;
-        
-        read_msglist(eqtlsmaslstName, besds,"xQTL summary file names");
-        if(besds.size()<1) {
-            printf("Less than 1 BESD files list in %s.\n",eqtlsmaslstName);
-            exit(EXIT_FAILURE);
-        }
-        printf("%ld xQTL summary file names are included.\n",besds.size());
-
-        // check multiple bfiles input
-        if(mbFileName!=NULL) {
-            read_msglist(mbFileName, multi_bfiles,"PLINK bed file names");
-            if(multi_bfiles.size()<1) {
-                printf("Less than 1 PLINK bed file list in %s.\n",mbFileName);
-                exit(EXIT_FAILURE);
-            }
-            printf("%ld PLINK genotype files are included.\n",multi_bfiles.size());
-        }        
-        
-        vector<int> format, smpsize;
-        check_besds_format(besds, format, smpsize);
-        int label=-1;
-        for(int i=0;i<format.size();i++)
-        {
-            if(format[i]==DENSE_FILE_TYPE_1 || format[i]==DENSE_FILE_TYPE_3 ) {
-                if(label==-1) {
-                    label=0;
-                } else if(label==1) {
-                    label=2;
-                    break;
-                }
-                
-            } else if (format[i]==SPARSE_FILE_TYPE_3F || format[i]==SPARSE_FILE_TYPE_3 ) {
-                if(label==-1) {
-                    label=1;
-                } else if(label==0) {
-                    label=2;
-                    break;
-                }
-            } else {
-                printf("Some BESDs are from old sparse format. please use SMR to re-make it.\n");
-                exit(EXIT_FAILURE);
-            }
-        }
-        long besdNum=besds.size();
-        
-        FILE** fptrs = (FILE**)malloc(sizeof(FILE*) * besds.size());
-        for(int i=0;i<besdNum;i++) {
-            string besdFileName=besds[i]+".besd";
-            fptrs[i]=fopen(besdFileName.c_str(),"rb");
-            if(fptrs[i]==NULL) {
-                printf("ERROR: in opening file %s .\n", besdFileName.c_str());
-                exit(EXIT_FAILURE);
-            }
-        }
-        
-        // 3. expoNum = besdNum will be used; get prior variance 
-        long expoNum; expoNum = besdNum;
-        printf("There are %ld exposure(s) and 1 outcome are included in OPERA.\n",expoNum);
-        
-        // illustrate all the combinations
-        vector<vector<int>> idxall;
-        for(int i=0;i<expoNum;i++) {
-            vector<int> index(2);
-            std::iota(index.begin(),index.end(),0);
-            idxall.push_back(index);
-        }
-        vector<vector<int>> combins;
-        permute_vector(idxall, combins);
-        long combNum=combins.size();        
-        // get the priors
-        double sigma_def = 0.02;
-        vector<string> sigmasplit;
-        if(sigmastr.size() == 0) {
-            for(int i=0;i<expoNum;i++) {
-                sigmastr+=atos(sigma_def);
-                if(i < (expoNum - 1))  sigmastr+=","; 
-            }            
-        }        
-        split_string(sigmastr,sigmasplit);
-        if(sigmasplit.size()!=expoNum) throw("Error: The number of input prior variances is not consistent with the number of input exposures.");
-        vector<double> sigma_b;
-        for(int t=0; t<expoNum; t++)
-        {
-            sigma_b.push_back(atof(sigmasplit[t].c_str()));
-            if(sigma_b[t]<0 || sigma_b[t]>1) throw("Error: --prior-sigma. Prior variance values should be betweeen 0 and 1.");
-        }
-
-        // 4. define global variables and extract the snp and probe data        
-        vector<eqtlInfo> etrait(besdNum);
-        vector<eqtlInfo> esdata(besdNum);
-        bInfo bdata;
-        gwasData gdata1;
-        map<string, string> prb_snp;
-        bool heidiFlag=false, targetLstflg=false;
-        
-        printf("\nReading the xQTL summary data file ...\n");
-        if(!heidioffFlag && bFileName == NULL && mbFileName == NULL) throw("Error: please input Plink file for SMR analysis by either the flag --bfile or --mbfile.");
-        if(refSNP!=NULL) heidiFlag=true;
-        if(problstName != NULL) cout<<"WARNING: --extract-probe works when the probes are used as either exposures dataset or outcomes.\n"<<endl;
-      
-        //extract the SNP list for exposures
-        for(int i=0;i<besdNum;i++) {
-            read_esifile(&etrait[i], string(besds[i])+".esi");
-            if (snplstName != NULL) extract_eqtl_snp(&etrait[i], snplstName);
-            if(snplst2exclde != NULL) exclude_eqtl_snp(&etrait[i], snplst2exclde);
-            if(snpchr!=0) extract_eqtl_by_chr(&etrait[i], snpchr);
-        }
-
-        //extract the probe list
-        for(int i=0;i<besdNum;i++) {
-            read_epifile(&etrait[i], string(besds[i])+".epi");
-            if(problstName != NULL) extract_prob(&etrait[i], problstName);
-            if(problst2exclde != NULL) exclude_prob(&etrait[i], problst2exclde);
-            if(eproblstName != NULL ) extract_prob(&etrait[i], eproblstName);
-            else if(eprobe != NULL) extract_eqtl_single_probe(&etrait[i], eprobe);
-            if(eproblst2exclde != NULL) exclude_prob(&etrait[i], eproblst2exclde);
-            else if(eprobe2rm != NULL) exclude_eqtl_single_probe(&etrait[i], eprobe2rm);
-            if(prbchr!=0) extract_epi_by_chr(&etrait[i],prbchr);
-        }
-        
-        // 5. select the indepedent (no overlap) genomic loci for stage 1 analysis
-        // find the molecular trait with minimum num. of probes
-        long minprbnum=etrait[0]._include.size();
-        int minexpnum=0;
-        for(int i=0;i<besdNum;i++) {
-            stable_sort(etrait[i]._include.begin(),etrait[i]._include.end());
-            if(etrait[i]._include.size() < minprbnum) {
-                minprbnum = etrait[i]._include.size();
-                minexpnum = i;
-            }
-        }
-        // find the num. of independent loci as the num. of no overlap probes for the smallest exposure
-        int exposure_probe_wind=op_wind*1000;
-        int indwin = piWind*1000;  // the epi_bp are required to be sorted
-        vector<vector<int>> includepi(besdNum);
-        includepi[minexpnum].push_back(etrait[minexpnum]._include[0]);
-        int tmpbp = etrait[minexpnum]._epi_bp[etrait[minexpnum]._include[0]];
-        for(int b=0;b<(etrait[minexpnum]._include.size()-1);b++) {
-            int incldidx = etrait[minexpnum]._include[b+1];
-            int distbp = abs(etrait[minexpnum]._epi_bp[incldidx] - tmpbp);
-            if(distbp > indwin) {
-                includepi[minexpnum].push_back(incldidx);
-                tmpbp = etrait[minexpnum]._epi_bp[incldidx];
-            }
-        }
-        // find the probes for each exposure that are within the window of the target probes
-        for( int ii=0;ii<includepi[minexpnum].size();ii++)
-        {
-            int idxincld=includepi[minexpnum][ii];
-            int probechr=etrait[minexpnum]._epi_chr[idxincld];
-            int probebp=etrait[minexpnum]._epi_bp[idxincld];
-            int lowerbounder=(probebp-indwin/2)>0?(probebp-indwin/2):0;
-            int upperbounder=probebp+indwin/2;
-           for(int i=0;i<besdNum;i++)
-           {
-               if(i!=minexpnum) {
-                   for(int j=0;j<etrait[i]._include.size();j++)
-                   {
-                       int idxtmp = etrait[i]._include[j];
-                       int bptmp = etrait[i]._epi_bp[idxtmp];
-                       if(etrait[i]._epi_chr[idxtmp]==probechr && bptmp>=lowerbounder && bptmp<=upperbounder) {
-                            includepi[i].push_back(idxtmp);
-                        }
-                   }
-               }
-               
-            }
-        }
-        // update the _include epi probes list for etrait
-        for(int i=0;i<besdNum;i++) {
-            getUnique(includepi[i]);
-            printf("There are %ld probes included for exposure %ld.\n",includepi[i].size(),i);
-            etrait[i]._include.clear();
-            for(int l=0;l<includepi[i].size();l++) {
-                    etrait[i]._include.push_back(includepi[i][l]);
-            }
-            stable_sort(etrait[i]._include.begin(),etrait[i]._include.end());
-        }
-        // select _esi_include SNPs that are within 2Mb window of the target probes
-        vector<vector<int>> slctsnpidx(besdNum);
-        for(int i=0;i<besdNum;i++) {
-            for( int k=0;k<etrait[i]._include.size();k++)
-            {
-                int idxtmp=etrait[i]._include[k];
-                int probechr=etrait[i]._epi_chr[idxtmp];
-                int probebp=etrait[i]._epi_bp[idxtmp];
-                int lowerbounder=(probebp-exposure_probe_wind)>0?(probebp-exposure_probe_wind):0;
-                int upperbounder=probebp+exposure_probe_wind;
-               for(int j=0;j<etrait[i]._esi_include.size();j++)
-               {
-                   int idxtmp = etrait[i]._esi_include[j];
-                   int bptmp = etrait[i]._esi_bp[idxtmp];
-                   if(etrait[i]._esi_chr[idxtmp]==probechr && bptmp>=lowerbounder && bptmp<=upperbounder) {
-                        slctsnpidx[i].push_back(idxtmp);}
-               }
-            }
-        }
-
-        // 6. allele checking between data
-        // update the _esi_include SNPs
-        for(int i=0;i<besdNum;i++) {
-            getUnique(slctsnpidx[i]);
-            printf("There are %ld SNPs included for exposure %ld.\n",slctsnpidx[i].size(),i);
-            etrait[i]._esi_include.clear();
-            for(int m=0;m<slctsnpidx[i].size();m++) {
-                    etrait[i]._esi_include.push_back(slctsnpidx[i][m]);
-            }
-            stable_sort(etrait[i]._esi_include.begin(),etrait[i]._esi_include.end());
-        }
-        // read the final besd file with updated esi_include and _include
-        for(int i=0;i<besdNum;i++) {
-           read_besdfile(&etrait[i], string(besds[i])+".besd");
-           if(etrait[i]._rowid.empty() && etrait[i]._bxz.empty())
-           {
-               printf("ERROR: no data included in the analysis.\n");
-               exit(EXIT_FAILURE);
-           }
-        }
-        // read gwas
-        if(gwasFileName!=NULL) {
-            read_gwas_data(&gdata1, gwasFileName);
-            if (snplstName!= NULL) {
-                extract_gwas_snp(&gdata1, snplstName);
-                update_gwas(&gdata1);
-            }
-        }        
-        // allele checking between data
-        if(!heidioffFlag)
-        {
-            map<string, string> snp_name_per_chr;
-            if(bFileName!=NULL) read_famfile(&bdata, string(bFileName)+".fam");
-            if(mbFileName!=NULL) read_multi_famfiles(&bdata, multi_bfiles);
-            if(indilstName != NULL) keep_indi(&bdata,indilstName);
-            if(indilst2remove != NULL) remove_indi(&bdata, indilst2remove);
-            if(bFileName!=NULL) read_bimfile(&bdata, string(bFileName)+".bim");
-            if(mbFileName!=NULL) read_multi_bimfiles(&bdata, multi_bfiles, snp_name_per_chr);
-            allele_check_multi_opt(&bdata, etrait, &gdata1);
-            if(bFileName!=NULL) read_bedfile(&bdata, string(bFileName)+".bed");
-            if(mbFileName!=NULL) read_multi_bedfiles(&bdata, multi_bfiles, snp_name_per_chr);
-            if (bdata._mu.empty()) calcu_mu(&bdata);
-            if (maf > 0)
-            {
-                filter_snp_maf(&bdata, maf);
-                update_geIndx(&bdata, etrait, &gdata1);
-            }
-        } else
-        {
-            allele_check_multi(etrait,&gdata1);
-        }
-        if(gwasFileName!=NULL)  update_gwas(&gdata1);
-        // update the SNPs after allele checking 
-        for(int i=0;i<besdNum;i++) {
-            e2econvert(&etrait[i], &esdata[i]);
-        }
-
-        // 7. open the output file for pi estimate and sd
-        string outstr = "", logpistr = "";
-        string pifile = string(outFileName)+".pi";
-        FILE* piiter = fopen(pifile.c_str(), "w");
-        outstr="Posteriors\t"; logpistr = "Iteration\t";
-        for(int i=0; i<combNum;i++)
-        {
-            outstr+="Pi"+atos(i+1)+"(";
-            logpistr+="Pi"+atos(i+1)+"(";
-            for(int j=0;j<expoNum;j++)
-            {
-                outstr+=atos(combins[i][j]);
-                if(j<expoNum-1) outstr+=":";
-                logpistr+=atos(combins[i][j]);
-                if(j<expoNum-1) logpistr+=":";
-            }
-            if(i<(combNum-1)) outstr+=")\t";
-            if(i<(combNum-1)) logpistr+=")\t";
-        }
-        outstr+=")\n"; logpistr+=")\n";
-        if (!(piiter)) {
-            printf("ERROR: open error %s\n", pifile.c_str());
-            exit(1);
-        }
-
-        // 8. compute the pairwise SMR effect for all exposure probes
-        vector<vector<SMRRLT>> smrrlts;
-        vector<long> probNum;
-        vector<string> outconame;
-        vector<int> outcochr;
-        vector<string> outcogene;
-        vector<int> outcobp;
-        for(int i=0;i<besdNum;i++)
-        {
-            vector<SMRRLT> smrrltstmp;
-            if(esdata[i]._val.size()>0) {
-                smr_heidi_func(smrrltstmp, NULL, &bdata,&gdata1,&esdata[i],cis_itvl, heidioffFlag, refSNP,p_hetero,ld_top, m_hetero , p_smr, threshpsmrest,new_het_mth,opt,ld_min,opt_hetero,sampleoverlap,pmecs,minCor,prb_snp,targetLstflg);
-            }
-            if(smrrltstmp.size()>0)
-            {                
-                probNum.push_back(smrrltstmp.size());
-                smrrlts.push_back(smrrltstmp);
-            }
-        }
-        if(probNum.size()!=expoNum) {
-            throw("ERROR: The number of exposures with significant instruments are less than the number of specified priors.\n");
-            exit(EXIT_FAILURE);
-        } 
-
-        // 9. sample a combination of exposure probes from each indepedent loci
-        vector<vector<int>> includetmp(expoNum);
-        vector<int> NAidx(probNum[minexpnum]);
-        for( int ii=0;ii<probNum[minexpnum];ii++)
-        {
-            int traitchr=smrrlts[minexpnum][ii].ProbeChr;
-            int traitbp=smrrlts[minexpnum][ii].Probe_bp;
-            int lowerbounder=(traitbp-indwin/2)>0?(traitbp-indwin/2):0;
-            int upperbounder=traitbp+indwin/2;
-            NAidx[ii] = 0;
-            for(int i=0;i<expoNum;i++)
-            {
-               vector<int> slctprbidx;
-               for(int j=0;j<probNum[i];j++)
-               {
-                   int bptmp=smrrlts[i][j].Probe_bp;
-                   if(smrrlts[i][j].ProbeChr==traitchr && bptmp>=lowerbounder && bptmp<=upperbounder) {
-                        slctprbidx.push_back(j); 
-                    }
-               }
-               if(slctprbidx.size()>0) {
-                int randomIndex = rand()%slctprbidx.size();
-                includetmp[i].push_back(slctprbidx[randomIndex]);
-               } else { 
-                    includetmp[i].push_back(-1);
-                    NAidx[ii] = 1;
-               }
-            }
-        }
-        // remove these loci with missing exposures
-        vector<vector<int>> includesmr(expoNum);
-        for(int i=0;i<expoNum;i++) {
-            for(int l=0;l<includetmp[minexpnum].size();l++) {
-                if(NAidx[l]!=1) {
-                    includesmr[i].push_back(includetmp[i][l]);
-                }
-            }
-        }            
-        printf("\nThere are %ld independent loci included in the estimation of the global pi.\n",includesmr[0].size());
-        
-        // 10. start the MCMC sampling with the indepedent loci SMR data
-        // MCMC iteration start, define variables;//
-        int nloops = 10000, nburn_in = 0.2 * nloops, nsamples = nloops - nburn_in;
-        MatrixXd Pr(nloops,combNum);
-        VectorXf ngamma(combNum);
-        VectorXd alpha(combNum);
-        VectorXf Pripi(combNum);
-        VectorXd Primean(combNum), Prisd(combNum);
-        Stat::Dirichlet Prob;
-        printf("\nMCMC sampling start ...\n");
-        //initialize the alpha value as 0.1
-        double sumalpha = 0;
-        for(int i=0;i<combNum;i++) {
-            alpha[i] = 0.1;
-            sumalpha += 0.1;
-        }
-        // output the posterior samples in log file
-        printf("\n%s", logpistr.c_str());
-        for(int l=0;l<nloops;l++) {
-            if(l==0) { //initialize the Pripi as even prior
-                for(int i=0;i<combNum;i++) {
-                    Pripi[i] = (float)1/combNum;
-                }
-            }
-            // set starting values of ngamma as alpha, where ngamma is the sum of PP after sampling pi and alpha is the hyperparamenter
-            for(int i=0;i<combNum;i++) {
-                ngamma[i] = alpha[i];
-            }
-            // find the SMR summary data for independent loci exposure combinations
-            MatrixXd PP(includesmr[minexpnum].size(),combNum);
-            for(int ii=0;ii<includesmr[minexpnum].size();ii++) {
-                // Only one combination at each independent locus
-                vector<float> bxy(expoNum), sigma_e(expoNum), c(expoNum);
-                vector<double> HH(combNum),PO(combNum);
-                MatrixXd lh(2,expoNum);                    
-                // get the summary-level SMR data
-                for(int t=0; t<expoNum; t++) {
-                    long idx = includesmr[t][ii];
-                    bxy[t]=smrrlts[t][idx].b_SMR;
-                    sigma_e[t]=pow(smrrlts[t][idx].se_SMR,2);
-                    c[t]=1+sigma_e[t]/sigma_b[t];
-                }
-                // compute the marginal likelood under H0 and H1
-                const double PI = 3.141592653589793238463;
-                for(int t=0;t<expoNum;t++) {
-                    lh(0,t)=pow(2*PI,-0.5)*pow(sigma_e[t],-0.5)*exp(-1*pow(bxy[t],2)/(2*sigma_e[t]));
-                    lh(1,t)=pow(2*PI,-0.5)*pow(c[t]*sigma_b[t],-0.5)*exp((1/c[t]-1)*pow(bxy[t],2)/(2*sigma_e[t]));
-                }
-                // compute the joint data likelihood for H_gamma
-                for(int i=0;i<combNum;i++) {
-                    HH[i]=1.0;
-                    for(int t=0;t<expoNum;t++)
-                    {
-                        HH[i] *= lh(combins[i][t],t);
-                    }
-                }
-                // compute the normalizing constant
-                double POall = 0;
-                for(int i=0;i<combNum;i++) {
-                    PO[i]=HH[i]*Pripi[i];
-                    POall+=PO[i];
-                }
-                // compute the posterior probability
-                if(POall > 0) {
-                    for(int i=0;i<combNum;i++) {
-                        PP(ii,i)=PO[i]/POall;
-                        ngamma[i]+=PP(ii,i);
-                    }
-                }                            
-            }
-            Pripi=Prob.sample(combNum,ngamma);
-            logpistr=atos(l);
-            for(int c=0;c<combNum;c++) {
-                Pr(l,c)=Pripi[c];
-                logpistr+='\t'+atos(Pr(l,c));
-            }
-            logpistr=logpistr+'\n';
-            // output the sampled global pi each 100 iteration               
-            if(l%100==0) {                                        
-                printf("%s",(logpistr).c_str());
-            }
-            
-        }
-
-        // 11. output the posterior mean and SD
-        Primean = Pr.bottomRows(nsamples).colwise().mean();
-        for(int c=0;c<combNum;c++) {
-            ArrayXd vectmp = Pr.bottomRows(nsamples).col(c);
-            Prisd[c] = sqrt((vectmp - vectmp.mean()).square().sum()/(vectmp.size()-1));
-        }
-        outstr=outstr+"Mean"; for(int c=0;c<combNum;c++) { outstr+='\t'+atos(Primean[c]);}; outstr=outstr+'\n';
-        outstr=outstr+"SD"; for(int c=0;c<combNum;c++) { outstr+='\t'+atos(Prisd[c]);}; outstr=outstr+'\n';
-        if(fputs_checked(outstr.c_str(),piiter))
-        {
-            printf("ERROR: in writing file %s .\n", pifile.c_str());
-            exit(EXIT_FAILURE);
-        }
-        fclose(piiter);
-
     }
     
     // not updated anymore
@@ -9938,7 +9966,7 @@ namespace SMRDATA
         // end of opening files
         int exposure_probe_wind=op_wind*1000;
         // loop with exposure probes
-//        printf("\nPerforming multi-exposure-SMR analysis (multi-SMR and multi-HEIDI tests) for %d exposure probes... \n",esdata[0]._probNum);
+        //printf("\nPerforming multi-exposure-SMR analysis (multi-SMR and multi-HEIDI tests) for %d exposure probes... \n",esdata[0]._probNum);
         // caculate the SMR effect size for all exposure probes
         vector<vector<SMRRLT>> smrrlts;
         //vector<eqtlInfo> esdatall;
@@ -9983,188 +10011,188 @@ namespace SMRDATA
                 throw("ERROR: The number of exposures with significant instruments are less than the number of specified priors.\n");
                 // exit(EXIT_FAILURE);
         } else {
-        double cr=0;
-        for( int ii=0;ii<probNum[0];ii++)
-        {   
-            double desti=1.0*ii/(probNum[0]);
-            if(desti>=cr)
-            {
-                printf("%3.0f%%\r", 100.0*desti);
-                fflush(stdout);
-                if(cr==0) cr+=0.05;
-                else if(cr==0.05) cr+=0.2;
-                else if(cr==0.25) cr+=0.5;
-                else cr+=0.25;
-            }
-            vector<SMRRLT> smrrltsbf;
-            vector<long> probNumbf;
-            smrrltsbf.push_back(smrrlts[0][ii]); 
-            probNumbf.push_back(1);
-            // //gwasData gdata;
-            // etrait[1]._include.clear();
-            // etrait[1]._include.push_back(ii);
-            string traitname=smrrlts[0][ii].ProbeID;
-            int traitchr=smrrlts[0][ii].ProbeChr;
-            string traitgene=smrrlts[0][ii].Gene;
-            int traitbp=smrrlts[0][ii].Probe_bp;
-            vector<eqtlInfo> esdatabf(expoNum);
-            
-            if(! heidioffFlag){
-                map<string, int>::iterator itt;
-                eqtlInfo esdatatmp;
-                esdata[0]._include.clear();
-                itt = esdata[0]._probe_name_map.find(traitname);
-                if(itt != esdata[0]._probe_name_map.end()){
-                    esdata[0]._include.push_back(itt->second);
-                    e2econvert(&esdata[0], &esdatatmp);
-                    esdatabf[0]=esdatatmp;
+            double cr=0;
+            for( int ii=0;ii<probNum[0];ii++)
+            {   
+                double desti=1.0*ii/(probNum[0]);
+                if(desti>=cr)
+                {
+                    printf("%3.0f%%\r", 100.0*desti);
+                    fflush(stdout);
+                    if(cr==0) cr+=0.05;
+                    else if(cr==0.05) cr+=0.2;
+                    else if(cr==0.25) cr+=0.5;
+                    else cr+=0.25;
+                }
+                vector<SMRRLT> smrrltsbf;
+                vector<long> probNumbf;
+                smrrltsbf.push_back(smrrlts[0][ii]); 
+                probNumbf.push_back(1);
+                // //gwasData gdata;
+                // etrait[1]._include.clear();
+                // etrait[1]._include.push_back(ii);
+                string traitname=smrrlts[0][ii].ProbeID;
+                int traitchr=smrrlts[0][ii].ProbeChr;
+                string traitgene=smrrlts[0][ii].Gene;
+                int traitbp=smrrlts[0][ii].Probe_bp;
+                vector<eqtlInfo> esdatabf(expoNum);
+                
+                if(! heidioffFlag){
+                    map<string, int>::iterator itt;
+                    eqtlInfo esdatatmp;
+                    esdata[0]._include.clear();
+                    itt = esdata[0]._probe_name_map.find(traitname);
+                    if(itt != esdata[0]._probe_name_map.end()){
+                        esdata[0]._include.push_back(itt->second);
+                        e2econvert(&esdata[0], &esdatatmp);
+                        esdatabf[0]=esdatatmp;
+                    } else {
+                        continue;
+                    }
+                }
+                //cout<<"\nPerforming analysis of exposure [ "+traitname+" ]..."<<endl;
+        
+               if(cis2all)
+               {
+                   //printf("\n%ld outcome probes are inclued in the analysis with the exposure probe %s.\n", esdata._include.size(),traitname.c_str());
+                   
+               } else
+               {
+                   int lowerbounder=(traitbp-exposure_probe_wind)>0?(traitbp-exposure_probe_wind):0;
+                   int upperbounder=traitbp+exposure_probe_wind;
+
+                   for(int i=1;i<besdNum;i++)
+                   {
+                       int countNum = 0;
+                       //esdata[i]._include.clear();
+                       for(int j=0;j<probNum[i];j++)
+                       {
+                           int bptmp=smrrlts[i][j].Probe_bp;
+                           if(smrrlts[i][j].ProbeChr==traitchr && bptmp>=lowerbounder && bptmp<=upperbounder) {
+                                smrrltsbf.push_back(smrrlts[i][j]); countNum = countNum + 1;
+                                //esdatabf.push_back(esdatall[i][j]);
+                            }
+                       }
+                       probNumbf.push_back(countNum);
+                       //printf("\n%ld probes from outcome%d in the cis region [%d, %d] of exposure probe %s are inclued in the analysis.\n", etrait[i]._include.size(),i+1,lowerbounder,upperbounder,traitname.c_str());
+                    }
+                }
+
+                int outcomcout=0; 
+                for(int i=0;i<probNumbf.size();i++){
+                    if(probNumbf[i]>0) outcomcout+=1;
+                }
+
+                if(outcomcout==expoNum) {
+                    // illustrate all the combinations
+                    vector<vector<int>> indexall;
+                    for(int i=0;i<probNumbf.size();i++){
+                        vector<int> index(probNumbf[i]);
+                        std::iota(index.begin(),index.end(),0);
+                        indexall.push_back(index);
+                    }
+                    vector<vector<int>> combines;
+                    permute_vector(indexall, combines);
+                    // Bayesian factor caculation
+                    //printf("\nPerforming Multi-SMR tests.....\n");
+                    //if (combines.size()==0) printf("\nWARNING: Less than %ld outcomes included in the analysis. \nThe multi-SMR and multi-HEIDI test will skip for exposure probe %s\n",expoNum,traitname.c_str());
+                    for(int i=0; i<combines.size();i++)
+                    {
+                        vector<float> bxy(expoNum), sigma_e(expoNum),c(expoNum);
+                        vector<string> outconamec(besdNum), outcogenec(besdNum); vector<long> outcobpc(besdNum);
+                        vector<float> Pr(combNum),HH(combNum),PO(combNum),PP(combNum);
+                        vector<gwasData> esdatain(expoNum);
+                        MatrixXd lh(2,expoNum);
+                        // get the probe and gene information for output
+                        outstr=atos(traitchr)+'\t'+traitname+'\t'+traitgene+'\t'+atos(traitbp)+'\t';
+                        long postmp=1;
+                        
+                        for(int t=1; t<besdNum; t++)
+                        {   
+                            long idxtmp = combines[i][t]+postmp;
+                            outconamec[t] = smrrltsbf[idxtmp].ProbeID;
+                            outcogenec[t] = smrrltsbf[idxtmp].Gene;
+                            outcobpc[t] = smrrltsbf[idxtmp].Probe_bp;
+                            postmp = postmp+probNumbf[t];
+                            if(! heidioffFlag){
+                                esdata[t]._include.clear();
+                                map<string, int>::iterator itt;
+                                eqtlInfo esdatatmp;
+                                itt = esdata[t]._probe_name_map.find(outconamec[t]);
+                                if(itt != esdata[t]._probe_name_map.end()){
+                                    esdata[t]._include.push_back(itt->second);
+                                    e2econvert(&esdata[t], &esdatatmp);
+                                    esdatabf[t] = esdatatmp;
+                                }
+                            }
+                            outstr+=outconamec[t]+'\t'+outcogenec[t]+'\t'+atos(outcobpc[t])+'\t';
+                        }
+                        //if(gwasFileName!=NULL) outstr+="Trait\t";
+                        //get the bxy, sigma_b and sigma_e from SMR
+                        long pos=0;
+                        for(int t=0; t<expoNum; t++)
+                        {
+                            long idx = combines[i][t]+pos;
+                            bxy[t]=smrrltsbf[idx].b_SMR;
+                            sigma_e[t]=pow(smrrltsbf[idx].se_SMR,2);
+                            c[t]=1+sigma_e[t]/sigma_b[t];
+                            //esdatain[t]=esdatabf[idx];
+                            pos=pos+probNumbf[t];
+                        }
+                        // multi-HEIDI test
+                        vector<SMRRLT> smrrltsheidi;
+                        if(! heidioffFlag){
+                        multi_heidi_func(smrrltsheidi, NULL, &bdata, &gdata1, esdatabf, cis_itvl, heidioffFlag, refSNP,p_hetero,ld_top, m_hetero, p_smr, threshpsmrest,new_het_mth,opt,ld_min,opt_hetero,sampleoverlap,pmecs,minCor);
+                        }
+                        // get the H0 and H1 prior pi and likelihood
+                        const double PI = 3.141592653589793238463;
+                        for(int t=0;t<expoNum;t++) {
+                            lh(0,t)=pow(2*PI,-0.5)*pow(sigma_e[t],-0.5)*exp(-1*pow(bxy[t],2)/(2*sigma_e[t]));
+                            lh(1,t)=pow(2*PI,-0.5)*pow(c[t]*sigma_b[t],-0.5)*exp((1/c[t]-1)*pow(bxy[t],2)/(2*sigma_e[t]));
+                        }
+                        // caculate the posterier probablity
+                        for(int i=0;i<combNum;i++){
+                            HH[i]=1.0;
+                            for(int t=0;t<expoNum;t++)
+                            {
+                                HH[i] *= lh(combins[i][t],t);
+                            }
+                        }
+                        float POall=0;
+                        for(int i=0;i<combNum;i++){
+                            PO[i]=HH[i]*prior[i];
+                            POall+=PO[i];
+                        }
+                        for(int i=0;i<combNum;i++){
+                            PP[i]=PO[i]/POall;
+                            outstr=outstr+atos(PP[i])+'\t';
+                        }
+                        bool sigflag = false;
+                        for(int i=1;i<combNum;i++) {
+                            if(PP[i]>=0.8) sigflag = true;
+                        }
+                        if(! heidioffFlag){
+                        outstr=outstr+(smrrltsheidi[0].p_HET >= 0 ? dtos(smrrltsheidi[0].p_HET) : "NA") + '\t' + (smrrltsheidi[0].nsnp > 0 ? atos(smrrltsheidi[0].nsnp+1) : "NA") + '\n';
+                        } else{
+                        outstr=outstr + "NA" + '\t' + "NA" + '\n';
+                        }
+                        if(sigflag) {
+                            itercountmlt+=1;
+                            if(fputs_checked(outstr.c_str(),smr2))
+                            {
+                                printf("ERROR: in writing file %s .\n", smrfile2.c_str());
+                                exit(EXIT_FAILURE);
+                            }
+                        }
+                    
+                    }
+
                 } else {
                     continue;
                 }
-            }
-            //cout<<"\nPerforming analysis of exposure [ "+traitname+" ]..."<<endl;
-    
-           if(cis2all)
-           {
-               //printf("\n%ld outcome probes are inclued in the analysis with the exposure probe %s.\n", esdata._include.size(),traitname.c_str());
-               
-           } else
-           {
-               int lowerbounder=(traitbp-exposure_probe_wind)>0?(traitbp-exposure_probe_wind):0;
-               int upperbounder=traitbp+exposure_probe_wind;
-
-               for(int i=1;i<besdNum;i++)
-               {
-                   int countNum = 0;
-                   //esdata[i]._include.clear();
-                   for(int j=0;j<probNum[i];j++)
-                   {
-                       int bptmp=smrrlts[i][j].Probe_bp;
-                       if(smrrlts[i][j].ProbeChr==traitchr && bptmp>=lowerbounder && bptmp<=upperbounder) {
-                            smrrltsbf.push_back(smrrlts[i][j]); countNum = countNum + 1;
-                            //esdatabf.push_back(esdatall[i][j]);
-                        }
-                   }
-                   probNumbf.push_back(countNum);
-                   //printf("\n%ld probes from outcome%d in the cis region [%d, %d] of exposure probe %s are inclued in the analysis.\n", etrait[i]._include.size(),i+1,lowerbounder,upperbounder,traitname.c_str());
-                }
-            }
-
-            int outcomcout=0; 
-            for(int i=0;i<probNumbf.size();i++){
-                if(probNumbf[i]>0) outcomcout+=1;
-            }
-
-            if(outcomcout==expoNum) {
-                // illustrate all the combinations
-                vector<vector<int>> indexall;
-                for(int i=0;i<probNumbf.size();i++){
-                    vector<int> index(probNumbf[i]);
-                    std::iota(index.begin(),index.end(),0);
-                    indexall.push_back(index);
-                }
-                vector<vector<int>> combines;
-                permute_vector(indexall, combines);
-                // Bayesian factor caculation
-                //printf("\nPerforming Multi-SMR tests.....\n");
-                //if (combines.size()==0) printf("\nWARNING: Less than %ld outcomes included in the analysis. \nThe multi-SMR and multi-HEIDI test will skip for exposure probe %s\n",expoNum,traitname.c_str());
-                for(int i=0; i<combines.size();i++)
-                {
-                    vector<float> bxy(expoNum), sigma_e(expoNum),c(expoNum);
-                    vector<string> outconamec(besdNum), outcogenec(besdNum); vector<long> outcobpc(besdNum);
-                    vector<float> Pr(combNum),HH(combNum),PO(combNum),PP(combNum);
-                    vector<gwasData> esdatain(expoNum);
-                    MatrixXd lh(2,expoNum);
-                    // get the probe and gene information for output
-                    outstr=atos(traitchr)+'\t'+traitname+'\t'+traitgene+'\t'+atos(traitbp)+'\t';
-                    long postmp=1;
-                    
-                    for(int t=1; t<besdNum; t++)
-                    {   
-                        long idxtmp = combines[i][t]+postmp;
-                        outconamec[t] = smrrltsbf[idxtmp].ProbeID;
-                        outcogenec[t] = smrrltsbf[idxtmp].Gene;
-                        outcobpc[t] = smrrltsbf[idxtmp].Probe_bp;
-                        postmp = postmp+probNumbf[t];
-                        if(! heidioffFlag){
-                            esdata[t]._include.clear();
-                            map<string, int>::iterator itt;
-                            eqtlInfo esdatatmp;
-                            itt = esdata[t]._probe_name_map.find(outconamec[t]);
-                            if(itt != esdata[t]._probe_name_map.end()){
-                                esdata[t]._include.push_back(itt->second);
-                                e2econvert(&esdata[t], &esdatatmp);
-                                esdatabf[t] = esdatatmp;
-                            }
-                        }
-                        outstr+=outconamec[t]+'\t'+outcogenec[t]+'\t'+atos(outcobpc[t])+'\t';
-                    }
-                    //if(gwasFileName!=NULL) outstr+="Trait\t";
-                    //get the bxy, sigma_b and sigma_e from SMR
-                    long pos=0;
-                    for(int t=0; t<expoNum; t++)
-                    {
-                        long idx = combines[i][t]+pos;
-                        bxy[t]=smrrltsbf[idx].b_SMR;
-                        sigma_e[t]=pow(smrrltsbf[idx].se_SMR,2);
-                        c[t]=1+sigma_e[t]/sigma_b[t];
-                        //esdatain[t]=esdatabf[idx];
-                        pos=pos+probNumbf[t];
-                    }
-                    // multi-HEIDI test
-                    vector<SMRRLT> smrrltsheidi;
-                    if(! heidioffFlag){
-                    multi_heidi_func(smrrltsheidi, NULL, &bdata, &gdata1, esdatabf, cis_itvl, heidioffFlag, refSNP,p_hetero,ld_top, m_hetero, p_smr, threshpsmrest,new_het_mth,opt,ld_min,opt_hetero,sampleoverlap,pmecs,minCor);
-                    }
-                    // get the H0 and H1 prior pi and likelihood
-                    const double PI = 3.141592653589793238463;
-                    for(int t=0;t<expoNum;t++) {
-                        lh(0,t)=pow(2*PI,-0.5)*pow(sigma_e[t],-0.5)*exp(-1*pow(bxy[t],2)/(2*sigma_e[t]));
-                        lh(1,t)=pow(2*PI,-0.5)*pow(c[t]*sigma_b[t],-0.5)*exp((1/c[t]-1)*pow(bxy[t],2)/(2*sigma_e[t]));
-                    }
-                    // caculate the posterier probablity
-                    for(int i=0;i<combNum;i++){
-                        HH[i]=1.0;
-                        for(int t=0;t<expoNum;t++)
-                        {
-                            HH[i] *= lh(combins[i][t],t);
-                        }
-                    }
-                    float POall=0;
-                    for(int i=0;i<combNum;i++){
-                        PO[i]=HH[i]*prior[i];
-                        POall+=PO[i];
-                    }
-                    for(int i=0;i<combNum;i++){
-                        PP[i]=PO[i]/POall;
-                        outstr=outstr+atos(PP[i])+'\t';
-                    }
-                    bool sigflag = false;
-                    for(int i=1;i<combNum;i++) {
-                        if(PP[i]>=0.8) sigflag = true;
-                    }
-                    if(! heidioffFlag){
-                    outstr=outstr+(smrrltsheidi[0].p_HET >= 0 ? dtos(smrrltsheidi[0].p_HET) : "NA") + '\t' + (smrrltsheidi[0].nsnp > 0 ? atos(smrrltsheidi[0].nsnp+1) : "NA") + '\n';
-                    } else{
-                    outstr=outstr + "NA" + '\t' + "NA" + '\n';
-                    }
-                    if(sigflag) {
-                        itercountmlt+=1;
-                        if(fputs_checked(outstr.c_str(),smr2))
-                        {
-                            printf("ERROR: in writing file %s .\n", smrfile2.c_str());
-                            exit(EXIT_FAILURE);
-                        }
-                    }
                 
-                }
-
-            } else {
-                continue;
             }
-            
-        }
-    }         
+        }         
         fclose(smr0);
         fclose(smr2);
         //printf("\nSMR and HEIDI analyses for molecular traits completed.\nSMR and heterogeneity analysis results of %ld outcome probes (%ld exposure probe) have been saved in the file %s.\n",itemcount,etraitcount,smrfile1.c_str());
@@ -10278,7 +10306,7 @@ namespace SMRDATA
         
         // 3. expoNum = besdNum will be used; get prior variance and PIP header
         long expoNum;  expoNum = besdNum;
-        printf("There are %ld exposure(s) and 1 outcome are included in OPERA.\n",expoNum);
+        printf("There are %ld exposure(s) and 1 outcome included in the OPERA analysis.\n",expoNum);
         if(expoNum < 2) {
             printf("\nWARNING: The program can not perform the OPERA analsyis with joint SMR effect because there is only one exposure file included.\nThe SMR effect will be used for OPERA analysis.\n");
             operasmrflag = true;
@@ -10335,7 +10363,7 @@ namespace SMRDATA
             }            
         }
         if(piFileName!=NULL) {
-            
+            read_pifile(piFileName, priorsplit);
         } else {
             split_string(priorstr,priorsplit);
         }
@@ -10444,7 +10472,7 @@ namespace SMRDATA
         }
 
         // 6. open .smr and .ppa for writing output
-        long itemcountsmr=0,itercountmlt=0;
+        long itemcountsmr=0,itercountmlt=0,itercounttest=0;
         string outstr="";
         // header for .smr
         string smrfile0 = string(outFileName)+".smr";
@@ -10547,7 +10575,7 @@ namespace SMRDATA
             }
             vector<SMRRLT> smrrltsbf;
             vector<long> probNumbf(besdNum,0); 
-            vector<long> expoNumbf;
+            vector<long> expoNumbf; //for missing exposures
 
             int locichr=ldata._chr[ii];
             int locibp=ldata._bp[ii];
@@ -10589,10 +10617,35 @@ namespace SMRDATA
                 }
                 probNumbf[i]=countNum;
             }
+            // update esdata._esi_include/gdata1._include/bdata._include with only SNPs in the cis-window; 
+            lowerbounder=(locibp-cis_itvl*1000)>0?(locibp-cis_itvl*1000):0;
+            upperbounder=locibp+cis_itvl*1000;
+            esdata[0]._esi_include.clear(); gdata1._include.clear(); bdata._include.clear();
+            for(int j=0;j<esdata[0]._snpNum;j++) {
+               int bptmp=esdata[0]._esi_bp[j];
+               if(esdata[0]._esi_chr[j]==locichr && bptmp>=lowerbounder && bptmp<=upperbounder) {
+                   esdata[0]._esi_include.push_back(j);
+                   gdata1._include.push_back(j);
+                   bdata._include.push_back(j);
+               }
+            }
+            // update esdata._esi_include for other exposures 
+            for(int i=1;i<besdNum;i++) {
+                esdata[i]._esi_include.clear();
+                for(int j=0;j<esdata[0]._snpNum;j++) {
+                   int bptmp=esdata[0]._esi_bp[j];
+                   if(esdata[0]._esi_chr[j]==locichr && bptmp>=lowerbounder && bptmp<=upperbounder) {
+                       esdata[i]._esi_include.push_back(j);
+                   }
+                }
+            }
             // skip the GWAS loci without an exposure probe with significant instrument
-            int expocout = 0; 
+            int expocout = 0, missNum = 0; 
+            vector<int> missexpoNum(expoNum);
             for(int i=0;i<probNumbf.size();i++) {
-                if(probNumbf[i]>0) { expocout+=1; expoNumbf.push_back(i);}
+                if(probNumbf[i]>0) { expocout+=1; expoNumbf.push_back(i);
+                } else { missNum += 1;}
+                missexpoNum[i] = missNum;
             }
             if(expocout == 0) { continue; }
             
@@ -10614,6 +10667,8 @@ namespace SMRDATA
             printf("\nThere are %ld possible combinations to test in a %ldKb window at %ldbp on chromosome %ld in the joint SMR model\n",combines.size(),op_wind,locibp,locichr);
 
             // loop with all the possible combinations
+            vector<long> idxcomb_smrrltsbf(expoNumbf.size()), idxcomb_smrrltsbf_last(expoNumbf.size());
+            vector<eqtlInfo> esdatabf(expoNumbf.size());
             double crcomb=0;
             for(int i=0; i<combines.size(); i++)
             {
@@ -10627,36 +10682,40 @@ namespace SMRDATA
                     else if(crcomb==0.25) crcomb+=0.5;
                     else crcomb+=0.25;
                 }
-                vector<eqtlInfo> esdatabf;
+                //vector<eqtlInfo> esdatabf;
                 vector<vector<string>> prb_cojolist;
                 vector<float> bxy(expoNum), sigma_e(expoNum), c(expoNum);
-                vector<string> outconamec(besdNum), outcogenec(besdNum);
-                vector<long> outcobpc(besdNum);
+                vector<string> outconamec(besdNum), outcogenec(besdNum); vector<long> outcobpc(besdNum);
                 vector<float> Pr(combNum),HH(combNum),PO(combNum),PP(combNum),PIP(combNum);
-                vector<gwasData> esdatain(expoNum);
                 MatrixXd lh(2,expoNum);
-                // get the probe and gene information for output
+                // find the probe in smrrltsbf and esdata
                 outstr=atos(locichr)+'\t';
-                long postmp = 0;
+                long postmp = 0; idxcomb_smrrltsbf.clear(), idxcomb_smrrltsbf.resize(expoNumbf.size());
+                if(operasmrflag) jointsmrflag = false;
                 for(int t=0; t<besdNum; t++)
                 {   
                     if(probNumbf[t] > 0) {
+                        int t_new = t - missexpoNum[t];
                         long idxtmp = combines[i][t]+postmp;
+                        idxcomb_smrrltsbf[t_new] = idxtmp;
                         outconamec[t] = smrrltsbf[idxtmp].ProbeID;
                         outcogenec[t] = smrrltsbf[idxtmp].Gene;
                         outcobpc[t] = smrrltsbf[idxtmp].Probe_bp;
                         postmp = postmp + probNumbf[t];
 
                         if(!heidioffFlag || jointsmrflag) {
-                            esdata[t]._include.clear();
-                            map<string, int>::iterator itt;
-                            eqtlInfo esdatatmp;
-                            itt = esdata[t]._probe_name_map.find(outconamec[t]);
-                            if(itt != esdata[t]._probe_name_map.end()) {
-                                esdata[t]._include.push_back(itt->second);
-                                e2econvert(&esdata[t], &esdatatmp);
-                                esdatabf.push_back(esdatatmp);
-                            }
+                            if(idxcomb_smrrltsbf[t_new] != idxcomb_smrrltsbf_last[t_new] || i==0) {
+                                esdata[t]._include.clear();
+                                map<string, int>::iterator itt;
+                                eqtlInfo esdatatmp;
+                                itt = esdata[t]._probe_name_map.find(outconamec[t]);
+                                if(itt != esdata[t]._probe_name_map.end()) {
+                                    esdata[t]._include.push_back(itt->second);
+                                    e2econvert(&esdata[t], &esdatatmp);
+                                    esdatabf[t_new] = esdatatmp;
+                                    //esdatabf.push_back(esdatatmp);
+                                }
+                            }                            
                             if(targetcojosnplstName!=NULL) {
                                 // find the target probe COJO signals
                                 map<string, vector<string>>::iterator prb_pos;
@@ -10673,20 +10732,24 @@ namespace SMRDATA
                     }                        
                     outstr+=outconamec[t]+'\t'+atos(outcobpc[t])+'\t';
                 }
+                idxcomb_smrrltsbf_last = idxcomb_smrrltsbf;
 
                 // perform the SMR or joint-SMR analysis, including unbalanced exposures
                 vector<SMRRLT> smrrlts_joint;
-                if(esdatabf.size() != expocout) { continue; }
+                if(esdatabf.size()!=0 && esdatabf.size() != expocout) { continue; } 
 
-                if(!operasmrflag) {
+                if(!operasmrflag) { // compute the joint SMR effect
                     if(targetcojosnplstName!=NULL) {
                      multi_joint_smr_func(smrrlts_joint, NULL, &bdata, &gdata1, esdatabf, prb_cojolist, cis_itvl, heidioffFlag,refSNP,p_hetero,ld_top,m_hetero,p_smr,threshpsmrest,new_het_mth,opt,ld_min,opt_hetero,sampleoverlap,pmecs,minCor);
                     } else { multi_joint_smr_func(smrrlts_joint, NULL, &bdata, &gdata1, esdatabf, cis_itvl, heidioffFlag,refSNP,p_hetero,ld_top,m_hetero,p_smr,threshpsmrest,new_het_mth,opt,ld_min,opt_hetero,sampleoverlap,pmecs,minCor); }
-                } else {
-                    for(int es=0; es<esdatabf.size(); es++) {
-                        vector<SMRRLT> smrrlt_esdata;
-                        smr_heidi_func(smrrlt_esdata, NULL, &bdata, &gdata1, &esdatabf[es],cis_itvl, heidioffFlag, refSNP,p_hetero,ld_top, m_hetero, p_smr, threshpsmrest,new_het_mth,opt,ld_min,opt_hetero,sampleoverlap,pmecs,minCor,prb_snp,targetLstflg);
-                        smrrlts_joint.push_back(smrrlt_esdata[0]);
+                } else { // compute the marginal SMR effect
+                    // for(int es=0; es<esdatabf.size(); es++) {
+                    //     vector<SMRRLT> smrrlt_esdata;
+                    //     smr_heidi_func(smrrlt_esdata, NULL, &bdata, &gdata1, &esdatabf[es],cis_itvl, heidioffFlag, refSNP,p_hetero,ld_top, m_hetero, p_smr, threshpsmrest,new_het_mth,opt,ld_min,opt_hetero,sampleoverlap,pmecs,minCor,prb_snp,targetLstflg);
+                    //     smrrlts_joint.push_back(smrrlt_esdata[0]);
+                    // }
+                    for(int s=0; s<idxcomb_smrrltsbf.size(); s++) {
+                        smrrlts_joint.push_back(smrrltsbf[idxcomb_smrrltsbf[s]]);
                     }
                 }
                 
@@ -10794,14 +10857,1186 @@ namespace SMRDATA
                         exit(EXIT_FAILURE);
                     }
                 }
-
+                itercounttest+=1;
             }
             
         }        
         fclose(smr0);            
         fclose(smr2);
         printf("\nPairwise SMR and HEIDI analyses for %ld exposure probes have been saved in the file %s.\n",itemcountsmr,smrfile0.c_str());
-        printf("\nOPERA analyses for %ld exposures and 1 outcome completed.\nPosterior probability and HEIDI results of %ld combinations have been saved in the file %s.\n",expoNum,itercountmlt,smrfile2.c_str());
+        printf("\nOPERA analyses for %ld combinations between %ld exposures and 1 outcome completed.\nPosterior probability and HEIDI results of %ld combinations have been saved in the file %s.\n",itercounttest,expoNum,itercountmlt,smrfile2.c_str());
+    }
+
+    void multiexposure_jointsmr(char* outFileName, char* bFileName, char* mbFileName, char* piFileName, char* eqtlsmaslstName, char* gwasFileName, double maf,string priorstr,string sigmastr, char* indilstName, char* snplstName,char* problstName, char* oproblstName,char* eproblstName,bool bFlag,double p_hetero,double ld_top,int m_hetero, int opt_hetero,  char* indilst2remove, char* snplst2exclde, char* problst2exclde, char* oproblst2exclde,char* eproblst2exclde,double p_smr,double thresh_PP, double thresh_smr, char* refSNP, bool heidioffFlag, bool jointsmrflag, bool operasmrflag, int cis_itvl,int snpchr,int prbchr,char* traitlstName,int op_wind, char* oprobe, char* eprobe, char* oprobe2rm, char* eprobe2rm, double threshpsmrest, bool new_het_mth, bool opt, double ld_min,bool cis2all, bool sampleoverlap, double pmecs, int minCor, char* targetcojosnplstName, char* snpproblstName,double afthresh,double percenthresh)
+    {   
+        // 1. check flags; eqtlsmaslstName is the included exposure probes and gwasFileName will be the outcome 
+        setNbThreads(thread_num);
+        string logstr;
+        if(oproblstName!=NULL && oprobe!=NULL)
+        {
+            logstr="WARNING: --extract-single-outcome-probe is not surpposed to use together with --extract-outcome-probe. --extract-single-outcome-probe will be disabled.\n";
+            oprobe=NULL;
+            fputs(logstr.c_str(), stdout);
+        }
+        if(eproblstName!=NULL && eprobe!=NULL)
+        {
+            logstr="WARNING: --extract-single-exposure-probe is not surpposed to use together with --extract-exposure-probe. --extract-single-exposure-probe will be disabled.\n";
+            eprobe=NULL;
+            fputs(logstr.c_str(), stdout);
+        }
+        if(oproblst2exclde!=NULL && oprobe2rm!=NULL)
+        {
+            logstr="WARNING: --exclude-single-outcome-probe is not surpposed to use together with --exclude-outcome-probe. --exclude-single-outcome-probe will be disabled.\n";
+            oprobe2rm=NULL;
+            fputs(logstr.c_str(), stdout);
+        }
+        if(eproblst2exclde!=NULL && eprobe2rm!=NULL)
+        {
+            logstr="WARNING: --exclude-single-exposure-probe is not surpposed to use together with --exclude-exposure-probe. --exclude-single-exposure-probe will be disabled.\n";
+            eprobe2rm=NULL;
+            fputs(logstr.c_str(), stdout);
+        }
+        if(ld_min>ld_top) {
+            printf("ERROR: --ld-min %f is larger than --ld-top %f.\n",ld_min,ld_top);
+            exit(EXIT_FAILURE);
+        }
+        if(refSNP && targetcojosnplstName)
+        {
+            printf("ERROR: --target-snp and --target-snp-probe-list both found in your command. please disable one.\n");
+            exit(EXIT_FAILURE);
+        }
+        if(snpproblstName && targetcojosnplstName)
+        {
+            printf("ERROR: --extract-target-snp-probe and --extract-snp-probe both found in your command. please disable one.\n");
+            exit(EXIT_FAILURE);
+        }
+
+        // 2. check input besd file format
+        vector<string> besds, multi_bfiles;;
+        vector<smr_snpinfo> snpinfo;
+        vector<smr_probeinfo> probeinfo;
+        vector<uint64_t> nprb,nsnp;
+        vector< vector<int> > lookup;
+        
+        read_msglist(eqtlsmaslstName, besds,"xQTL summary file names");
+        if(besds.size()<1) {
+            printf("Less than 1 BESD files list in %s.\n",eqtlsmaslstName);
+            exit(EXIT_FAILURE);
+        }
+        printf("%ld xQTL summary file names are included.\n",besds.size());
+        
+        // check multiple bfiles input
+        if(mbFileName!=NULL) {
+            read_msglist(mbFileName, multi_bfiles,"PLINK bed file names");
+            if(multi_bfiles.size()<1) {
+                printf("Less than 1 PLINK bed file list in %s.\n",mbFileName);
+                exit(EXIT_FAILURE);
+            }
+            printf("%ld PLINK genotype files are included.\n",multi_bfiles.size());
+        }
+
+        vector<int> format, smpsize;
+        check_besds_format(besds, format, smpsize);
+        int label=-1;
+        for(int i=0;i<format.size();i++)
+        {
+            if(format[i]==DENSE_FILE_TYPE_1 || format[i]==DENSE_FILE_TYPE_3 ) {
+                if(label==-1) {
+                    label=0;
+                } else if(label==1) {
+                    label=2;
+                    break;
+                }
+                
+            } else if (format[i]==SPARSE_FILE_TYPE_3F || format[i]==SPARSE_FILE_TYPE_3 ) {
+                if(label==-1) {
+                    label=1;
+                } else if(label==0) {
+                    label=2;
+                    break;
+                }
+            } else {
+                printf("Some BESDs are from old sparse format. please use SMR to re-make it.\n");
+                exit(EXIT_FAILURE);
+            }
+        }
+        long besdNum=besds.size();
+        
+        FILE** fptrs = (FILE**)malloc(sizeof(FILE*) * besds.size());
+        for(int i=0;i<besdNum;i++) {
+            string besdFileName=besds[i]+".besd";
+            fptrs[i]=fopen(besdFileName.c_str(),"rb");
+            if(fptrs[i]==NULL) {
+                printf("ERROR: in opening file %s .\n", besdFileName.c_str());
+                exit(EXIT_FAILURE);
+            }
+        }
+        
+        // 3. expoNum = besdNum will be used; get prior variance and PIP header
+        long expoNum; expoNum = besdNum;
+        printf("There are %ld exposure(s) and 1 outcome included in the OPERA analysis.\n",expoNum);
+        if(expoNum < 2) {
+            printf("\nWARNING: The program can not perform the OPERA analsyis with joint SMR effect because there is only one exposure included.\nThe SMR effect will be used for OPERA analysis.\n");
+            operasmrflag = true;
+        }
+
+        // illustrate all the combinations
+        vector<vector<int>> idxall;
+        for(int i=0;i<expoNum;i++) {
+            vector<int> index(2);
+            std::iota(index.begin(),index.end(),0);
+            idxall.push_back(index);
+        }
+        vector<vector<int>> combins;
+        permute_vector(idxall, combins);
+        long combNum=combins.size();
+        
+        // list marginal PIP combins
+        vector<vector<int>> combmarg, comborg(combins.size()), idxmarg(combins.size());
+        comborg[0].push_back(0); idxmarg[0].push_back(0);
+        for(int i=1;i<combNum;i++) {
+            for(int j=0;j<expoNum;j++) {
+                if(combins[i][j] == 1) comborg[i].push_back(j+1);
+            }
+        }
+        // reorder the output PIP
+        for(int i=1;i<=expoNum;i++) {
+            vector<vector<int>> combtmp;
+            for(int j=0;j<combNum;j++) {
+                if(comborg[j].size()==i) combtmp.push_back(comborg[j]);
+            }
+            sort(combtmp.begin(),combtmp.end());
+            for(int k=0;k<combtmp.size();k++) {
+                combmarg.push_back(combtmp[k]);
+            }
+        }
+        // find the PIP correspoding configuration index
+        for(int i=1;i<combmarg.size();i++) {
+            for(int c=0;c<combNum;c++) {
+                int sumcount=0;
+                for(int j=0;j<combmarg[i].size();j++) {
+                    int tmpidx = combmarg[i][j] - 1;
+                    sumcount += combins[c][tmpidx];
+                }
+                if(sumcount==combmarg[i].size()) idxmarg[i].push_back(c);
+            }
+        }
+        // get the priors
+        vector<string> priorsplit, sigmasplit;
+        double sigma_def = 0.02;
+        if(sigmastr.size() == 0) {
+            for(int i=0;i<expoNum;i++) {
+                sigmastr+=atos(sigma_def);
+                if(i < (expoNum - 1))  sigmastr+=","; 
+            }            
+        }
+        if(piFileName!=NULL) {
+            read_pifile(piFileName, priorsplit);
+        } else {
+            split_string(priorstr,priorsplit);
+        }        
+        split_string(sigmastr,sigmasplit);
+        if(sigmasplit.size()!=expoNum)
+            throw("Error: The number of input prior variances is not consistent with the number of input exposures.");
+        if(priorsplit.size()!=combNum)
+            throw("Error: The number of input prior probabilities is not consistent with the number of test configurations.");
+        vector<double> prior, sigma_b;
+        for(int t=0; t<expoNum; t++)
+        {
+            sigma_b.push_back(atof(sigmasplit[t].c_str()));
+            if(sigma_b[t]<0 || sigma_b[t]>1) throw("Error: --prior-sigma. Prior variance values should be betweeen 0 and 1.");
+        }
+        for(int t=0; t<combNum; t++)
+        {
+            prior.push_back(atof(priorsplit[t].c_str()));
+            if(prior[t]<0 || prior[t]>1) throw("Error: --prior-pi. Prior probability values should be betweeen 0 and 1.");
+        }
+
+        // 4. define global variables and extract the snp and probe data         
+        vector<eqtlInfo> etrait(besdNum); 
+        vector<eqtlInfo> esdata(besdNum);
+        bInfo bdata;
+        gwasData gdata1;
+        map<string, string> prb_snp;
+        bool heidiFlag=false, targetLstflg=false;
+        
+        printf("\nReading the xQTL summary data file ...\n");
+        if((!heidioffFlag && bFileName == NULL && mbFileName == NULL) || (jointsmrflag && bFileName == NULL && mbFileName == NULL)) throw("Error: please input Plink file for SMR analysis by either the flag --bfile or --mbfile.");
+        if(refSNP!=NULL) heidiFlag=true;
+        if(problstName != NULL) cout<<"WARNING: --extract-probe works when the probes are used as either exposures dataset or outcomes.\n"<<endl;
+      
+        // extract the SNP list for exposures
+        for(int i=0;i<besdNum;i++) {
+            read_esifile(&etrait[i], string(besds[i])+".esi");
+            if (snplstName != NULL) extract_eqtl_snp(&etrait[i], snplstName);
+            if(snplst2exclde != NULL) exclude_eqtl_snp(&etrait[i], snplst2exclde);
+            if(snpchr!=0) extract_eqtl_by_chr(&etrait[i], snpchr);
+        }
+        // extract the probe list for exposures
+        for(int i=0;i<besdNum;i++) {
+            read_epifile(&etrait[i], string(besds[i])+".epi");
+            if(problstName != NULL) extract_prob(&etrait[i], problstName);
+            if(problst2exclde != NULL) exclude_prob(&etrait[i], problst2exclde);
+            if(eproblstName != NULL ) extract_prob(&etrait[i], eproblstName);
+            else if(eprobe != NULL) extract_eqtl_single_probe(&etrait[i], eprobe);
+            if(eproblst2exclde != NULL) exclude_prob(&etrait[i], eproblst2exclde);
+            else if(eprobe2rm != NULL) exclude_eqtl_single_probe(&etrait[i], eprobe2rm);
+            if(prbchr!=0) extract_epi_by_chr(&etrait[i],prbchr);
+            read_besdfile(&etrait[i], string(besds[i])+".besd");
+            if(etrait[i]._rowid.empty() && etrait[i]._bxz.empty())
+            {
+                printf("ERROR: no data included in the analysis.\n");
+                exit(EXIT_FAILURE);
+            }
+        }
+
+        // read gwas
+        if(gwasFileName!=NULL) {
+            read_gwas_data(&gdata1, gwasFileName);
+            if (snplstName!= NULL) {
+                extract_gwas_snp(&gdata1, snplstName);
+                update_gwas(&gdata1);
+            } 
+        }
+        // read the cojo independent SNPs for each probe
+        vector<string> cojoprbs; map<string, vector<string>> prb_cojosnps;
+        if(targetcojosnplstName!=NULL) {
+            read_prb_cojo_snplist(targetcojosnplstName, cojoprbs, prb_cojosnps);
+        }
+
+        // 5. allele checking between data
+        if(!heidioffFlag || jointsmrflag)
+        {
+            map<string, string> snp_name_per_chr;
+            if(bFileName!=NULL) read_famfile(&bdata, string(bFileName)+".fam");
+            if(mbFileName!=NULL) read_multi_famfiles(&bdata, multi_bfiles);
+            if(indilstName != NULL) keep_indi(&bdata,indilstName);
+            if(indilst2remove != NULL) remove_indi(&bdata, indilst2remove);
+            if(bFileName!=NULL) read_bimfile(&bdata, string(bFileName)+".bim");
+            if(mbFileName!=NULL) read_multi_bimfiles(&bdata, multi_bfiles, snp_name_per_chr);
+            allele_check_multi_opt(&bdata, etrait, &gdata1);
+            //            allele_check_multi(&bdata, etrait, &gdata1);
+            if(bFileName!=NULL) read_bedfile(&bdata, string(bFileName)+".bed");
+            if(mbFileName!=NULL) read_multi_bedfiles(&bdata, multi_bfiles, snp_name_per_chr);
+            if (bdata._mu.empty()) calcu_mu(&bdata);
+            if (maf > 0)
+            {
+                filter_snp_maf(&bdata, maf);
+                update_geIndx(&bdata, etrait, &gdata1);
+            }
+        } else
+        {
+            allele_check_multi(etrait,&gdata1);
+        }
+        // update the SNPs after allele checking
+        if(gwasFileName!=NULL)  update_gwas(&gdata1);
+        // update the SNPs after allele checking
+        for(int i=0;i<besdNum;i++) {
+            e2econvert(&etrait[i], &esdata[i]);
+        }
+
+        // 6. open .smr and .ppa for writing output
+        long itemcount=0,itercountmlt=0,itercounttest=0;
+        string outstr="";
+        // header for .smr
+        string smrfile0 = string(outFileName)+".smr";
+        FILE* smr0;
+        if(gwasFileName!=NULL) {
+            smr0 = fopen(smrfile0.c_str(), "w");
+            if (!(smr0)) {
+                printf("ERROR: open error %s\n", smrfile0.c_str());
+                exit(1);
+            }
+            outstr="probeID\tProbeChr\tGene\tProbe_bp\ttopSNP\ttopSNP_chr\ttopSNP_bp\tA1\tA2\tFreq\tb_GWAS\tse_GWAS\tp_GWAS\tb_eQTL\tse_eQTL\tp_eQTL\tb_SMR\tse_SMR\tp_SMR\tp_HEIDI\tnsnp_HEIDI\n";
+            if(fputs_checked(outstr.c_str(),smr0))
+            {
+                printf("ERROR: error in writing file %s .\n", smrfile0.c_str());
+                exit(EXIT_FAILURE);
+            }
+        }
+        // header for .ppa
+        string smrfile2 = string(outFileName)+".ppa";
+        FILE* smr2 = fopen(smrfile2.c_str(), "w");
+        if (!(smr2)) {
+            printf("ERROR: open error %s\n", smrfile2.c_str());
+            exit(1);
+        }
+        outstr="Chr\t";
+        int j = 0;
+        for(int i=0; i<besdNum;i++)
+        {
+            j = i+1;
+            outstr+="Expo"+atos(j)+"_ID"+'\t'+"Expo"+atos(j)+"_bp"+'\t';
+        }
+        for(int i=0; i<combmarg.size();i++)
+        {
+            outstr+="PPA(";
+            for(int j=0;j<combmarg[i].size();j++)
+            {
+                outstr+=atos(combmarg[i][j]);
+                if(j<combmarg[i].size()-1) outstr+=",";
+            }
+            outstr+=")\t";
+        }
+        for(int i=1; i<combmarg.size();i++)
+        {
+            outstr+="p_HEIDI(";
+            for(int j=0;j<combmarg[i].size();j++)
+            {
+                outstr+=atos(combmarg[i][j]);
+                if(j<combmarg[i].size()-1) outstr+=",";
+            }
+            if(i<(combmarg.size()-1)) outstr+=")\t";
+        }
+        outstr+=")\n";
+        if(fputs_checked(outstr.c_str(),smr2))
+        {
+            printf("ERROR: in writing file %s .\n", smrfile2.c_str());
+            exit(EXIT_FAILURE);
+        }
+
+        // 7. compute the pairwise SMR effect for all exposure probes
+        printf("\nPerforming SMR analysis ...\n");
+        vector<vector<SMRRLT>> smrrlts;
+        vector<long> probNum;
+        vector<string> outconame;
+        vector<int> outcochr;
+        vector<string> outcogene;
+        vector<int> outcobp;
+        int exposure_probe_wind=op_wind*1000;
+        map<string, double> hdirlts;
+        for(int i=0;i<besdNum;i++)
+        {
+            vector<SMRRLT> smrrltstmp;
+            if(esdata[i]._val.size()>0) {
+                smr_heidi_func(smrrltstmp, NULL, &bdata,&gdata1,&esdata[i],cis_itvl, heidioffFlag, refSNP,p_hetero,ld_top, m_hetero, p_smr, threshpsmrest,new_het_mth,opt,ld_min,opt_hetero,sampleoverlap,pmecs,minCor,prb_snp,targetLstflg);
+            }
+            if(smrrltstmp.size()>0)
+            {
+                probNum.push_back(smrrltstmp.size());
+                smrrlts.push_back(smrrltstmp);
+                for(int j=0;j<smrrltstmp.size();j++)
+                {
+                    outstr=smrrltstmp[j].ProbeID+'\t'+atos(smrrltstmp[j].ProbeChr)+'\t'+smrrltstmp[j].Gene+'\t'+atos(smrrltstmp[j].Probe_bp)+'\t'+smrrltstmp[j].SNP+'\t'+atos(smrrltstmp[j].SNP_Chr)+'\t'+atos(smrrltstmp[j].SNP_bp)+'\t'+smrrltstmp[j].A1+'\t'+smrrltstmp[j].A2+'\t'+atos(smrrltstmp[j].Freq)+'\t'+atos(smrrltstmp[j].b_GWAS)+'\t'+atos(smrrltstmp[j].se_GWAS)+'\t'+dtos(smrrltstmp[j].p_GWAS)+'\t'+atos(smrrltstmp[j].b_eQTL)+'\t'+atos(smrrltstmp[j].se_eQTL)+'\t'+dtos(smrrltstmp[j].p_eQTL)+'\t'+atos(smrrltstmp[j].b_SMR)+'\t'+atos(smrrltstmp[j].se_SMR)+'\t'+dtos(smrrltstmp[j].p_SMR)+'\t'+(smrrltstmp[j].p_HET >= 0 ? dtos(smrrltstmp[j].p_HET) : "NA") + '\t' + (smrrltstmp[j].nsnp > 0 ? atos(smrrltstmp[j].nsnp+1) : "NA") + '\n';
+                    if(fputs_checked(outstr.c_str(),smr0))
+                    {
+                        printf("ERROR: in writing file %s .\n", smrfile0.c_str());
+                        exit(EXIT_FAILURE);
+                    }
+                    hdirlts.insert(pair<string, double>(smrrltstmp[j].ProbeID,smrrltstmp[j].p_HET));
+                }                
+            } 
+        }
+        for(int k=0;k<probNum.size();k++)
+        {   
+            itemcount = itemcount + probNum[k]; 
+        }
+        printf("SMR analysis results of %ld exposure probes have been saved in the file %s .\n",itemcount,smrfile0.c_str());
+        fclose(smr0);
+
+        printf("\nPerforming multi-exposure OPERA analysis (including multi-exposure HEIDI tests) ... \n");
+        if(probNum.size()!=expoNum) {
+            throw("ERROR: The number of exposure probes with significant instrument are less than the number of specified priors.\n");
+            exit(EXIT_FAILURE);
+        }
+
+        // 8. loop with probes for exposure #1; test all possible combinations at each probe loci
+        double cr=0;
+        for(int ii=0;ii<probNum[0];ii++)
+        {
+            double desti=1.0*ii/(probNum[0]);
+            if(desti>=cr)
+            {
+                printf("%3.0f%%\r", 100.0*desti);
+                fflush(stdout);
+                if(cr==0) cr+=0.05;
+                else if(cr==0.05) cr+=0.2;
+                else if(cr==0.25) cr+=0.5;
+                else cr+=0.25;
+            }
+            vector<SMRRLT> smrrltsbf;
+            vector<long> probNumbf;
+            vector<long> expoNumbf; //for missing exposures
+
+            smrrltsbf.push_back(smrrlts[0][ii]); 
+            probNumbf.push_back(1);
+            int traitchr=smrrlts[0][ii].ProbeChr;
+            int traitbp=smrrlts[0][ii].Probe_bp;
+            int lowerbounder=(traitbp-exposure_probe_wind)>0?(traitbp-exposure_probe_wind):0;
+            int upperbounder=traitbp+exposure_probe_wind;
+            // find other exposure probes in the cis-window of 1st exposure
+            for(int i=1;i<besdNum;i++)
+            {
+                int countNum = 0;
+                for(int j=0;j<probNum[i];j++)
+                {
+                   int bptmp=smrrlts[i][j].Probe_bp;
+                   // select probes with SMR pvalue < 0.05 for OPERA analysis
+                   if(smrrlts[i][j].ProbeChr==traitchr && bptmp>=lowerbounder && bptmp<=upperbounder && smrrlts[i][j].p_SMR<=thresh_smr) {
+                        smrrltsbf.push_back(smrrlts[i][j]); countNum = countNum + 1;
+                   }
+                }
+                probNumbf.push_back(countNum);
+            }
+            // update esdata._esi_include/gdata1._include/bdata._include with only SNPs in the cis-window; 
+            // use the 1st exposure bp as gold standard
+            lowerbounder=(traitbp-cis_itvl*1000)>0?(traitbp-cis_itvl*1000):0;
+            upperbounder=traitbp+cis_itvl*1000;
+            esdata[0]._esi_include.clear(); gdata1._include.clear(); bdata._include.clear();
+            for(int j=0;j<esdata[0]._snpNum;j++) {
+               int bptmp=esdata[0]._esi_bp[j];
+               if(esdata[0]._esi_chr[j]==traitchr && bptmp>=lowerbounder && bptmp<=upperbounder) {
+                   esdata[0]._esi_include.push_back(j);
+                   gdata1._include.push_back(j);
+                   bdata._include.push_back(j);
+               }
+            }
+            // update esdata._esi_include for other exposures 
+            for(int i=1;i<besdNum;i++) {
+                esdata[i]._esi_include.clear();
+                for(int j=0;j<esdata[0]._snpNum;j++) {
+                   int bptmp=esdata[0]._esi_bp[j];
+                   if(esdata[0]._esi_chr[j]==traitchr && bptmp>=lowerbounder && bptmp<=upperbounder) {
+                       esdata[i]._esi_include.push_back(j);
+                   }
+                }
+            }
+            // skip the probe of 1st exposure where no nearby probes from other exposure with SMR effect
+            int expocout = 0, missNum = 0;
+            vector<int> missexpoNum(expoNum);
+            for(int i=0;i<expoNum;i++) {
+                if(probNumbf[i]>0) { expocout+=1; expoNumbf.push_back(i);
+                } else { missNum += 1;}
+                missexpoNum[i] = missNum;
+            }
+            if(expocout == 0) { continue; } 
+
+            // illustrate all the combinations
+            vector<vector<int>> indexall;
+            for(int i=0;i<probNumbf.size();i++) {
+                if(probNumbf[i] > 0) {
+                    vector<int> index(probNumbf[i]);
+                    std::iota(index.begin(),index.end(),0);
+                    indexall.push_back(index);
+                } else {
+                    vector<int> index;
+                    index.push_back(0);
+                    indexall.push_back(index);
+                }
+            }
+            vector<vector<int>> combines;
+            permute_vector(indexall, combines);
+
+            // loop with all the possible combinations
+            vector<long> idxcomb_smrrltsbf(expoNumbf.size()), idxcomb_smrrltsbf_last(expoNumbf.size());
+            vector<eqtlInfo> esdatabf(expoNumbf.size());
+            for(int i=0; i<combines.size();i++)
+            {                
+                vector<vector<string>> prb_cojolist;
+                vector<float> bxy(expoNum), sigma_e(expoNum), c(expoNum);
+                vector<string> outconamec(besdNum), outcogenec(besdNum); vector<long> outcobpc(besdNum);
+                vector<float> Pr(combNum),HH(combNum),PO(combNum),PP(combNum),PIP(combNum);
+                MatrixXd lh(2,expoNum);
+                // find the probe in smrrltsbf and esdata
+                outstr=atos(traitchr)+'\t';
+                long postmp = 0; idxcomb_smrrltsbf.clear(), idxcomb_smrrltsbf.resize(expoNumbf.size());
+                if(operasmrflag) jointsmrflag = false;
+                for(int t=0; t<besdNum; t++)
+                {   
+                    if(probNumbf[t] > 0) {
+                        int t_new = t - missexpoNum[t];
+                        long idxtmp = combines[i][t] + postmp;
+                        idxcomb_smrrltsbf[t_new] = idxtmp;
+                        outconamec[t] = smrrltsbf[idxtmp].ProbeID;
+                        outcogenec[t] = smrrltsbf[idxtmp].Gene;
+                        outcobpc[t] = smrrltsbf[idxtmp].Probe_bp;
+                        postmp = postmp + probNumbf[t];
+                        if(!heidioffFlag || jointsmrflag) {
+                            if(idxcomb_smrrltsbf[t_new] != idxcomb_smrrltsbf_last[t_new] || i==0) {
+                                esdata[t]._include.clear();
+                                map<string, int>::iterator itt;
+                                eqtlInfo esdatatmp;
+                                itt = esdata[t]._probe_name_map.find(outconamec[t]);
+                                if(itt != esdata[t]._probe_name_map.end()) {
+                                    esdata[t]._include.push_back(itt->second);
+                                    e2econvert(&esdata[t], &esdatatmp);                                
+                                    esdatabf[t_new] = esdatatmp;
+                                    // esdatabf.push_back(esdatatmp);
+                                }
+                            }                            
+                            if(targetcojosnplstName!=NULL) {
+                                // find the target probe COJO signals
+                                map<string, vector<string>>::iterator prb_pos;
+                                prb_pos = prb_cojosnps.find(outconamec[t]);
+                                vector<string> navector; navector.push_back("");
+                                if(prb_pos!=prb_cojosnps.end()) {
+                                    prb_cojolist.push_back(prb_pos->second);
+                                } else { prb_cojolist.push_back(navector); }
+                            }
+                        }
+                    
+                    } else {
+                        outconamec[t] = "NA"; outcogenec[t] = "NA"; outcobpc[t] = 0;
+                    }                        
+                    outstr+=outconamec[t]+'\t'+atos(outcobpc[t])+'\t';
+                }
+                idxcomb_smrrltsbf_last = idxcomb_smrrltsbf;
+                
+                // perform the SMR or joint-SMR analysis
+                vector<SMRRLT> smrrlts_joint;
+                if(esdatabf.size()!=0 && esdatabf.size() != expocout) { continue; } 
+
+                if(!operasmrflag) { // compute the joint SMR effect
+                    if(targetcojosnplstName!=NULL) {
+                        multi_joint_smr_func(smrrlts_joint, NULL, &bdata, &gdata1, esdatabf, prb_cojolist, cis_itvl, heidioffFlag,refSNP,p_hetero,ld_top,m_hetero,p_smr,threshpsmrest,new_het_mth,opt,ld_min,opt_hetero,sampleoverlap,pmecs,minCor);
+                    } else { multi_joint_smr_func(smrrlts_joint, NULL, &bdata, &gdata1, esdatabf, cis_itvl, heidioffFlag,refSNP,p_hetero,ld_top,m_hetero,p_smr,threshpsmrest,new_het_mth,opt,ld_min,opt_hetero,sampleoverlap,pmecs,minCor); }
+                } else { // compute the marginal SMR effect
+                    // for(int s=0; s<esdatabf.size(); s++) {
+                    //     vector<SMRRLT> smrrlt_esdata;
+                    //     smr_heidi_func(smrrlt_esdata, NULL, &bdata, &gdata1, &esdatabf[s],cis_itvl, heidioffFlag, refSNP,p_hetero,ld_top, m_hetero, p_smr, threshpsmrest,new_het_mth,opt,ld_min,opt_hetero,sampleoverlap,pmecs,minCor,prb_snp,targetLstflg);
+                    //     smrrlts_joint.push_back(smrrlt_esdata[0]);
+                    // }
+                    for(int s=0; s<idxcomb_smrrltsbf.size(); s++) {
+                        smrrlts_joint.push_back(smrrltsbf[idxcomb_smrrltsbf[s]]);
+                    }
+                }
+
+                //get the bxy, sigma_b and sigma_e from joint-SMR
+                int k_joint = 0;
+                for(int t=0; t<expoNum; t++)
+                {
+                    if(probNumbf[t] > 0) {
+                        bxy[t] = smrrlts_joint[k_joint].b_SMR;
+                        sigma_e[t] = pow(smrrlts_joint[k_joint].se_SMR,2);
+                        c[t] = 1+sigma_e[t]/sigma_b[t];
+                        k_joint = k_joint + 1;
+                    } else {
+                        bxy[t] = 0; sigma_e[t] = 0; c[t] = 0;
+                    }
+                }
+                // get the H0 and H1 prior pi and likelihood
+                const double PI = 3.141592653589793238463;
+                for(int t=0;t<expoNum;t++) {
+                    if(probNumbf[t] > 0) {
+                        lh(0,t)=pow(2*PI,-0.5)*pow(sigma_e[t],-0.5)*exp(-1*pow(bxy[t],2)/(2*sigma_e[t]));
+                        lh(1,t)=pow(2*PI,-0.5)*pow(c[t]*sigma_b[t],-0.5)*exp((1/c[t]-1)*pow(bxy[t],2)/(2*sigma_e[t]));
+                    } else {
+                        lh(0,t) = 1; lh(1,t) = 0;
+                    }
+                }
+                // caculate the posterier probablity
+                for(int i=0;i<combNum;i++) {
+                    HH[i]=1.0;
+                    for(int t=0;t<expoNum;t++)
+                    {
+                        HH[i] *= lh(combins[i][t],t);
+                    }
+                }
+                float POall = 0;
+                for(int i=0;i<combNum;i++) {
+                    PO[i] = HH[i]*prior[i];
+                    POall+=PO[i];
+                }
+                for(int i=0;i<combNum;i++) {
+                    PP[i] = PO[i]/POall;
+                }
+                for(int i=0;i<combmarg.size();i++) {
+                    for(int j=0;j<idxmarg[i].size();j++) {
+                        PIP[i] += PP[idxmarg[i][j]];
+                    }
+                }
+                for(int i=0;i<PIP.size();i++) {
+                    outstr = outstr + atos(PIP[i])+'\t';
+                }
+                bool sigflag = false; vector<int> sigcomb;  
+                for(int i=1;i<combmarg.size();i++) {
+                    if(PIP[i]>=thresh_PP) { sigflag = true; sigcomb.push_back(i); }
+                }
+                
+                // multi-exposure HEIDI test
+                vector<vector<SMRRLT>> smrrltsheidi(combmarg.size());
+                if(! heidioffFlag && sigflag) {
+                    for(int h=0;h<sigcomb.size();h++) {
+                        vector<eqtlInfo> esdataheidi;
+                        int tmpidx = sigcomb[h];
+                        string prbname;
+                        for(int c=0;c<combmarg[tmpidx].size();c++) {
+                            int combidx = combmarg[tmpidx][c]-1;
+                            for(int k=0;k<expoNumbf.size();k++) {
+                                if(expoNumbf[k] == combidx) {
+                                    esdataheidi.push_back(esdatabf[k]);
+                                    prbname.append(esdatabf[k]._epi_prbID[0]);
+                                }
+                            }                                                            
+                        }
+                        map<string, double>::iterator itmp;
+                        itmp = hdirlts.find(prbname);
+                        if(itmp != hdirlts.end()) {
+                            SMRRLT currlt;
+                            currlt.p_HET = itmp->second;
+                            currlt.ProbeID = prbname;
+                            smrrltsheidi[tmpidx].push_back(currlt);
+                        } else {
+                        multi_heidi_func(smrrltsheidi[tmpidx], NULL, &bdata, &gdata1, esdataheidi, cis_itvl, heidioffFlag, refSNP,p_hetero,ld_top, m_hetero, p_smr, threshpsmrest,new_het_mth,opt,ld_min,opt_hetero,sampleoverlap,pmecs,minCor);
+                        hdirlts.insert(pair<string, double>(prbname,smrrltsheidi[tmpidx][0].p_HET));
+                        }
+                    }
+                    // output heidi pvalue
+                    for(int i=1;i<combmarg.size();i++) {
+                        if(smrrltsheidi[i].size()>0) {
+                            if(i<(combmarg.size()-1)) {outstr=outstr+(smrrltsheidi[i][0].p_HET >= 0 ? dtos(smrrltsheidi[i][0].p_HET) : "NA") + '\t' ;
+                            } else {outstr=outstr+(smrrltsheidi[i][0].p_HET >= 0 ? dtos(smrrltsheidi[i][0].p_HET) : "NA") + '\n';}
+                        } else {
+                            if(i<(combmarg.size()-1)) {outstr=outstr + "NA" + '\t';
+                            } else {outstr=outstr + "NA" + '\n';}
+                        }
+                    }                
+                } else {
+                     for(int i=1;i<combmarg.size();i++) {
+                         if(i<(combmarg.size()-1)) { outstr=outstr + "NA" + '\t';
+                         } else { outstr=outstr + "NA" + '\n'; }
+                    }
+                }
+                if(sigflag) {
+                    itercountmlt+=1;
+                    if(fputs_checked(outstr.c_str(),smr2))
+                    {
+                        printf("ERROR: in writing file %s .\n", smrfile2.c_str());
+                        exit(EXIT_FAILURE);
+                    }
+                }   
+                itercounttest+=1;
+            }
+            
+        }
+        fclose(smr2);
+        printf("\nOPERA analyses for %ld combinations between %ld exposures and 1 outcome completed.\nPosterior probability and HEIDI results of %ld combinations have been saved in the file %s.\n",itercounttest,expoNum,itercountmlt,smrfile2.c_str());
+    }
+
+    void multioutcomesmr(char* outFileName, char* bFileName, char* mbFileName, char* piFileName, char* eqtlFileName, char* eqtlsmaslstName, char* gwasFileName, double maf,string priorstr,string sigmastr, char* indilstName, char* snplstName,char* problstName, char* oproblstName,char* eproblstName,bool bFlag,double p_hetero,double ld_top,int m_hetero, int opt_hetero,  char* indilst2remove, char* snplst2exclde, char* problst2exclde, char* oproblst2exclde,char* eproblst2exclde,double p_smr,char* refSNP, bool heidioffFlag,int cis_itvl,int snpchr,int prbchr,char* traitlstName,int op_wind, char* oprobe, char* eprobe, char* oprobe2rm, char* eprobe2rm, double threshpsmrest, bool new_het_mth, bool opt, double ld_min,bool cis2all, bool sampleoverlap, double pmecs, int minCor, char* targetcojosnplstName, char* snpproblstName,double afthresh,double percenthresh)
+    {   
+        //here eqtlFileName is the outcome and eqtlFileName2 is the exposure. in the main we pass the outcome (eqtlFileName2) to eqtlFileName and the exposure (eqtlFileName) to eqtlFileName2
+        setNbThreads(thread_num);
+        string logstr;
+        if(oproblstName!=NULL && oprobe!=NULL)
+        {
+            logstr="WARNING: --extract-single-outcome-probe is not surpposed to use together with --extract-outcome-probe. --extract-single-outcome-probe will be disabled.\n";
+            oprobe=NULL;
+            fputs(logstr.c_str(), stdout);
+        }
+        if(eproblstName!=NULL && eprobe!=NULL)
+        {
+            logstr="WARNING: --extract-single-exposure-probe is not surpposed to use together with --extract-exposure-probe. --extract-single-exposure-probe will be disabled.\n";
+            eprobe=NULL;
+            fputs(logstr.c_str(), stdout);
+        }
+        if(oproblst2exclde!=NULL && oprobe2rm!=NULL)
+        {
+            logstr="WARNING: --exclude-single-outcome-probe is not surpposed to use together with --exclude-outcome-probe. --exclude-single-outcome-probe will be disabled.\n";
+            oprobe2rm=NULL;
+            fputs(logstr.c_str(), stdout);
+        }
+        if(eproblst2exclde!=NULL && eprobe2rm!=NULL)
+        {
+            logstr="WARNING: --exclude-single-exposure-probe is not surpposed to use together with --exclude-exposure-probe. --exclude-single-exposure-probe will be disabled.\n";
+            eprobe2rm=NULL;
+            fputs(logstr.c_str(), stdout);
+        }
+        if(ld_min>ld_top) {
+            printf("ERROR: --ld-min %f is larger than --ld-top %f.\n",ld_min,ld_top);
+            exit(EXIT_FAILURE);
+        }
+        if(refSNP && targetcojosnplstName)
+        {
+            printf("ERROR: --target-snp and --target-snp-probe-list both found in your command. please disable one.\n");
+            exit(EXIT_FAILURE);
+        }
+        if(snpproblstName && targetcojosnplstName)
+        {
+            printf("ERROR: --extract-target-snp-probe and --extract-snp-probe both found in your command. please disable one.\n");
+            exit(EXIT_FAILURE);
+        }
+        // checking besd file list
+        vector<string> besds;
+        vector<smr_snpinfo> snpinfo;
+        vector<smr_probeinfo> probeinfo;
+        vector<uint64_t> nprb,nsnp;
+        vector< vector<int> > lookup;
+        
+        read_msglist(eqtlsmaslstName, besds,"eQTL summary file names");
+        if(besds.size()<1) {
+            printf("Less than 1 BESD files list in %s.\n",eqtlsmaslstName);
+            exit(EXIT_FAILURE);
+        }
+        printf("%ld eQTL summary file names are included.\n",besds.size());
+        
+        //printf("Checking the BESD format...\n");
+        vector<int> format, smpsize;
+        check_besds_format(besds, format, smpsize);
+        int label=-1;
+        for(int i=0;i<format.size();i++)
+        {
+            if(format[i]==DENSE_FILE_TYPE_1 || format[i]==DENSE_FILE_TYPE_3 ) {
+                if(label==-1) {
+                    label=0;
+                } else if(label==1) {
+                    label=2;
+                    break;
+                }
+                
+            } else if (format[i]==SPARSE_FILE_TYPE_3F || format[i]==SPARSE_FILE_TYPE_3 ) {
+                if(label==-1) {
+                    label=1;
+                } else if(label==0) {
+                    label=2;
+                    break;
+                }
+            } else {
+                printf("Some BESDs are from old sparse format. please use SMR to re-make it.\n");
+                exit(EXIT_FAILURE);
+            }
+        }
+        long besdNum=besds.size();
+        
+        FILE** fptrs = (FILE**)malloc(sizeof(FILE*) * besds.size());
+        for(int i=0;i<besdNum;i++) {
+            string besdFileName=besds[i]+".besd";
+            fptrs[i]=fopen(besdFileName.c_str(),"rb");
+            if(fptrs[i]==NULL) {
+                printf("ERROR: in opening file %s .\n", besdFileName.c_str());
+                exit(EXIT_FAILURE);
+            }
+        }
+        
+        long outcoNum;
+        if(gwasFileName!=NULL)
+        {
+            outcoNum = besdNum +1;
+        } else {outcoNum = besdNum;}
+        printf("There are %ld outcomes and 1 exposure are included in multiple-SMR and multiple-HEIDI test.\n",outcoNum);
+        // illustrate all the combinations
+        vector<vector<int>> idxall;
+        for(int i=0;i<outcoNum;i++){
+            vector<int> index(2);
+            std::iota(index.begin(),index.end(),0);
+            idxall.push_back(index);
+        }
+        vector<vector<int>> combins;
+        permute_vector(idxall, combins);
+        
+        // get the priors
+        vector<string> priorsplit, sigmasplit;
+        split_string(priorstr,priorsplit);
+        split_string(sigmastr,sigmasplit);
+        if(priorsplit.size()!=sigmasplit.size() || priorsplit.size()!=outcoNum || sigmasplit.size()!=outcoNum)
+            throw("Error: The number of input prior is not consistent with the number of input outcomes.");
+        vector<double> prior, sigma_b;
+        for(int t=0; t<outcoNum; t++)
+        {
+            prior.push_back(atof(priorsplit[t].c_str()));
+            sigma_b.push_back(atof(sigmasplit[t].c_str()));
+            if(prior[t]<0 || prior[t]>1) throw("Error: --prior-pi. Prior probability values should be betweeen 0 and 1.");
+        }
+        
+        bool targetLstflg=false;
+        map<string, string> prb_snp;
+        vector<eqtlInfo> etrait(besdNum);        //vector<eqtlInfo*> etrait;
+        eqtlInfo esdata;
+        bInfo bdata;
+        gwasData gdata1;
+        bool heidiFlag=false;
+        
+        printf("Reading the exposure summary data file ...\n");
+        if(!heidioffFlag && bFileName == NULL ) throw("Error: please input Plink file for SMR analysis by the flag --bfile.");
+        if(eqtlFileName==NULL) throw("Error: please input eQTL summary data for SMR analysis by the flag --eqtl-summary.");
+        if(refSNP!=NULL) heidiFlag=true;
+        if(problstName != NULL) cout<<"WARNING: --extract-probe works when the probes are used as either exposures dataset or outcomes.\n"<<endl;
+        read_esifile(&esdata, string(eqtlFileName)+".esi");
+        if (snplstName != NULL) extract_eqtl_snp(&esdata, snplstName);
+        if(snplst2exclde != NULL) exclude_eqtl_snp(&esdata, snplst2exclde);
+        read_epifile(&esdata, string(eqtlFileName)+".epi");
+        if(problstName != NULL) extract_prob(&esdata, problstName);
+        if(problst2exclde != NULL) exclude_prob(&esdata, problst2exclde);
+        if(eproblstName != NULL ) extract_prob(&esdata, eproblstName);
+        else if(eprobe != NULL) extract_eqtl_single_probe(&esdata, eprobe);
+        if(eproblst2exclde != NULL) exclude_prob(&esdata, eproblst2exclde);
+        else if(eprobe2rm != NULL) exclude_eqtl_single_probe(&esdata, eprobe2rm);
+        
+        printf("Reading the outcome summary data file ...\n");
+        for(int i=0;i<besdNum;i++) {
+            read_esifile(&etrait[i], string(besds[i])+".esi");
+            if (snplstName != NULL) extract_eqtl_snp(&etrait[i], snplstName);
+            if(snplst2exclde != NULL) exclude_eqtl_snp(&etrait[i], snplst2exclde);
+            if(snpchr!=0) extract_eqtl_by_chr(&etrait[i], snpchr);
+        }
+
+        //the etrait is not updated, so from now on _esi_include should be used always.
+        for(int i=0;i<besdNum;i++) {
+            //cout<<"Reading eQTL summary data..."<<endl;
+            read_epifile(&etrait[i], string(besds[i])+".epi");
+            if(problstName != NULL) extract_prob(&etrait[i], problstName);
+            if(problst2exclde != NULL) exclude_prob(&etrait[i], problst2exclde);
+            if(oproblstName != NULL ) extract_prob(&etrait[i], oproblstName);
+            else if(oprobe != NULL) extract_eqtl_single_probe(&etrait[i], oprobe);
+            if(oproblst2exclde != NULL) exclude_prob(&etrait[i], oproblst2exclde);
+            else if(oprobe2rm != NULL) exclude_eqtl_single_probe(&etrait[i], oprobe2rm);
+            if(prbchr!=0) extract_epi_by_chr(&etrait[i],prbchr);
+            read_besdfile(&etrait[i], string(besds[i])+".besd");
+            //cout<<etrait[i]._rowid<<endl;
+            if(etrait[i]._rowid.empty() && etrait[i]._bxz.empty())
+            {
+                printf("ERROR: no data included in the analysis.\n");
+                exit(EXIT_FAILURE);
+            }
+        }
+        // Yang Wu read gwas
+        if(gwasFileName!=NULL) read_gwas_data(&gdata1, gwasFileName);
+        // allele checking between data
+        if(!heidioffFlag)
+        {
+            read_famfile(&bdata, string(bFileName)+".fam");
+            if(indilstName != NULL) keep_indi(&bdata,indilstName);
+            if(indilst2remove != NULL) remove_indi(&bdata, indilst2remove);
+            read_bimfile(&bdata, string(bFileName)+".bim");
+            if(gwasFileName!=NULL){
+                allele_check_multi(&bdata, etrait, &gdata1, &esdata);
+            }else { allele_check_multi(&bdata, etrait, &esdata);}
+            // if no snp left after check
+            read_bedfile(&bdata, string(bFileName)+".bed");
+            if (bdata._mu.empty()) calcu_mu(&bdata);
+            if (maf > 0)
+            {
+                filter_snp_maf(&bdata, maf);
+                if(gwasFileName!=NULL)
+                {
+                    update_geIndx(&bdata, etrait, &gdata1, &esdata);
+                } else {update_geIndx(&bdata, etrait, &esdata);}
+            }
+        }else
+        {
+            if(gwasFileName!=NULL)
+            {
+                allele_check_multi(etrait,&gdata1,&esdata);
+            } else {allele_check_multi(etrait,&esdata);}
+            
+        }
+        if(gwasFileName!=NULL)  update_gwas(&gdata1);
+        read_besdfile(&esdata, string(eqtlFileName)+".besd");
+        if(esdata._rowid.empty() && esdata._bxz.empty())
+        {
+            printf("No data included in the analysis.\n");
+            exit(EXIT_FAILURE);
+        }
+        // open multiple outcome files to write
+        long itemcount=0,itercountmlt=0,itercounttest=0;
+        long etraitcount=0;
+        string outstr="";
+        // GWAS trait
+        string smrfile0 = string(outFileName)+".smr";
+        FILE* smr0;
+        if(gwasFileName!=NULL){
+            smr0 = fopen(smrfile0.c_str(), "w");
+            if (!(smr0)) {
+                printf("ERROR: open error %s\n", smrfile0.c_str());
+                exit(1);
+            }
+            outstr="probeID\tProbeChr\tGene\tProbe_bp\ttopSNP\ttopSNP_chr\ttopSNP_bp\tA1\tA2\tFreq\tb_GWAS\tse_GWAS\tp_GWAS\tb_eQTL\tse_eQTL\tp_eQTL\tb_SMR\tse_SMR\tp_SMR\tp_HEIDI\tnsnp_HEIDI\n";
+            if(fputs_checked(outstr.c_str(),smr0))
+            {
+                printf("ERROR: error in writing file %s .\n", smrfile0.c_str());
+                exit(EXIT_FAILURE);
+            }
+        }
+        // molecular trait
+        string smrfile1 = string(outFileName)+".msmr";
+        FILE* smr1 = fopen(smrfile1.c_str(), "w");
+            if (!(smr1)) {
+                printf("ERROR: open error %s\n", smrfile1.c_str());
+                exit(1);
+            }
+            outstr="Expo_ID\tExpo_Chr\tExpo_Gene\tExpo_bp\tOutco_ID\tOutco_Chr\tOutco_Gene\tOutco_bp\ttopSNP\ttopSNP_chr\ttopSNP_bp\tA1\tA2\tFreq\tb_Outco\tse_Outco\tp_Outco\tb_Expo\tse_Expo\tp_Expo\tb_SMR\tse_SMR\tp_SMR\tp_HEIDI\tnsnp_HEIDI\n";
+            if(fputs_checked(outstr.c_str(),smr1))
+            {
+                printf("ERROR: in writing file %s .\n", smrfile1.c_str());
+                exit(EXIT_FAILURE);
+            }
+        // posterior probability
+        string smrfile2 = string(outFileName)+".multismr";
+        FILE* smr2 = fopen(smrfile2.c_str(), "w");
+            if (!(smr2)) {
+                printf("ERROR: open error %s\n", smrfile2.c_str());
+                exit(1);
+            }
+            //outstr="Chr\tExpo_ID\tExpo_Gene\tExpo_bp\tOutco1_ID\tOutco1_Gene\tOutco1_bp\tOutco2_ID\tOutco2_Gene\tOutco2_bp\tOutco3_ID\tPP1(0:0:0)\tPP2(0:0:1)\tPP3(0:1:0)\tPP4(0:1:1)\tPP5(1:0:0)\tPP6(1:0:1)\tPP7(1:1:0)\tPP8(1:1:1)\n";
+            outstr="Chr\tExpo_ID\tExpo_Gene\tExpo_bp\t";
+            int j = 0;
+            for(int i=0; i<besdNum;i++)
+            {
+                j = i+1;
+                outstr+="Outco"+atos(j)+"_ID"+'\t'+"Outco"+atos(j)+"_Gene"+'\t'+"Outco"+atos(j)+"_bp"+'\t';
+            }
+            if(gwasFileName!=NULL) outstr+="Outco"+atos(j+1)+"_ID"+'\t';
+        
+            for(int i=0; i<combins.size();i++)
+            {
+                outstr+="PP"+atos(i+1)+"(";
+                for(int j=0;j<outcoNum;j++)
+                {
+                    outstr+=atos(combins[i][j]);
+                    if(j<outcoNum-1) outstr+=":";
+                }
+                if(i<(combins.size()-1)) outstr+=")\t";
+            }
+            outstr+=")\tp_HEIDI\tnsnp_HEIDI\n";
+            if(fputs_checked(outstr.c_str(),smr2))
+            {
+                printf("ERROR: in writing file %s .\n", smrfile2.c_str());
+                exit(EXIT_FAILURE);
+            }   
+        // end of opening files
+        int exposure_probe_wind=op_wind*1000;
+        vector<vector<int>> includebk(besdNum);
+        for(int t=0;t<besdNum;t++)
+        {
+            includebk[t]=etrait[t]._include;
+        }
+        // loop with exposure probes
+        printf("\nPerforming multi-outcome-SMR analysis (multi-SMR and multi-HEIDI tests) for %d exposure probes... \n",esdata._probNum);
+        double cr=0;
+        for( int ii=0;ii<esdata._probNum;ii++)
+        {   
+            double desti=1.0*ii/(esdata._probNum-1);
+            if(desti>=cr)
+            {
+                printf("%3.0f%%\r", 100.0*desti);
+                fflush(stdout);
+                if(cr==0) cr+=0.05;
+                else if(cr==0.05) cr+=0.2;
+                else if(cr==0.25) cr+=0.5;
+                else cr+=0.25;
+            }
+            //gwasData gdata;
+            esdata._include.clear();
+            esdata._include.push_back(ii);
+            string traitname=esdata._epi_prbID[ii];
+            int traitchr=esdata._epi_chr[ii];
+            string traitgene=esdata._epi_gene[ii];
+            int traitbp=esdata._epi_bp[ii];
+            //cout<<"\nPerforming analysis of exposure [ "+traitname+" ]..."<<endl;
+    
+           if(cis2all)
+           {
+               printf("\n%ld outcome probes are inclued in the analysis with the exposure probe %s.\n", esdata._include.size(),traitname.c_str());
+               
+           } else
+           {
+               int lowerbounder=(traitbp-exposure_probe_wind)>0?(traitbp-exposure_probe_wind):0;
+               int upperbounder=traitbp+exposure_probe_wind;
+
+               for(int i=0;i<besdNum;i++)
+               {
+                   etrait[i]._include.clear();
+                   for(int j=0;j<includebk[i].size();j++)
+                   {
+                       int bptmp=etrait[i]._epi_bp[includebk[i][j]];
+                       if(etrait[i]._epi_chr[includebk[i][j]]==traitchr && bptmp>=lowerbounder && bptmp<=upperbounder) etrait[i]._include.push_back(includebk[i][j]);
+                   }
+                   //printf("\n%ld probes from outcome%d in the cis region [%d, %d] of exposure probe %s are inclued in the analysis.\n", etrait[i]._include.size(),i+1,lowerbounder,upperbounder,traitname.c_str());
+                }
+            }
+            vector<long> probNum;
+            vector<vector<SMRRLT>> smrrlts;
+            vector<gwasData> gdatall;
+            vector<string> outconame;
+            vector<int> outcochr;
+            vector<string> outcogene;
+            vector<int> outcobp;
+            // molecular traits SMR
+            for(int i=0;i<besdNum;i++)
+            {
+                long count=0, cisNum = etrait[i]._include.size();
+                for(int p=0;p<cisNum;p++)
+                {
+                gwasData gdata;
+                vector<SMRRLT> smrrlts1;
+                int j = etrait[i]._include[p];
+                e2gconvert(&etrait[i], &gdata, j);
+                if(gdata.snpName.size()< m_hetero)
+                {
+                    //cout<<"\n"<<gdata.snpNum<<" common SNPs (less than parameter m_hetero: "+atos(m_hetero)+" ) are included from eTrait [ "+etrait[i]._epi_prbID[j]+" ] summary."<<endl;
+                    continue;
+                }
+                gdata.snpNum=gdata._include.size();
+                //cout<<"\n"<<gdata.snpNum<<" common SNPs are included from eTrait [ "+etrait[i]._epi_prbID[j]+" ] summary."<<endl;
+                smr_heidi_func(smrrlts1, NULL, &bdata, &gdata, &esdata, cis_itvl, heidioffFlag, refSNP,p_hetero,ld_top, m_hetero , p_smr, threshpsmrest,new_het_mth,opt,ld_min,opt_hetero,sampleoverlap,pmecs,minCor,prb_snp,targetLstflg);                
+                if(smrrlts1.size()>0)
+                    {
+                        count+=1;
+                        itemcount+=1;
+                        if(!heidioffFlag) {gdatall.push_back(gdata);}
+                        smrrlts.push_back(smrrlts1);
+                        outcochr.push_back(etrait[i]._epi_chr[j]);
+                        outconame.push_back(etrait[i]._epi_prbID[j]);
+                        outcogene.push_back(etrait[i]._epi_gene[j]);
+                        outcobp.push_back(etrait[i]._epi_bp[j]);
+                    }
+                }
+                probNum.push_back(count);
+            }
+            // GWAS SMR
+            vector<SMRRLT> smrrltsgwas;
+            if(gwasFileName!=NULL)
+            {
+            smr_heidi_func(smrrltsgwas, NULL, &bdata,&gdata1,&esdata, cis_itvl, heidioffFlag, refSNP,p_hetero,ld_top, m_hetero , p_smr, threshpsmrest,new_het_mth,opt,ld_min,opt_hetero,sampleoverlap,pmecs,minCor,prb_snp,targetLstflg);
+            if(smrrltsgwas.size()>0)
+                {
+                    
+                    probNum.push_back(1);
+                    smrrlts.push_back(smrrltsgwas);
+                    if(!heidioffFlag) {gdatall.push_back(gdata1);}
+                } else {
+                    //printf("WARNING: No common SNP passed the p-value threshold %e for the SMR analysis of complex trait.\n", p_smr);
+                    continue;
+                }
+            }
+            if(smrrlts.size()>0) etraitcount+=1;
+
+            int outcomcout=0; 
+            for(int i=0;i<probNum.size();i++){
+                if(probNum[i]>0) outcomcout+=1;
+            }
+
+            if(outcomcout==outcoNum) {
+                // illustrate all the combinations
+                vector<vector<int>> indexall;
+                for(int i=0;i<probNum.size();i++){
+                    vector<int> index(probNum[i]);
+                    std::iota(index.begin(),index.end(),0);
+                    indexall.push_back(index);
+                }
+                vector<vector<int>> combines;
+                permute_vector(indexall, combines);
+                // Bayesian factor caculation
+                //printf("\nPerforming Multi-SMR tests.....\n");
+                //if (combines.size()==0) printf("\nWARNING: Less than %ld outcomes included in the analysis. \nThe multi-SMR and multi-HEIDI test will skip for exposure probe %s\n",outcoNum,traitname.c_str());
+                long combNum=round(pow(2,outcoNum));
+                for(int i=0; i<combines.size();i++)
+                {
+                    vector<float> bxy(outcoNum), sigma_e(outcoNum),c(outcoNum);
+                    vector<string> outconamec(besdNum), outcogenec(besdNum); vector<long> outcobpc(besdNum);
+                    vector<float> Pr(combNum),HH(combNum),PO(combNum),PP(combNum);
+                    MatrixXd pie(2,outcoNum), lh(2,outcoNum);
+
+                    vector<gwasData> gdatain(outcoNum);
+
+                    // get the probe and gene information for output
+                    outstr=atos(traitchr)+'\t'+traitname+'\t'+traitgene+'\t'+atos(traitbp)+'\t';
+                    long postmp=0;
+                    for(int t=0; t<besdNum; t++)
+                    {
+                        long idxtmp = combines[i][t]+postmp;
+                        outconamec[t] = outconame[idxtmp];
+                        outcogenec[t] = outcogene[idxtmp];
+                        outcobpc[t] = outcobp[idxtmp];
+                        postmp=postmp+probNum[t];
+                        outstr+=outconamec[t]+'\t'+outcogenec[t]+'\t'+atos(outcobpc[t])+'\t';
+                    }
+                    if(gwasFileName!=NULL) outstr+="Trait\t";
+                    //get the bxy, sigma_b and sigma_e from SMR
+                    long pos=0;
+                    for(int t=0; t<outcoNum; t++)
+                    {
+                        long idx = combines[i][t]+pos;
+                        bxy[t]=smrrlts[idx][0].b_SMR;
+                        sigma_e[t]=pow(smrrlts[idx][0].se_SMR,2);
+                        c[t]=1+sigma_e[t]/sigma_b[t];
+                        pos=pos+probNum[t];
+                        if(!heidioffFlag) {gdatain[t]=gdatall[idx];}
+
+                    }
+                    // multi-HEIDI test
+                    vector<SMRRLT> smrrltsheidi;
+                    if(!heidioffFlag){
+                    multi_heidi_func(smrrltsheidi, NULL, &bdata, gdatain, &esdata, cis_itvl, heidioffFlag, refSNP,p_hetero,ld_top, m_hetero, p_smr, threshpsmrest,new_het_mth,opt,ld_min,opt_hetero,sampleoverlap,pmecs,minCor);
+                    }
+                    // get the H0 and H1 prior pi and likelihood
+                    const double PI = 3.141592653589793238463;
+                    for(int t=0;t<outcoNum;t++) {
+                        pie(0,t)=1-prior[t]; pie(1,t)=prior[t];
+                        lh(0,t)=pow(2*PI,-0.5)*pow(sigma_e[t],-0.5)*exp(-1*pow(bxy[t],2)/(2*sigma_e[t]));
+                        lh(1,t)=pow(2*PI,-0.5)*pow(c[t]*sigma_b[t],-0.5)*exp((1/c[t]-1)*pow(bxy[t],2)/(2*sigma_e[t]));
+                    }
+                    // caculate the posterier probablity
+                    for(int i=0;i<combNum;i++){
+                        Pr[i]=1.0;  HH[i]=1.0;
+                        for(int t=0;t<outcoNum;t++)
+                        {
+                            Pr[i] *= pie(combins[i][t],t);
+                            HH[i] *= lh(combins[i][t],t);
+                        }
+                    }
+                    float POall=0;
+                    for(int i=0;i<combNum;i++){
+                        PO[i]=HH[i]*Pr[i];
+                        POall+=PO[i];
+                    }
+                    for(int i=0;i<combNum;i++){
+                        PP[i]=PO[i]/POall;
+                        outstr=outstr+atos(PP[i])+'\t';
+                    }
+                    if(!heidioffFlag){
+                    outstr=outstr+(smrrltsheidi[0].p_HET >= 0 ? dtos(smrrltsheidi[0].p_HET) : "NA") + '\t' + (smrrltsheidi[0].nsnp > 0 ? atos(smrrltsheidi[0].nsnp+1) : "NA") + '\n';
+                    } else {
+                        outstr=outstr + "NA" + '\t' + "NA" + '\n';
+                    }
+                    // if(PP[combNum-1]>=0.6){
+                    if(1-PP[0]>=0.5){
+                        itercountmlt+=1;
+                        if(fputs_checked(outstr.c_str(),smr2))
+                        {
+                            printf("ERROR: in writing file %s .\n", smrfile2.c_str());
+                            exit(EXIT_FAILURE);
+                        }
+                    }
+                    itercounttest+=1;                    
+                }
+
+            } else {
+                continue;
+            }
+            
+            // output the GWAS SMR results if included
+            if(gwasFileName!=NULL){
+                outstr=smrrltsgwas[0].ProbeID+'\t'+atos(smrrltsgwas[0].ProbeChr)+'\t'+smrrltsgwas[0].Gene+'\t'+atos(smrrltsgwas[0].Probe_bp)+'\t'+smrrltsgwas[0].SNP+'\t'+atos(smrrltsgwas[0].SNP_Chr)+'\t'+atos(smrrltsgwas[0].SNP_bp)+'\t'+smrrltsgwas[0].A1+'\t'+smrrltsgwas[0].A2+'\t'+atos(smrrltsgwas[0].Freq)+'\t'+atos(smrrltsgwas[0].b_GWAS)+'\t'+atos(smrrltsgwas[0].se_GWAS)+'\t'+dtos(smrrltsgwas[0].p_GWAS)+'\t'+atos(smrrltsgwas[0].b_eQTL)+'\t'+atos(smrrltsgwas[0].se_eQTL)+'\t'+dtos(smrrltsgwas[0].p_eQTL)+'\t'+atos(smrrltsgwas[0].b_SMR)+'\t'+atos(smrrltsgwas[0].se_SMR)+'\t'+dtos(smrrltsgwas[0].p_SMR)+'\t'+(smrrltsgwas[0].p_HET >= 0 ? dtos(smrrltsgwas[0].p_HET) : "NA") + '\t' + (smrrltsgwas[0].nsnp > 0 ? atos(smrrltsgwas[0].nsnp+1) : "NA") + '\n';
+                if(fputs_checked(outstr.c_str(),smr0))
+                {
+                    printf("ERROR: in writing file %s .\n", smrfile0.c_str());
+                    exit(EXIT_FAILURE);
+                }
+                
+            }
+            // output molecular trait SMR results
+            long mNum=smrrlts.size();
+            if (gwasFileName!=NULL) mNum=mNum-1;
+            for(int j=0;j<mNum;j++)
+            {
+                outstr=smrrlts[j][0].ProbeID+'\t'+atos(smrrlts[j][0].ProbeChr)+'\t'+smrrlts[j][0].Gene+'\t'+atos(smrrlts[j][0].Probe_bp)+'\t'+outconame[j]+'\t'+atos(outcochr[j])+'\t'+outcogene[j]+'\t'+atos(outcobp[j])+'\t'+smrrlts[j][0].SNP+'\t'+atos(smrrlts[j][0].SNP_Chr)+'\t'+atos(smrrlts[j][0].SNP_bp)+'\t'+smrrlts[j][0].A1+'\t'+smrrlts[j][0].A2+'\t'+atos(smrrlts[j][0].Freq)+'\t'+atos(smrrlts[j][0].b_GWAS)+'\t'+atos(smrrlts[j][0].se_GWAS)+'\t'+dtos(smrrlts[j][0].p_GWAS)+'\t'+atos(smrrlts[j][0].b_eQTL)+'\t'+atos(smrrlts[j][0].se_eQTL)+'\t'+dtos(smrrlts[j][0].p_eQTL)+'\t'+atos(smrrlts[j][0].b_SMR)+'\t'+atos(smrrlts[j][0].se_SMR)+'\t'+dtos(smrrlts[j][0].p_SMR)+'\t'+(smrrlts[j][0].p_HET >= 0 ? dtos(smrrlts[j][0].p_HET) : "NA") + '\t' + (smrrlts[j][0].nsnp > 0 ? atos(smrrlts[j][0].nsnp+1) : "NA") + '\n';
+                if(fputs_checked(outstr.c_str(),smr1))
+                {
+                    printf("ERROR: in writing file %s .\n", smrfile1.c_str());
+                    exit(EXIT_FAILURE);
+                }
+            }
+        }
+        if(gwasFileName!=NULL)
+        {
+            fclose(smr0);
+            printf("\n\nSMR and HEIDI analyses for complex traits completed.\nSMR and heterogeneity analysis results of %ld exposure probes have been saved in the file %s.\n",etraitcount,smrfile0.c_str());
+        }
+        fclose(smr1);
+        fclose(smr2);
+        printf("\nSMR and HEIDI analyses for molecular traits completed.\nSMR and heterogeneity analysis results of %ld outcome probes (%ld exposure probe) have been saved in the file %s.\n",itemcount,etraitcount,smrfile1.c_str());
+        printf("\nMulti-SMR and Multi-HEIDI analyses for %ld between 1 exposure and %ld outcomes completed.\nPosterior probability and HEIDI results of %ld combinations (%ld outcome probes and %ld exposure probes) have been saved in the file %s.\n",itercounttest,outcoNum,itercountmlt,itemcount,etraitcount,smrfile2.c_str());
     }
 
     // jointSMR balanced, no updated anymore
@@ -11274,1144 +12509,6 @@ namespace SMRDATA
         fclose(smr2);
         //printf("\nSMR and HEIDI analyses for molecular traits completed.\nSMR and heterogeneity analysis results of %ld outcome probes (%ld exposure probe) have been saved in the file %s.\n",itemcount,etraitcount,smrfile1.c_str());
         printf("\nOPERA analyses for %ld exposures and 1 outcome completed.\nPosterior probability and HEIDI results of %ld combinations have been saved in the file %s .\n",expoNum,itercountmlt,smrfile2.c_str());
-    }
-
-    void multiexposure_jointsmr(char* outFileName, char* bFileName, char* mbFileName, char* piFileName, char* eqtlsmaslstName, char* gwasFileName, double maf,string priorstr,string sigmastr, char* indilstName, char* snplstName,char* problstName, char* oproblstName,char* eproblstName,bool bFlag,double p_hetero,double ld_top,int m_hetero, int opt_hetero,  char* indilst2remove, char* snplst2exclde, char* problst2exclde, char* oproblst2exclde,char* eproblst2exclde,double p_smr,double thresh_PP, double thresh_smr, char* refSNP, bool heidioffFlag, bool jointsmrflag, bool operasmrflag, int cis_itvl,int snpchr,int prbchr,char* traitlstName,int op_wind, char* oprobe, char* eprobe, char* oprobe2rm, char* eprobe2rm, double threshpsmrest, bool new_het_mth, bool opt, double ld_min,bool cis2all, bool sampleoverlap, double pmecs, int minCor, char* targetcojosnplstName, char* snpproblstName,double afthresh,double percenthresh)
-    {   
-        // 1. check flags; eqtlsmaslstName is the included exposure probes and gwasFileName will be the outcome 
-        setNbThreads(thread_num);
-        string logstr;
-        if(oproblstName!=NULL && oprobe!=NULL)
-        {
-            logstr="WARNING: --extract-single-outcome-probe is not surpposed to use together with --extract-outcome-probe. --extract-single-outcome-probe will be disabled.\n";
-            oprobe=NULL;
-            fputs(logstr.c_str(), stdout);
-        }
-        if(eproblstName!=NULL && eprobe!=NULL)
-        {
-            logstr="WARNING: --extract-single-exposure-probe is not surpposed to use together with --extract-exposure-probe. --extract-single-exposure-probe will be disabled.\n";
-            eprobe=NULL;
-            fputs(logstr.c_str(), stdout);
-        }
-        if(oproblst2exclde!=NULL && oprobe2rm!=NULL)
-        {
-            logstr="WARNING: --exclude-single-outcome-probe is not surpposed to use together with --exclude-outcome-probe. --exclude-single-outcome-probe will be disabled.\n";
-            oprobe2rm=NULL;
-            fputs(logstr.c_str(), stdout);
-        }
-        if(eproblst2exclde!=NULL && eprobe2rm!=NULL)
-        {
-            logstr="WARNING: --exclude-single-exposure-probe is not surpposed to use together with --exclude-exposure-probe. --exclude-single-exposure-probe will be disabled.\n";
-            eprobe2rm=NULL;
-            fputs(logstr.c_str(), stdout);
-        }
-        if(ld_min>ld_top) {
-            printf("ERROR: --ld-min %f is larger than --ld-top %f.\n",ld_min,ld_top);
-            exit(EXIT_FAILURE);
-        }
-        if(refSNP && targetcojosnplstName)
-        {
-            printf("ERROR: --target-snp and --target-snp-probe-list both found in your command. please disable one.\n");
-            exit(EXIT_FAILURE);
-        }
-        if(snpproblstName && targetcojosnplstName)
-        {
-            printf("ERROR: --extract-target-snp-probe and --extract-snp-probe both found in your command. please disable one.\n");
-            exit(EXIT_FAILURE);
-        }
-
-        // 2. check input besd file format
-        vector<string> besds, multi_bfiles;;
-        vector<smr_snpinfo> snpinfo;
-        vector<smr_probeinfo> probeinfo;
-        vector<uint64_t> nprb,nsnp;
-        vector< vector<int> > lookup;
-        
-        read_msglist(eqtlsmaslstName, besds,"xQTL summary file names");
-        if(besds.size()<1) {
-            printf("Less than 1 BESD files list in %s.\n",eqtlsmaslstName);
-            exit(EXIT_FAILURE);
-        }
-        printf("%ld xQTL summary file names are included.\n",besds.size());
-        
-        // check multiple bfiles input
-        if(mbFileName!=NULL) {
-            read_msglist(mbFileName, multi_bfiles,"PLINK bed file names");
-            if(multi_bfiles.size()<1) {
-                printf("Less than 1 PLINK bed file list in %s.\n",mbFileName);
-                exit(EXIT_FAILURE);
-            }
-            printf("%ld PLINK genotype files are included.\n",multi_bfiles.size());
-        }
-
-        vector<int> format, smpsize;
-        check_besds_format(besds, format, smpsize);
-        int label=-1;
-        for(int i=0;i<format.size();i++)
-        {
-            if(format[i]==DENSE_FILE_TYPE_1 || format[i]==DENSE_FILE_TYPE_3 ) {
-                if(label==-1) {
-                    label=0;
-                } else if(label==1) {
-                    label=2;
-                    break;
-                }
-                
-            } else if (format[i]==SPARSE_FILE_TYPE_3F || format[i]==SPARSE_FILE_TYPE_3 ) {
-                if(label==-1) {
-                    label=1;
-                } else if(label==0) {
-                    label=2;
-                    break;
-                }
-            } else {
-                printf("Some BESDs are from old sparse format. please use SMR to re-make it.\n");
-                exit(EXIT_FAILURE);
-            }
-        }
-        long besdNum=besds.size();
-        
-        FILE** fptrs = (FILE**)malloc(sizeof(FILE*) * besds.size());
-        for(int i=0;i<besdNum;i++) {
-            string besdFileName=besds[i]+".besd";
-            fptrs[i]=fopen(besdFileName.c_str(),"rb");
-            if(fptrs[i]==NULL) {
-                printf("ERROR: in opening file %s .\n", besdFileName.c_str());
-                exit(EXIT_FAILURE);
-            }
-        }
-        
-        // 3. expoNum = besdNum will be used; get prior variance and PIP header
-        long expoNum; expoNum = besdNum;
-        printf("There are %ld exposure(s) and 1 outcome are included in OPERA.\n",expoNum);
-        if(expoNum < 2) {
-            printf("\nWARNING: The program can not perform the OPERA analsyis with joint SMR effect because there is only one exposure included.\nThe SMR effect will be used for OPERA analysis.\n");
-            operasmrflag = true;
-        }
-
-        // illustrate all the combinations
-        vector<vector<int>> idxall;
-        for(int i=0;i<expoNum;i++) {
-            vector<int> index(2);
-            std::iota(index.begin(),index.end(),0);
-            idxall.push_back(index);
-        }
-        vector<vector<int>> combins;
-        permute_vector(idxall, combins);
-        long combNum=combins.size();
-        
-        // list marginal PIP combins
-        vector<vector<int>> combmarg, comborg(combins.size()), idxmarg(combins.size());
-        comborg[0].push_back(0); idxmarg[0].push_back(0);
-        for(int i=1;i<combNum;i++) {
-            for(int j=0;j<expoNum;j++) {
-                if(combins[i][j] == 1) comborg[i].push_back(j+1);
-            }
-        }
-        // reorder the output PIP
-        for(int i=1;i<=expoNum;i++) {
-            vector<vector<int>> combtmp;
-            for(int j=0;j<combNum;j++) {
-                if(comborg[j].size()==i) combtmp.push_back(comborg[j]);
-            }
-            sort(combtmp.begin(),combtmp.end());
-            for(int k=0;k<combtmp.size();k++) {
-                combmarg.push_back(combtmp[k]);
-            }
-        }
-        // find the PIP correspoding configuration index
-        for(int i=1;i<combmarg.size();i++) {
-            for(int c=0;c<combNum;c++) {
-                int sumcount=0;
-                for(int j=0;j<combmarg[i].size();j++) {
-                    int tmpidx = combmarg[i][j] - 1;
-                    sumcount += combins[c][tmpidx];
-                }
-                if(sumcount==combmarg[i].size()) idxmarg[i].push_back(c);
-            }
-        }
-        // get the priors
-        vector<string> priorsplit, sigmasplit;
-        double sigma_def = 0.02;
-        if(sigmastr.size() == 0) {
-            for(int i=0;i<expoNum;i++) {
-                sigmastr+=atos(sigma_def);
-                if(i < (expoNum - 1))  sigmastr+=","; 
-            }            
-        }
-        if(piFileName!=NULL) {
-            read_pifile(piFileName, priorsplit);
-        } else {
-            split_string(priorstr,priorsplit);
-        }        
-        split_string(sigmastr,sigmasplit);
-        if(sigmasplit.size()!=expoNum)
-            throw("Error: The number of input prior variances is not consistent with the number of input exposures.");
-        if(priorsplit.size()!=combNum)
-            throw("Error: The number of input prior probabilities is not consistent with the number of test configurations.");
-        vector<double> prior, sigma_b;
-        for(int t=0; t<expoNum; t++)
-        {
-            sigma_b.push_back(atof(sigmasplit[t].c_str()));
-            if(sigma_b[t]<0 || sigma_b[t]>1) throw("Error: --prior-sigma. Prior variance values should be betweeen 0 and 1.");
-        }
-        for(int t=0; t<combNum; t++)
-        {
-            prior.push_back(atof(priorsplit[t].c_str()));
-            if(prior[t]<0 || prior[t]>1) throw("Error: --prior-pi. Prior probability values should be betweeen 0 and 1.");
-        }
-
-        // 4. define global variables and extract the snp and probe data         
-        vector<eqtlInfo> etrait(besdNum); 
-        vector<eqtlInfo> esdata(besdNum);
-        bInfo bdata;
-        gwasData gdata1;
-        map<string, string> prb_snp;
-        bool heidiFlag=false, targetLstflg=false;
-        
-        printf("\nReading the xQTL summary data file ...\n");
-        if((!heidioffFlag && bFileName == NULL && mbFileName == NULL) || (jointsmrflag && bFileName == NULL && mbFileName == NULL)) throw("Error: please input Plink file for SMR analysis by either the flag --bfile or --mbfile.");
-        if(refSNP!=NULL) heidiFlag=true;
-        if(problstName != NULL) cout<<"WARNING: --extract-probe works when the probes are used as either exposures dataset or outcomes.\n"<<endl;
-      
-        // extract the SNP list for exposures
-        for(int i=0;i<besdNum;i++) {
-            read_esifile(&etrait[i], string(besds[i])+".esi");
-            if (snplstName != NULL) extract_eqtl_snp(&etrait[i], snplstName);
-            if(snplst2exclde != NULL) exclude_eqtl_snp(&etrait[i], snplst2exclde);
-            if(snpchr!=0) extract_eqtl_by_chr(&etrait[i], snpchr);
-        }
-        // extract the probe list for exposures
-        for(int i=0;i<besdNum;i++) {
-            read_epifile(&etrait[i], string(besds[i])+".epi");
-            if(problstName != NULL) extract_prob(&etrait[i], problstName);
-            if(problst2exclde != NULL) exclude_prob(&etrait[i], problst2exclde);
-            if(eproblstName != NULL ) extract_prob(&etrait[i], eproblstName);
-            else if(eprobe != NULL) extract_eqtl_single_probe(&etrait[i], eprobe);
-            if(eproblst2exclde != NULL) exclude_prob(&etrait[i], eproblst2exclde);
-            else if(eprobe2rm != NULL) exclude_eqtl_single_probe(&etrait[i], eprobe2rm);
-            if(prbchr!=0) extract_epi_by_chr(&etrait[i],prbchr);
-            read_besdfile(&etrait[i], string(besds[i])+".besd");
-            if(etrait[i]._rowid.empty() && etrait[i]._bxz.empty())
-            {
-                printf("ERROR: no data included in the analysis.\n");
-                exit(EXIT_FAILURE);
-            }
-        }
-
-        // read gwas
-        if(gwasFileName!=NULL) {
-            read_gwas_data(&gdata1, gwasFileName);
-            if (snplstName!= NULL) {
-                extract_gwas_snp(&gdata1, snplstName);
-                update_gwas(&gdata1);
-            } 
-        }
-        // read the cojo independent SNPs for each probe
-        vector<string> cojoprbs; map<string, vector<string>> prb_cojosnps;
-        if(targetcojosnplstName!=NULL) {
-            read_prb_cojo_snplist(targetcojosnplstName, cojoprbs, prb_cojosnps);
-        }
-
-        // 5. allele checking between data
-        if(!heidioffFlag || jointsmrflag)
-        {
-            map<string, string> snp_name_per_chr;
-            if(bFileName!=NULL) read_famfile(&bdata, string(bFileName)+".fam");
-            if(mbFileName!=NULL) read_multi_famfiles(&bdata, multi_bfiles);
-            if(indilstName != NULL) keep_indi(&bdata,indilstName);
-            if(indilst2remove != NULL) remove_indi(&bdata, indilst2remove);
-            if(bFileName!=NULL) read_bimfile(&bdata, string(bFileName)+".bim");
-            if(mbFileName!=NULL) read_multi_bimfiles(&bdata, multi_bfiles, snp_name_per_chr);
-            allele_check_multi_opt(&bdata, etrait, &gdata1);
-            //            allele_check_multi(&bdata, etrait, &gdata1);
-            if(bFileName!=NULL) read_bedfile(&bdata, string(bFileName)+".bed");
-            if(mbFileName!=NULL) read_multi_bedfiles(&bdata, multi_bfiles, snp_name_per_chr);
-            if (bdata._mu.empty()) calcu_mu(&bdata);
-            if (maf > 0)
-            {
-                filter_snp_maf(&bdata, maf);
-                update_geIndx(&bdata, etrait, &gdata1);
-            }
-        } else
-        {
-            allele_check_multi(etrait,&gdata1);
-        }
-        // update the SNPs after allele checking
-        if(gwasFileName!=NULL)  update_gwas(&gdata1);
-        // update the SNPs after allele checking
-        for(int i=0;i<besdNum;i++) {
-            e2econvert(&etrait[i], &esdata[i]);
-        }
-
-        // 6. open .smr and .ppa for writing output
-        long itemcount=0,itercountmlt=0;
-        string outstr="";
-        // header for .smr
-        string smrfile0 = string(outFileName)+".smr";
-        FILE* smr0;
-        if(gwasFileName!=NULL) {
-            smr0 = fopen(smrfile0.c_str(), "w");
-            if (!(smr0)) {
-                printf("ERROR: open error %s\n", smrfile0.c_str());
-                exit(1);
-            }
-            outstr="probeID\tProbeChr\tGene\tProbe_bp\ttopSNP\ttopSNP_chr\ttopSNP_bp\tA1\tA2\tFreq\tb_GWAS\tse_GWAS\tp_GWAS\tb_eQTL\tse_eQTL\tp_eQTL\tb_SMR\tse_SMR\tp_SMR\tp_HEIDI\tnsnp_HEIDI\n";
-            if(fputs_checked(outstr.c_str(),smr0))
-            {
-                printf("ERROR: error in writing file %s .\n", smrfile0.c_str());
-                exit(EXIT_FAILURE);
-            }
-        }
-        // header for .ppa
-        string smrfile2 = string(outFileName)+".ppa";
-        FILE* smr2 = fopen(smrfile2.c_str(), "w");
-        if (!(smr2)) {
-            printf("ERROR: open error %s\n", smrfile2.c_str());
-            exit(1);
-        }
-        outstr="Chr\t";
-        int j = 0;
-        for(int i=0; i<besdNum;i++)
-        {
-            j = i+1;
-            outstr+="Expo"+atos(j)+"_ID"+'\t'+"Expo"+atos(j)+"_bp"+'\t';
-        }
-        for(int i=0; i<combmarg.size();i++)
-        {
-            outstr+="PPA(";
-            for(int j=0;j<combmarg[i].size();j++)
-            {
-                outstr+=atos(combmarg[i][j]);
-                if(j<combmarg[i].size()-1) outstr+=",";
-            }
-            outstr+=")\t";
-        }
-        for(int i=1; i<combmarg.size();i++)
-        {
-            outstr+="p_HEIDI(";
-            for(int j=0;j<combmarg[i].size();j++)
-            {
-                outstr+=atos(combmarg[i][j]);
-                if(j<combmarg[i].size()-1) outstr+=",";
-            }
-            if(i<(combmarg.size()-1)) outstr+=")\t";
-        }
-        outstr+=")\n";
-        if(fputs_checked(outstr.c_str(),smr2))
-        {
-            printf("ERROR: in writing file %s .\n", smrfile2.c_str());
-            exit(EXIT_FAILURE);
-        }
-
-        // 7. compute the pairwise SMR effect for all exposure probes
-        printf("\nPerforming SMR analysis ...\n");
-        vector<vector<SMRRLT>> smrrlts;
-        vector<long> probNum;
-        vector<string> outconame;
-        vector<int> outcochr;
-        vector<string> outcogene;
-        vector<int> outcobp;
-        int exposure_probe_wind=op_wind*1000;
-        map<string, double> hdirlts;
-        for(int i=0;i<besdNum;i++)
-        {
-            vector<SMRRLT> smrrltstmp;
-            if(esdata[i]._val.size()>0) {
-                smr_heidi_func(smrrltstmp, NULL, &bdata,&gdata1,&esdata[i],cis_itvl, heidioffFlag, refSNP,p_hetero,ld_top, m_hetero, p_smr, threshpsmrest,new_het_mth,opt,ld_min,opt_hetero,sampleoverlap,pmecs,minCor,prb_snp,targetLstflg);
-            }
-            if(smrrltstmp.size()>0)
-            {
-                probNum.push_back(smrrltstmp.size());
-                smrrlts.push_back(smrrltstmp);
-                for(int j=0;j<smrrltstmp.size();j++)
-                {
-                    outstr=smrrltstmp[j].ProbeID+'\t'+atos(smrrltstmp[j].ProbeChr)+'\t'+smrrltstmp[j].Gene+'\t'+atos(smrrltstmp[j].Probe_bp)+'\t'+smrrltstmp[j].SNP+'\t'+atos(smrrltstmp[j].SNP_Chr)+'\t'+atos(smrrltstmp[j].SNP_bp)+'\t'+smrrltstmp[j].A1+'\t'+smrrltstmp[j].A2+'\t'+atos(smrrltstmp[j].Freq)+'\t'+atos(smrrltstmp[j].b_GWAS)+'\t'+atos(smrrltstmp[j].se_GWAS)+'\t'+dtos(smrrltstmp[j].p_GWAS)+'\t'+atos(smrrltstmp[j].b_eQTL)+'\t'+atos(smrrltstmp[j].se_eQTL)+'\t'+dtos(smrrltstmp[j].p_eQTL)+'\t'+atos(smrrltstmp[j].b_SMR)+'\t'+atos(smrrltstmp[j].se_SMR)+'\t'+dtos(smrrltstmp[j].p_SMR)+'\t'+(smrrltstmp[j].p_HET >= 0 ? dtos(smrrltstmp[j].p_HET) : "NA") + '\t' + (smrrltstmp[j].nsnp > 0 ? atos(smrrltstmp[j].nsnp+1) : "NA") + '\n';
-                    if(fputs_checked(outstr.c_str(),smr0))
-                    {
-                        printf("ERROR: in writing file %s .\n", smrfile0.c_str());
-                        exit(EXIT_FAILURE);
-                    }
-                    hdirlts.insert(pair<string, double>(smrrltstmp[j].ProbeID,smrrltstmp[j].p_HET));
-                }                
-            } 
-        }
-        for(int k=0;k<probNum.size();k++)
-        {   
-            itemcount = itemcount + probNum[k]; 
-        }
-        printf("SMR analysis results of %ld exposure probes have been saved in the file %s .\n",itemcount,smrfile0.c_str());
-        fclose(smr0);
-
-        printf("\nPerforming multi-exposure OPERA analysis (including multi-exposure HEIDI tests) ... \n");
-        if(probNum.size()!=expoNum) {
-            throw("ERROR: The number of exposure probes with significant instrument are less than the number of specified priors.\n");
-            exit(EXIT_FAILURE);
-        }
-
-        // 8. loop with probes for exposure #1; test all possible combinations at each probe loci
-        double cr=0;
-        for(int ii=0;ii<probNum[0];ii++)
-        {
-            double desti=1.0*ii/(probNum[0]);
-            if(desti>=cr)
-            {
-                printf("%3.0f%%\r", 100.0*desti);
-                fflush(stdout);
-                if(cr==0) cr+=0.05;
-                else if(cr==0.05) cr+=0.2;
-                else if(cr==0.25) cr+=0.5;
-                else cr+=0.25;
-            }
-            vector<SMRRLT> smrrltsbf;
-            vector<long> probNumbf;
-            vector<long> expoNumbf;
-
-            smrrltsbf.push_back(smrrlts[0][ii]); 
-            probNumbf.push_back(1);
-            int traitchr=smrrlts[0][ii].ProbeChr;
-            int traitbp=smrrlts[0][ii].Probe_bp;
-            int lowerbounder=(traitbp-exposure_probe_wind)>0?(traitbp-exposure_probe_wind):0;
-            int upperbounder=traitbp+exposure_probe_wind;
-            
-            for(int i=1;i<besdNum;i++)
-            {
-                int countNum = 0;
-                for(int j=0;j<probNum[i];j++)
-                {
-                   int bptmp=smrrlts[i][j].Probe_bp;
-                   // select probes with SMR pvalue < 0.05 for OPERA analysis
-                   if(smrrlts[i][j].ProbeChr==traitchr && bptmp>=lowerbounder && bptmp<=upperbounder && smrrlts[i][j].p_SMR<=thresh_smr) {
-                        smrrltsbf.push_back(smrrlts[i][j]); countNum = countNum + 1;
-                    }
-                }
-                probNumbf.push_back(countNum);
-            }
-            // skip the loop when there is no SMR effect
-            int expocout = 0; 
-            for(int i=0;i<probNumbf.size();i++) {
-                if(probNumbf[i]>0) { expocout+=1; expoNumbf.push_back(i);}
-            }
-            if(expocout == 0) { continue; } 
-
-            // illustrate all the combinations
-            vector<vector<int>> indexall;
-            for(int i=0;i<probNumbf.size();i++) {
-                if(probNumbf[i] > 0) {
-                    vector<int> index(probNumbf[i]);
-                    std::iota(index.begin(),index.end(),0);
-                    indexall.push_back(index);
-                } else {
-                    vector<int> index;
-                    index.push_back(0);
-                    indexall.push_back(index);
-                }
-            }
-            vector<vector<int>> combines;
-            permute_vector(indexall, combines);
-
-            // loop with all the possible combinations
-            for(int i=0; i<combines.size();i++)
-            {
-                vector<eqtlInfo> esdatabf;
-                vector<vector<string>> prb_cojolist;
-                vector<float> bxy(expoNum), sigma_e(expoNum), c(expoNum);
-                vector<string> outconamec(besdNum), outcogenec(besdNum);
-                vector<long> outcobpc(besdNum);
-                vector<float> Pr(combNum),HH(combNum),PO(combNum),PP(combNum),PIP(combNum);
-                vector<gwasData> esdatain(expoNum);
-                MatrixXd lh(2,expoNum);
-                // get the probe and gene information for output
-                outstr=atos(traitchr)+'\t';
-                long postmp = 0;                    
-                for(int t=0; t<besdNum; t++)
-                {   
-                    if(probNumbf[t] > 0) {
-                        long idxtmp = combines[i][t]+postmp;
-                        outconamec[t] = smrrltsbf[idxtmp].ProbeID;
-                        outcogenec[t] = smrrltsbf[idxtmp].Gene;
-                        outcobpc[t] = smrrltsbf[idxtmp].Probe_bp;
-                        postmp = postmp + probNumbf[t];
-
-                        if(!heidioffFlag || jointsmrflag) {
-                            esdata[t]._include.clear();
-                            map<string, int>::iterator itt;
-                            eqtlInfo esdatatmp;
-                            itt = esdata[t]._probe_name_map.find(outconamec[t]);
-                            if(itt != esdata[t]._probe_name_map.end()) {
-                                esdata[t]._include.push_back(itt->second);
-                                e2econvert(&esdata[t], &esdatatmp);
-                                esdatabf.push_back(esdatatmp);
-                            }
-                            if(targetcojosnplstName!=NULL) {
-                                // find the target probe COJO signals
-                                map<string, vector<string>>::iterator prb_pos;
-                                prb_pos = prb_cojosnps.find(outconamec[t]);
-                                vector<string> navector; navector.push_back("");
-                                if(prb_pos!=prb_cojosnps.end()) {
-                                    prb_cojolist.push_back(prb_pos->second);
-                                } else { prb_cojolist.push_back(navector); }
-                            }
-                        }
-                    
-                    } else {
-                        outconamec[t] = "NA"; outcogenec[t] = "NA"; outcobpc[t] = 0;
-                    }                        
-                    outstr+=outconamec[t]+'\t'+atos(outcobpc[t])+'\t';
-                }
-                
-                // perform the SMR or joint-SMR analysis
-                vector<SMRRLT> smrrlts_joint;
-                if(esdatabf.size() != expocout) { continue; } 
-
-                if(!operasmrflag) {
-                    if(targetcojosnplstName!=NULL) {
-                        multi_joint_smr_func(smrrlts_joint, NULL, &bdata, &gdata1, esdatabf, prb_cojolist, cis_itvl, heidioffFlag,refSNP,p_hetero,ld_top,m_hetero,p_smr,threshpsmrest,new_het_mth,opt,ld_min,opt_hetero,sampleoverlap,pmecs,minCor);
-                    } else { multi_joint_smr_func(smrrlts_joint, NULL, &bdata, &gdata1, esdatabf, cis_itvl, heidioffFlag,refSNP,p_hetero,ld_top,m_hetero,p_smr,threshpsmrest,new_het_mth,opt,ld_min,opt_hetero,sampleoverlap,pmecs,minCor); }
-                } else {
-                    for(int es=0; es<esdatabf.size(); es++) {
-                        vector<SMRRLT> smrrlt_esdata;
-                        smr_heidi_func(smrrlt_esdata, NULL, &bdata, &gdata1, &esdatabf[es],cis_itvl, heidioffFlag, refSNP,p_hetero,ld_top, m_hetero, p_smr, threshpsmrest,new_het_mth,opt,ld_min,opt_hetero,sampleoverlap,pmecs,minCor,prb_snp,targetLstflg);
-                        smrrlts_joint.push_back(smrrlt_esdata[0]);
-                    }
-                }
-
-                //get the bxy, sigma_b and sigma_e from joint-SMR
-                int k_joint = 0;
-                for(int t=0; t<expoNum; t++)
-                {
-                    if(probNumbf[t] > 0) {
-                        bxy[t] = smrrlts_joint[k_joint].b_SMR;
-                        sigma_e[t] = pow(smrrlts_joint[k_joint].se_SMR,2);
-                        c[t] = 1+sigma_e[t]/sigma_b[t];
-                        k_joint = k_joint + 1;
-                    } else {
-                        bxy[t] = 0; sigma_e[t] = 0; c[t] = 0;
-                    }
-                }
-                // get the H0 and H1 prior pi and likelihood
-                const double PI = 3.141592653589793238463;
-                for(int t=0;t<expoNum;t++) {
-                    if(probNumbf[t] > 0) {
-                        lh(0,t)=pow(2*PI,-0.5)*pow(sigma_e[t],-0.5)*exp(-1*pow(bxy[t],2)/(2*sigma_e[t]));
-                        lh(1,t)=pow(2*PI,-0.5)*pow(c[t]*sigma_b[t],-0.5)*exp((1/c[t]-1)*pow(bxy[t],2)/(2*sigma_e[t]));
-                    } else {
-                        lh(0,t) = 1; lh(1,t) = 0;
-                    }
-                }
-                // caculate the posterier probablity
-                for(int i=0;i<combNum;i++) {
-                    HH[i]=1.0;
-                    for(int t=0;t<expoNum;t++)
-                    {
-                        HH[i] *= lh(combins[i][t],t);
-                    }
-                }
-                float POall = 0;
-                for(int i=0;i<combNum;i++) {
-                    PO[i] = HH[i]*prior[i];
-                    POall+=PO[i];
-                }
-                for(int i=0;i<combNum;i++) {
-                    PP[i] = PO[i]/POall;
-                }
-                for(int i=0;i<combmarg.size();i++) {
-                    for(int j=0;j<idxmarg[i].size();j++) {
-                        PIP[i] += PP[idxmarg[i][j]];
-                    }
-                }
-                for(int i=0;i<PIP.size();i++) {
-                    outstr = outstr + atos(PIP[i])+'\t';
-                }
-                //thresh_PP = 1e-5;
-                bool sigflag = false; vector<int> sigcomb;  
-                for(int i=1;i<combmarg.size();i++) {
-                    if(PIP[i]>=thresh_PP) { sigflag = true; sigcomb.push_back(i); }
-                }
-                
-                // multi-exposure HEIDI test
-                vector<vector<SMRRLT>> smrrltsheidi(combmarg.size());
-                if(! heidioffFlag && sigflag) {
-                    for(int h=0;h<sigcomb.size();h++) {
-                        vector<eqtlInfo> esdataheidi;
-                        int tmpidx = sigcomb[h];
-                        string prbname;
-                        for(int c=0;c<combmarg[tmpidx].size();c++) {
-                            int combidx = combmarg[tmpidx][c]-1;
-                            for(int k=0;k<expoNumbf.size();k++) {
-                                if(expoNumbf[k] == combidx) {
-                                    esdataheidi.push_back(esdatabf[k]);
-                                    prbname.append(esdatabf[k]._epi_prbID[0]);
-                                }
-                            }                                                            
-                        }
-                        map<string, double>::iterator itmp;
-                        itmp = hdirlts.find(prbname);
-                        if(itmp != hdirlts.end()) {
-                            SMRRLT currlt;
-                            currlt.p_HET = itmp->second;
-                            currlt.ProbeID = prbname;
-                            smrrltsheidi[tmpidx].push_back(currlt);
-                        } else {
-                        multi_heidi_func(smrrltsheidi[tmpidx], NULL, &bdata, &gdata1, esdataheidi, cis_itvl, heidioffFlag, refSNP,p_hetero,ld_top, m_hetero, p_smr, threshpsmrest,new_het_mth,opt,ld_min,opt_hetero,sampleoverlap,pmecs,minCor);
-                        hdirlts.insert(pair<string, double>(prbname,smrrltsheidi[tmpidx][0].p_HET));
-                        }
-                    }
-                    // output heidi pvalue
-                    for(int i=1;i<combmarg.size();i++) {
-                        if(smrrltsheidi[i].size()>0) {
-                            if(i<(combmarg.size()-1)) {outstr=outstr+(smrrltsheidi[i][0].p_HET >= 0 ? dtos(smrrltsheidi[i][0].p_HET) : "NA") + '\t' ;
-                            } else {outstr=outstr+(smrrltsheidi[i][0].p_HET >= 0 ? dtos(smrrltsheidi[i][0].p_HET) : "NA") + '\n';}
-                        } else {
-                            if(i<(combmarg.size()-1)) {outstr=outstr + "NA" + '\t';
-                            } else {outstr=outstr + "NA" + '\n';}
-                        }
-                    }                
-                } else {
-                     for(int i=1;i<combmarg.size();i++) {
-                         if(i<(combmarg.size()-1)) { outstr=outstr + "NA" + '\t';
-                         } else { outstr=outstr + "NA" + '\n'; }
-                    }
-                }
-                if(sigflag) {
-                    itercountmlt+=1;
-                    if(fputs_checked(outstr.c_str(),smr2))
-                    {
-                        printf("ERROR: in writing file %s .\n", smrfile2.c_str());
-                        exit(EXIT_FAILURE);
-                    }
-                }   
-    
-            }
-            
-        }         
-        fclose(smr2);
-        printf("\nOPERA analyses for %ld exposures and 1 outcome completed.\nPosterior probability and HEIDI results of %ld combinations have been saved in the file %s.\n",expoNum,itercountmlt,smrfile2.c_str());
-    }
-
-    void multioutcomesmr(char* outFileName, char* bFileName, char* mbFileName, char* piFileName, char* eqtlFileName, char* eqtlsmaslstName, char* gwasFileName, double maf,string priorstr,string sigmastr, char* indilstName, char* snplstName,char* problstName, char* oproblstName,char* eproblstName,bool bFlag,double p_hetero,double ld_top,int m_hetero, int opt_hetero,  char* indilst2remove, char* snplst2exclde, char* problst2exclde, char* oproblst2exclde,char* eproblst2exclde,double p_smr,char* refSNP, bool heidioffFlag,int cis_itvl,int snpchr,int prbchr,char* traitlstName,int op_wind, char* oprobe, char* eprobe, char* oprobe2rm, char* eprobe2rm, double threshpsmrest, bool new_het_mth, bool opt, double ld_min,bool cis2all, bool sampleoverlap, double pmecs, int minCor, char* targetcojosnplstName, char* snpproblstName,double afthresh,double percenthresh)
-    {   
-        //here eqtlFileName is the outcome and eqtlFileName2 is the exposure. in the main we pass the outcome (eqtlFileName2) to eqtlFileName and the exposure (eqtlFileName) to eqtlFileName2
-        setNbThreads(thread_num);
-        string logstr;
-        if(oproblstName!=NULL && oprobe!=NULL)
-        {
-            logstr="WARNING: --extract-single-outcome-probe is not surpposed to use together with --extract-outcome-probe. --extract-single-outcome-probe will be disabled.\n";
-            oprobe=NULL;
-            fputs(logstr.c_str(), stdout);
-        }
-        if(eproblstName!=NULL && eprobe!=NULL)
-        {
-            logstr="WARNING: --extract-single-exposure-probe is not surpposed to use together with --extract-exposure-probe. --extract-single-exposure-probe will be disabled.\n";
-            eprobe=NULL;
-            fputs(logstr.c_str(), stdout);
-        }
-        if(oproblst2exclde!=NULL && oprobe2rm!=NULL)
-        {
-            logstr="WARNING: --exclude-single-outcome-probe is not surpposed to use together with --exclude-outcome-probe. --exclude-single-outcome-probe will be disabled.\n";
-            oprobe2rm=NULL;
-            fputs(logstr.c_str(), stdout);
-        }
-        if(eproblst2exclde!=NULL && eprobe2rm!=NULL)
-        {
-            logstr="WARNING: --exclude-single-exposure-probe is not surpposed to use together with --exclude-exposure-probe. --exclude-single-exposure-probe will be disabled.\n";
-            eprobe2rm=NULL;
-            fputs(logstr.c_str(), stdout);
-        }
-        if(ld_min>ld_top) {
-            printf("ERROR: --ld-min %f is larger than --ld-top %f.\n",ld_min,ld_top);
-            exit(EXIT_FAILURE);
-        }
-        if(refSNP && targetcojosnplstName)
-        {
-            printf("ERROR: --target-snp and --target-snp-probe-list both found in your command. please disable one.\n");
-            exit(EXIT_FAILURE);
-        }
-        if(snpproblstName && targetcojosnplstName)
-        {
-            printf("ERROR: --extract-target-snp-probe and --extract-snp-probe both found in your command. please disable one.\n");
-            exit(EXIT_FAILURE);
-        }
-        // checking besd file list
-        vector<string> besds;
-        vector<smr_snpinfo> snpinfo;
-        vector<smr_probeinfo> probeinfo;
-        vector<uint64_t> nprb,nsnp;
-        vector< vector<int> > lookup;
-        
-        read_msglist(eqtlsmaslstName, besds,"eQTL summary file names");
-        if(besds.size()<1) {
-            printf("Less than 1 BESD files list in %s.\n",eqtlsmaslstName);
-            exit(EXIT_FAILURE);
-        }
-        printf("%ld eQTL summary file names are included.\n",besds.size());
-        
-        //printf("Checking the BESD format...\n");
-        vector<int> format, smpsize;
-        check_besds_format(besds, format, smpsize);
-        int label=-1;
-        for(int i=0;i<format.size();i++)
-        {
-            if(format[i]==DENSE_FILE_TYPE_1 || format[i]==DENSE_FILE_TYPE_3 ) {
-                if(label==-1) {
-                    label=0;
-                } else if(label==1) {
-                    label=2;
-                    break;
-                }
-                
-            } else if (format[i]==SPARSE_FILE_TYPE_3F || format[i]==SPARSE_FILE_TYPE_3 ) {
-                if(label==-1) {
-                    label=1;
-                } else if(label==0) {
-                    label=2;
-                    break;
-                }
-            } else {
-                printf("Some BESDs are from old sparse format. please use SMR to re-make it.\n");
-                exit(EXIT_FAILURE);
-            }
-        }
-        long besdNum=besds.size();
-        
-        FILE** fptrs = (FILE**)malloc(sizeof(FILE*) * besds.size());
-        for(int i=0;i<besdNum;i++) {
-            string besdFileName=besds[i]+".besd";
-            fptrs[i]=fopen(besdFileName.c_str(),"rb");
-            if(fptrs[i]==NULL) {
-                printf("ERROR: in opening file %s .\n", besdFileName.c_str());
-                exit(EXIT_FAILURE);
-            }
-        }
-        
-        long outcoNum;
-        if(gwasFileName!=NULL)
-        {
-            outcoNum = besdNum +1;
-        } else {outcoNum = besdNum;}
-        printf("There are %ld outcomes and 1 exposure are included in multiple-SMR and multiple-HEIDI test.\n",outcoNum);
-        // illustrate all the combinations
-        vector<vector<int>> idxall;
-        for(int i=0;i<outcoNum;i++){
-            vector<int> index(2);
-            std::iota(index.begin(),index.end(),0);
-            idxall.push_back(index);
-        }
-        vector<vector<int>> combins;
-        permute_vector(idxall, combins);
-        
-        // get the priors
-        vector<string> priorsplit, sigmasplit;
-        split_string(priorstr,priorsplit);
-        split_string(sigmastr,sigmasplit);
-        if(priorsplit.size()!=sigmasplit.size() || priorsplit.size()!=outcoNum || sigmasplit.size()!=outcoNum)
-            throw("Error: The number of input prior is not consistent with the number of input outcomes.");
-        vector<double> prior, sigma_b;
-        for(int t=0; t<outcoNum; t++)
-        {
-            prior.push_back(atof(priorsplit[t].c_str()));
-            sigma_b.push_back(atof(sigmasplit[t].c_str()));
-            if(prior[t]<0 || prior[t]>1) throw("Error: --prior-pi. Prior probability values should be betweeen 0 and 1.");
-        }
-        
-        bool targetLstflg=false;
-        map<string, string> prb_snp;
-        vector<eqtlInfo> etrait(besdNum);        //vector<eqtlInfo*> etrait;
-        eqtlInfo esdata;
-        bInfo bdata;
-        gwasData gdata1;
-        bool heidiFlag=false;
-        
-        printf("Reading the exposure summary data file ...\n");
-        if(!heidioffFlag && bFileName == NULL ) throw("Error: please input Plink file for SMR analysis by the flag --bfile.");
-        if(eqtlFileName==NULL) throw("Error: please input eQTL summary data for SMR analysis by the flag --eqtl-summary.");
-        if(refSNP!=NULL) heidiFlag=true;
-        if(problstName != NULL) cout<<"WARNING: --extract-probe works when the probes are used as either exposures dataset or outcomes.\n"<<endl;
-        read_esifile(&esdata, string(eqtlFileName)+".esi");
-        if (snplstName != NULL) extract_eqtl_snp(&esdata, snplstName);
-        if(snplst2exclde != NULL) exclude_eqtl_snp(&esdata, snplst2exclde);
-        read_epifile(&esdata, string(eqtlFileName)+".epi");
-        if(problstName != NULL) extract_prob(&esdata, problstName);
-        if(problst2exclde != NULL) exclude_prob(&esdata, problst2exclde);
-        if(eproblstName != NULL ) extract_prob(&esdata, eproblstName);
-        else if(eprobe != NULL) extract_eqtl_single_probe(&esdata, eprobe);
-        if(eproblst2exclde != NULL) exclude_prob(&esdata, eproblst2exclde);
-        else if(eprobe2rm != NULL) exclude_eqtl_single_probe(&esdata, eprobe2rm);
-        
-        printf("Reading the outcome summary data file ...\n");
-        for(int i=0;i<besdNum;i++) {
-            read_esifile(&etrait[i], string(besds[i])+".esi");
-            if (snplstName != NULL) extract_eqtl_snp(&etrait[i], snplstName);
-            if(snplst2exclde != NULL) exclude_eqtl_snp(&etrait[i], snplst2exclde);
-            if(snpchr!=0) extract_eqtl_by_chr(&etrait[i], snpchr);
-        }
-
-        //the etrait is not updated, so from now on _esi_include should be used always.
-        for(int i=0;i<besdNum;i++) {
-            //cout<<"Reading eQTL summary data..."<<endl;
-            read_epifile(&etrait[i], string(besds[i])+".epi");
-            if(problstName != NULL) extract_prob(&etrait[i], problstName);
-            if(problst2exclde != NULL) exclude_prob(&etrait[i], problst2exclde);
-            if(oproblstName != NULL ) extract_prob(&etrait[i], oproblstName);
-            else if(oprobe != NULL) extract_eqtl_single_probe(&etrait[i], oprobe);
-            if(oproblst2exclde != NULL) exclude_prob(&etrait[i], oproblst2exclde);
-            else if(oprobe2rm != NULL) exclude_eqtl_single_probe(&etrait[i], oprobe2rm);
-            if(prbchr!=0) extract_epi_by_chr(&etrait[i],prbchr);
-            read_besdfile(&etrait[i], string(besds[i])+".besd");
-            //cout<<etrait[i]._rowid<<endl;
-            if(etrait[i]._rowid.empty() && etrait[i]._bxz.empty())
-            {
-                printf("ERROR: no data included in the analysis.\n");
-                exit(EXIT_FAILURE);
-            }
-        }
-        // Yang Wu read gwas
-        if(gwasFileName!=NULL) read_gwas_data(&gdata1, gwasFileName);
-        // allele checking between data
-        if(!heidioffFlag)
-        {
-            read_famfile(&bdata, string(bFileName)+".fam");
-            if(indilstName != NULL) keep_indi(&bdata,indilstName);
-            if(indilst2remove != NULL) remove_indi(&bdata, indilst2remove);
-            read_bimfile(&bdata, string(bFileName)+".bim");
-            if(gwasFileName!=NULL){
-                allele_check_multi(&bdata, etrait, &gdata1, &esdata);
-            }else { allele_check_multi(&bdata, etrait, &esdata);}
-            // if no snp left after check
-            read_bedfile(&bdata, string(bFileName)+".bed");
-            if (bdata._mu.empty()) calcu_mu(&bdata);
-            if (maf > 0)
-            {
-                filter_snp_maf(&bdata, maf);
-                if(gwasFileName!=NULL)
-                {
-                    update_geIndx(&bdata, etrait, &gdata1, &esdata);
-                } else {update_geIndx(&bdata, etrait, &esdata);}
-            }
-        }else
-        {
-            if(gwasFileName!=NULL)
-            {
-                allele_check_multi(etrait,&gdata1,&esdata);
-            } else {allele_check_multi(etrait,&esdata);}
-            
-        }
-        if(gwasFileName!=NULL)  update_gwas(&gdata1);
-        read_besdfile(&esdata, string(eqtlFileName)+".besd");
-        if(esdata._rowid.empty() && esdata._bxz.empty())
-        {
-            printf("No data included in the analysis.\n");
-            exit(EXIT_FAILURE);
-        }
-        // open multiple outcome files to write
-        long itemcount=0,itercountmlt=0;
-        long etraitcount=0;
-        string outstr="";
-        // GWAS trait
-        string smrfile0 = string(outFileName)+".smr";
-        FILE* smr0;
-        if(gwasFileName!=NULL){
-            smr0 = fopen(smrfile0.c_str(), "w");
-            if (!(smr0)) {
-                printf("ERROR: open error %s\n", smrfile0.c_str());
-                exit(1);
-            }
-            outstr="probeID\tProbeChr\tGene\tProbe_bp\ttopSNP\ttopSNP_chr\ttopSNP_bp\tA1\tA2\tFreq\tb_GWAS\tse_GWAS\tp_GWAS\tb_eQTL\tse_eQTL\tp_eQTL\tb_SMR\tse_SMR\tp_SMR\tp_HEIDI\tnsnp_HEIDI\n";
-            if(fputs_checked(outstr.c_str(),smr0))
-            {
-                printf("ERROR: error in writing file %s .\n", smrfile0.c_str());
-                exit(EXIT_FAILURE);
-            }
-        }
-        // molecular trait
-        string smrfile1 = string(outFileName)+".msmr";
-        FILE* smr1 = fopen(smrfile1.c_str(), "w");
-            if (!(smr1)) {
-                printf("ERROR: open error %s\n", smrfile1.c_str());
-                exit(1);
-            }
-            outstr="Expo_ID\tExpo_Chr\tExpo_Gene\tExpo_bp\tOutco_ID\tOutco_Chr\tOutco_Gene\tOutco_bp\ttopSNP\ttopSNP_chr\ttopSNP_bp\tA1\tA2\tFreq\tb_Outco\tse_Outco\tp_Outco\tb_Expo\tse_Expo\tp_Expo\tb_SMR\tse_SMR\tp_SMR\tp_HEIDI\tnsnp_HEIDI\n";
-            if(fputs_checked(outstr.c_str(),smr1))
-            {
-                printf("ERROR: in writing file %s .\n", smrfile1.c_str());
-                exit(EXIT_FAILURE);
-            }
-        // posterior probability
-        string smrfile2 = string(outFileName)+".multismr";
-        FILE* smr2 = fopen(smrfile2.c_str(), "w");
-            if (!(smr2)) {
-                printf("ERROR: open error %s\n", smrfile2.c_str());
-                exit(1);
-            }
-            //outstr="Chr\tExpo_ID\tExpo_Gene\tExpo_bp\tOutco1_ID\tOutco1_Gene\tOutco1_bp\tOutco2_ID\tOutco2_Gene\tOutco2_bp\tOutco3_ID\tPP1(0:0:0)\tPP2(0:0:1)\tPP3(0:1:0)\tPP4(0:1:1)\tPP5(1:0:0)\tPP6(1:0:1)\tPP7(1:1:0)\tPP8(1:1:1)\n";
-            outstr="Chr\tExpo_ID\tExpo_Gene\tExpo_bp\t";
-            int j = 0;
-            for(int i=0; i<besdNum;i++)
-            {
-                j = i+1;
-                outstr+="Outco"+atos(j)+"_ID"+'\t'+"Outco"+atos(j)+"_Gene"+'\t'+"Outco"+atos(j)+"_bp"+'\t';
-            }
-            if(gwasFileName!=NULL) outstr+="Outco"+atos(j+1)+"_ID"+'\t';
-        
-            for(int i=0; i<combins.size();i++)
-            {
-                outstr+="PP"+atos(i+1)+"(";
-                for(int j=0;j<outcoNum;j++)
-                {
-                    outstr+=atos(combins[i][j]);
-                    if(j<outcoNum-1) outstr+=":";
-                }
-                if(i<(combins.size()-1)) outstr+=")\t";
-            }
-            outstr+=")\tp_HEIDI\tnsnp_HEIDI\n";
-            if(fputs_checked(outstr.c_str(),smr2))
-            {
-                printf("ERROR: in writing file %s .\n", smrfile2.c_str());
-                exit(EXIT_FAILURE);
-            }   
-        // end of opening files
-        int exposure_probe_wind=op_wind*1000;
-        vector<vector<int>> includebk(besdNum);
-        for(int t=0;t<besdNum;t++)
-        {
-            includebk[t]=etrait[t]._include;
-        }
-        // loop with exposure probes
-        printf("\nPerforming multi-outcome-SMR analysis (multi-SMR and multi-HEIDI tests) for %d exposure probes... \n",esdata._probNum);
-        double cr=0;
-        for( int ii=0;ii<esdata._probNum;ii++)
-        {   
-            double desti=1.0*ii/(esdata._probNum-1);
-            if(desti>=cr)
-            {
-                printf("%3.0f%%\r", 100.0*desti);
-                fflush(stdout);
-                if(cr==0) cr+=0.05;
-                else if(cr==0.05) cr+=0.2;
-                else if(cr==0.25) cr+=0.5;
-                else cr+=0.25;
-            }
-            //gwasData gdata;
-            esdata._include.clear();
-            esdata._include.push_back(ii);
-            string traitname=esdata._epi_prbID[ii];
-            int traitchr=esdata._epi_chr[ii];
-            string traitgene=esdata._epi_gene[ii];
-            int traitbp=esdata._epi_bp[ii];
-            //cout<<"\nPerforming analysis of exposure [ "+traitname+" ]..."<<endl;
-    
-           if(cis2all)
-           {
-               printf("\n%ld outcome probes are inclued in the analysis with the exposure probe %s.\n", esdata._include.size(),traitname.c_str());
-               
-           } else
-           {
-               int lowerbounder=(traitbp-exposure_probe_wind)>0?(traitbp-exposure_probe_wind):0;
-               int upperbounder=traitbp+exposure_probe_wind;
-
-               for(int i=0;i<besdNum;i++)
-               {
-                   etrait[i]._include.clear();
-                   for(int j=0;j<includebk[i].size();j++)
-                   {
-                       int bptmp=etrait[i]._epi_bp[includebk[i][j]];
-                       if(etrait[i]._epi_chr[includebk[i][j]]==traitchr && bptmp>=lowerbounder && bptmp<=upperbounder) etrait[i]._include.push_back(includebk[i][j]);
-                   }
-                   //printf("\n%ld probes from outcome%d in the cis region [%d, %d] of exposure probe %s are inclued in the analysis.\n", etrait[i]._include.size(),i+1,lowerbounder,upperbounder,traitname.c_str());
-                }
-            }
-            vector<long> probNum;
-            vector<vector<SMRRLT>> smrrlts;
-            vector<gwasData> gdatall;
-            vector<string> outconame;
-            vector<int> outcochr;
-            vector<string> outcogene;
-            vector<int> outcobp;
-            // molecular traits SMR
-            for(int i=0;i<besdNum;i++)
-            {
-                long count=0, cisNum = etrait[i]._include.size();
-                for(int p=0;p<cisNum;p++)
-                {
-                gwasData gdata;
-                vector<SMRRLT> smrrlts1;
-                int j = etrait[i]._include[p];
-                e2gconvert(&etrait[i], &gdata, j);
-                if(gdata.snpName.size()< m_hetero)
-                {
-                    //cout<<"\n"<<gdata.snpNum<<" common SNPs (less than parameter m_hetero: "+atos(m_hetero)+" ) are included from eTrait [ "+etrait[i]._epi_prbID[j]+" ] summary."<<endl;
-                    continue;
-                }
-                gdata.snpNum=gdata._include.size();
-                //cout<<"\n"<<gdata.snpNum<<" common SNPs are included from eTrait [ "+etrait[i]._epi_prbID[j]+" ] summary."<<endl;
-                smr_heidi_func(smrrlts1, NULL, &bdata, &gdata, &esdata, cis_itvl, heidioffFlag, refSNP,p_hetero,ld_top, m_hetero , p_smr, threshpsmrest,new_het_mth,opt,ld_min,opt_hetero,sampleoverlap,pmecs,minCor,prb_snp,targetLstflg);                
-                if(smrrlts1.size()>0)
-                    {
-                        count+=1;
-                        itemcount+=1;
-                        if(!heidioffFlag) {gdatall.push_back(gdata);}
-                        smrrlts.push_back(smrrlts1);
-                        outcochr.push_back(etrait[i]._epi_chr[j]);
-                        outconame.push_back(etrait[i]._epi_prbID[j]);
-                        outcogene.push_back(etrait[i]._epi_gene[j]);
-                        outcobp.push_back(etrait[i]._epi_bp[j]);
-                    }
-                }
-                probNum.push_back(count);
-            }
-            // GWAS SMR
-            vector<SMRRLT> smrrltsgwas;
-            if(gwasFileName!=NULL)
-            {
-            smr_heidi_func(smrrltsgwas, NULL, &bdata,&gdata1,&esdata, cis_itvl, heidioffFlag, refSNP,p_hetero,ld_top, m_hetero , p_smr, threshpsmrest,new_het_mth,opt,ld_min,opt_hetero,sampleoverlap,pmecs,minCor,prb_snp,targetLstflg);
-            if(smrrltsgwas.size()>0)
-                {
-                    
-                    probNum.push_back(1);
-                    smrrlts.push_back(smrrltsgwas);
-                    if(!heidioffFlag) {gdatall.push_back(gdata1);}
-                } else {
-                    //printf("WARNING: No common SNP passed the p-value threshold %e for the SMR analysis of complex trait.\n", p_smr);
-                    continue;
-                }
-            }
-            if(smrrlts.size()>0) etraitcount+=1;
-
-            int outcomcout=0; 
-            for(int i=0;i<probNum.size();i++){
-                if(probNum[i]>0) outcomcout+=1;
-            }
-
-            if(outcomcout==outcoNum) {
-                // illustrate all the combinations
-                vector<vector<int>> indexall;
-                for(int i=0;i<probNum.size();i++){
-                    vector<int> index(probNum[i]);
-                    std::iota(index.begin(),index.end(),0);
-                    indexall.push_back(index);
-                }
-                vector<vector<int>> combines;
-                permute_vector(indexall, combines);
-                // Bayesian factor caculation
-                //printf("\nPerforming Multi-SMR tests.....\n");
-                //if (combines.size()==0) printf("\nWARNING: Less than %ld outcomes included in the analysis. \nThe multi-SMR and multi-HEIDI test will skip for exposure probe %s\n",outcoNum,traitname.c_str());
-                long combNum=round(pow(2,outcoNum));
-                for(int i=0; i<combines.size();i++)
-                {
-                    vector<float> bxy(outcoNum), sigma_e(outcoNum),c(outcoNum);
-                    vector<string> outconamec(besdNum), outcogenec(besdNum); vector<long> outcobpc(besdNum);
-                    vector<float> Pr(combNum),HH(combNum),PO(combNum),PP(combNum);
-                    MatrixXd pie(2,outcoNum), lh(2,outcoNum);
-
-                    vector<gwasData> gdatain(outcoNum);
-
-                    // get the probe and gene information for output
-                    outstr=atos(traitchr)+'\t'+traitname+'\t'+traitgene+'\t'+atos(traitbp)+'\t';
-                    long postmp=0;
-                    for(int t=0; t<besdNum; t++)
-                    {
-                        long idxtmp = combines[i][t]+postmp;
-                        outconamec[t] = outconame[idxtmp];
-                        outcogenec[t] = outcogene[idxtmp];
-                        outcobpc[t] = outcobp[idxtmp];
-                        postmp=postmp+probNum[t];
-                        outstr+=outconamec[t]+'\t'+outcogenec[t]+'\t'+atos(outcobpc[t])+'\t';
-                    }
-                    if(gwasFileName!=NULL) outstr+="Trait\t";
-                    //get the bxy, sigma_b and sigma_e from SMR
-                    long pos=0;
-                    for(int t=0; t<outcoNum; t++)
-                    {
-                        long idx = combines[i][t]+pos;
-                        bxy[t]=smrrlts[idx][0].b_SMR;
-                        sigma_e[t]=pow(smrrlts[idx][0].se_SMR,2);
-                        c[t]=1+sigma_e[t]/sigma_b[t];
-                        pos=pos+probNum[t];
-                        if(!heidioffFlag) {gdatain[t]=gdatall[idx];}
-
-                    }
-                    // multi-HEIDI test
-                    vector<SMRRLT> smrrltsheidi;
-                    if(!heidioffFlag){
-                    multi_heidi_func(smrrltsheidi, NULL, &bdata, gdatain, &esdata, cis_itvl, heidioffFlag, refSNP,p_hetero,ld_top, m_hetero, p_smr, threshpsmrest,new_het_mth,opt,ld_min,opt_hetero,sampleoverlap,pmecs,minCor);
-                    }
-                    // get the H0 and H1 prior pi and likelihood
-                    const double PI = 3.141592653589793238463;
-                    for(int t=0;t<outcoNum;t++) {
-                        pie(0,t)=1-prior[t]; pie(1,t)=prior[t];
-                        lh(0,t)=pow(2*PI,-0.5)*pow(sigma_e[t],-0.5)*exp(-1*pow(bxy[t],2)/(2*sigma_e[t]));
-                        lh(1,t)=pow(2*PI,-0.5)*pow(c[t]*sigma_b[t],-0.5)*exp((1/c[t]-1)*pow(bxy[t],2)/(2*sigma_e[t]));
-                    }
-                    // caculate the posterier probablity
-                    for(int i=0;i<combNum;i++){
-                        Pr[i]=1.0;  HH[i]=1.0;
-                        for(int t=0;t<outcoNum;t++)
-                        {
-                            Pr[i] *= pie(combins[i][t],t);
-                            HH[i] *= lh(combins[i][t],t);
-                        }
-                    }
-                    float POall=0;
-                    for(int i=0;i<combNum;i++){
-                        PO[i]=HH[i]*Pr[i];
-                        POall+=PO[i];
-                    }
-                    for(int i=0;i<combNum;i++){
-                        PP[i]=PO[i]/POall;
-                        outstr=outstr+atos(PP[i])+'\t';
-                    }
-                    if(!heidioffFlag){
-                    outstr=outstr+(smrrltsheidi[0].p_HET >= 0 ? dtos(smrrltsheidi[0].p_HET) : "NA") + '\t' + (smrrltsheidi[0].nsnp > 0 ? atos(smrrltsheidi[0].nsnp+1) : "NA") + '\n';
-                    } else {
-                        outstr=outstr + "NA" + '\t' + "NA" + '\n';
-                    }
-                    // if(PP[combNum-1]>=0.6){
-                    if(1-PP[0]>=0.5){
-                        itercountmlt+=1;
-                        if(fputs_checked(outstr.c_str(),smr2))
-                        {
-                            printf("ERROR: in writing file %s .\n", smrfile2.c_str());
-                            exit(EXIT_FAILURE);
-                        }
-                    }                    
-                }
-
-            } else {
-                continue;
-            }
-            
-            // output the GWAS SMR results if included
-            if(gwasFileName!=NULL){
-                outstr=smrrltsgwas[0].ProbeID+'\t'+atos(smrrltsgwas[0].ProbeChr)+'\t'+smrrltsgwas[0].Gene+'\t'+atos(smrrltsgwas[0].Probe_bp)+'\t'+smrrltsgwas[0].SNP+'\t'+atos(smrrltsgwas[0].SNP_Chr)+'\t'+atos(smrrltsgwas[0].SNP_bp)+'\t'+smrrltsgwas[0].A1+'\t'+smrrltsgwas[0].A2+'\t'+atos(smrrltsgwas[0].Freq)+'\t'+atos(smrrltsgwas[0].b_GWAS)+'\t'+atos(smrrltsgwas[0].se_GWAS)+'\t'+dtos(smrrltsgwas[0].p_GWAS)+'\t'+atos(smrrltsgwas[0].b_eQTL)+'\t'+atos(smrrltsgwas[0].se_eQTL)+'\t'+dtos(smrrltsgwas[0].p_eQTL)+'\t'+atos(smrrltsgwas[0].b_SMR)+'\t'+atos(smrrltsgwas[0].se_SMR)+'\t'+dtos(smrrltsgwas[0].p_SMR)+'\t'+(smrrltsgwas[0].p_HET >= 0 ? dtos(smrrltsgwas[0].p_HET) : "NA") + '\t' + (smrrltsgwas[0].nsnp > 0 ? atos(smrrltsgwas[0].nsnp+1) : "NA") + '\n';
-                if(fputs_checked(outstr.c_str(),smr0))
-                {
-                    printf("ERROR: in writing file %s .\n", smrfile0.c_str());
-                    exit(EXIT_FAILURE);
-                }
-                
-            }
-            // output molecular trait SMR results
-            long mNum=smrrlts.size();
-            if (gwasFileName!=NULL) mNum=mNum-1;
-            for(int j=0;j<mNum;j++)
-            {
-                outstr=smrrlts[j][0].ProbeID+'\t'+atos(smrrlts[j][0].ProbeChr)+'\t'+smrrlts[j][0].Gene+'\t'+atos(smrrlts[j][0].Probe_bp)+'\t'+outconame[j]+'\t'+atos(outcochr[j])+'\t'+outcogene[j]+'\t'+atos(outcobp[j])+'\t'+smrrlts[j][0].SNP+'\t'+atos(smrrlts[j][0].SNP_Chr)+'\t'+atos(smrrlts[j][0].SNP_bp)+'\t'+smrrlts[j][0].A1+'\t'+smrrlts[j][0].A2+'\t'+atos(smrrlts[j][0].Freq)+'\t'+atos(smrrlts[j][0].b_GWAS)+'\t'+atos(smrrlts[j][0].se_GWAS)+'\t'+dtos(smrrlts[j][0].p_GWAS)+'\t'+atos(smrrlts[j][0].b_eQTL)+'\t'+atos(smrrlts[j][0].se_eQTL)+'\t'+dtos(smrrlts[j][0].p_eQTL)+'\t'+atos(smrrlts[j][0].b_SMR)+'\t'+atos(smrrlts[j][0].se_SMR)+'\t'+dtos(smrrlts[j][0].p_SMR)+'\t'+(smrrlts[j][0].p_HET >= 0 ? dtos(smrrlts[j][0].p_HET) : "NA") + '\t' + (smrrlts[j][0].nsnp > 0 ? atos(smrrlts[j][0].nsnp+1) : "NA") + '\n';
-                if(fputs_checked(outstr.c_str(),smr1))
-                {
-                    printf("ERROR: in writing file %s .\n", smrfile1.c_str());
-                    exit(EXIT_FAILURE);
-                }
-            }
-        }
-        if(gwasFileName!=NULL)
-        {
-            fclose(smr0);
-            printf("\n\nSMR and HEIDI analyses for complex traits completed.\nSMR and heterogeneity analysis results of %ld exposure probes have been saved in the file %s.\n",etraitcount,smrfile0.c_str());
-        }
-        fclose(smr1);
-        fclose(smr2);
-        printf("\nSMR and HEIDI analyses for molecular traits completed.\nSMR and heterogeneity analysis results of %ld outcome probes (%ld exposure probe) have been saved in the file %s.\n",itemcount,etraitcount,smrfile1.c_str());
-        printf("\nMulti-SMR and Multi-HEIDI analyses for 1 exposure and %ld outcomes completed.\nPosterior probability and HEIDI results of %ld combinations (%ld outcome probes and %ld exposure probes) have been saved in the file %s.\n",outcoNum,itercountmlt,itemcount,etraitcount,smrfile2.c_str());
     }
 
     void multi_joint_smr_func(vector<SMRRLT> &smrrlts, char* outFileName, bInfo* bdata, gwasData* gdata, vector<eqtlInfo> &esdata, int cis_itvl, bool heidioffFlag, const char* refSNP,double p_hetero,double ld_top,int m_hetero , double p_smr,double threshpsmrest, bool new_heidi_mth, bool opt, double ld_min,int opt_hetero, bool sampleoverlap, double pmecs, int minCor)
@@ -13195,6 +13292,107 @@ namespace SMRDATA
             }
             esdata->_valNum=esdata->_val.size();
         }
+    }
+    void cis_xqtl_probe_include_only(eqtlInfo* eqtlinfo, double p_smr, int cis_itvl, string eqtlFileName)
+    {
+        vector<int> newIcld;
+        if(eqtlinfo->_valNum==0)
+        {
+            for(uint32_t i=0;i<eqtlinfo->_probNum;i++)
+            {
+                double beta_top=0;
+                double se_top=1;
+                double pxz_top=1;
+                int esi_id_top=-1;
+                int epi_id_top=-1;
+                int prbbp=eqtlinfo->_epi_bp[i];
+                int prbchr=eqtlinfo->_epi_chr[i];
+                int cisR=prbbp+cis_itvl*1000;
+                int cisL=(prbbp-cis_itvl*1000)>0?(prbbp-cis_itvl*1000):0;
+                
+                for(uint32_t j=0;j<eqtlinfo->_snpNum;j++)
+                {
+                    int snpbp=eqtlinfo->_esi_bp[j];
+                    int snpchr=eqtlinfo->_esi_chr[j];
+                    if(snpchr==prbchr && snpbp>=cisL && snpbp<=cisR)
+                    {
+                        double beta=eqtlinfo->_bxz[i][j];
+                        double se=eqtlinfo->_sexz[i][j];
+                        if(ABS(se+9)<1e-6) continue;
+                        double zsxz=beta/se;
+                        double pxz=pchisq(zsxz*zsxz, 1);
+                        if(pxz<=pxz_top)
+                        {
+                            esi_id_top=j;
+                            epi_id_top=i;
+                            beta_top=beta;
+                            se_top=se;
+                            pxz_top=pxz;
+                        }
+                        
+                    }
+                }
+                
+                if(pxz_top<=p_smr)
+                {
+                    newIcld.push_back(eqtlinfo->_include[i]);
+                }
+            }
+        }
+        else
+        {
+            if(eqtlinfo->_val.size()==0)
+            {
+                throw ("Error: No data extracted from the input, please check.\n");
+            }
+            
+            for(uint32_t i=0;i<eqtlinfo->_probNum;i++)
+            {
+                uint64_t proid=eqtlinfo->_include[i];
+                uint64_t pos=eqtlinfo->_cols[proid<<1];
+                uint64_t pos1=eqtlinfo->_cols[(proid<<1)+1];
+                uint64_t num=pos1-pos;
+                double beta_top=0;
+                double se_top=1;
+                double pxz_top=1;
+                int esi_id_top=-1;
+                int epi_id_top=-1;
+                int prbbp=eqtlinfo->_epi_bp[proid];
+                int prbchr=eqtlinfo->_epi_chr[proid];
+                int cisR=prbbp+cis_itvl*1000;
+                int cisL=(prbbp-cis_itvl*1000)>0?(prbbp-cis_itvl*1000):0;
+                for(int j=0;j<num;j++)
+                {
+                    int esiid=eqtlinfo->_rowid[pos+j];
+                    int snpbp=eqtlinfo->_esi_bp[esiid];
+                    int snpchr=eqtlinfo->_esi_chr[esiid];
+                    if(snpchr==prbchr && snpbp>=cisL && snpbp<=cisR)
+                    {
+                        double beta=eqtlinfo->_val[pos+j];
+                        double se=eqtlinfo->_val[pos+j+num];
+                        double zsxz=beta/se;
+                        double pxz=pchisq(zsxz*zsxz, 1);
+                        if(pxz<=pxz_top)
+                        {
+                            esi_id_top=eqtlinfo->_rowid[pos+j];
+                            epi_id_top=i;
+                            beta_top=beta;
+                            se_top=se;
+                            pxz_top=pxz;
+                        }
+                    }
+                    
+                }
+                if(pxz_top<=p_smr)
+                {
+                    newIcld.push_back(eqtlinfo->_include[i]);
+                }
+
+            }
+        }
+        eqtlinfo->_include.clear();
+        eqtlinfo->_include=newIcld;
+        cout<<eqtlinfo->_include.size()<<" probes with at least a cis-xQTL at p-value threshold of "<<p_smr<<" are extracted from ["+eqtlFileName+"]."<<endl;    
     }
     // multiple outcomes HEIDI test
     void multi_heidi_func(vector<SMRRLT> &smrrlts, char* outFileName, bInfo* bdata, vector<gwasData> &gdata,eqtlInfo* esdata, int cis_itvl, bool heidioffFlag, const char* refSNP,double p_hetero,double ld_top,int m_hetero , double p_smr,double threshpsmrest, bool new_heidi_mth, bool opt, double ld_min,int opt_hetero, bool sampleoverlap, double pmecs, int minCor)
@@ -15415,7 +15613,7 @@ namespace SMRDATA
         vector<vector<int>> ein(etraitNum);
         // use [0:t-1]:etrait[0:t-1]vsGWAS; [t]:LDrefvsGWAS;         
         double disp=0;
-        for(int i=0;i<gdata->_include.size();i++) //no map in gwas data
+        for(int i=0;i<gdata->_include.size();i++) //gwas data
         {
             progress(i, disp, (int)gdata->_include.size());      
             int rid = gdata->_include[i];
@@ -16207,7 +16405,7 @@ namespace SMRDATA
         return maxid;
     }
     // need to update the function to extract the workspace for cis variants
-    long fill_smr_wk_mlt(bInfo* bdata,gwasData* gdata,vector<eqtlInfo> &esdata,MTSMRWKEXP* smrwk,const char* refSNP,int cis_itvl,bool heidioffFlag)
+    long fill_smr_wk_mlt_old(bInfo* bdata,gwasData* gdata,vector<eqtlInfo> &esdata,MTSMRWKEXP* smrwk,const char* refSNP,int cis_itvl,bool heidioffFlag)
     {
         int i=smrwk->cur_prbidx;
         long maxid =-9;
@@ -16372,7 +16570,174 @@ namespace SMRDATA
                 }                
             }       
         return maxid;
-    }   
+    }
+    // need to update the function to extract the workspace for cis variants
+    long fill_smr_wk_mlt(bInfo* bdata,gwasData* gdata,vector<eqtlInfo> &esdata,MTSMRWKEXP* smrwk,const char* refSNP,int cis_itvl,bool heidioffFlag)
+    {
+        int i=smrwk->cur_prbidx;
+        long maxid =-9;
+        long outcoNum=esdata.size();
+
+        if(esdata[0]._rowid.empty())
+        {
+            for (int j = 0; j<esdata[0]._esi_include.size() ; j++)// bdata._include.size() == esdata._esi_include.size() == gdata._include.size()
+            {
+                if (fabs(esdata[0]._bxz[i][j] + 9) > 1e-6)
+                {
+                    int snpbp=esdata[0]._esi_bp[j];
+                    int snpchr=esdata[0]._esi_chr[j];
+                    if(snpchr==esdata[0]._epi_chr[i] && ABS(esdata[0]._epi_bp[i]-snpbp)<=cis_itvl && gdata->seyz[gdata->_include[j]]+9>1e-6)
+                    {
+                        if(esdata[0]._epi_start.size()>0 && esdata[0]._epi_end.size()>0) //technical eQTLs should be removed
+                        {
+                            if(esdata[0]._epi_end[i]==-9 || (snpbp>esdata[0]._epi_end[i] && snpbp<esdata[0]._epi_start[i]))
+                            {
+                                for( int t=0; t<outcoNum; t++)
+                                {
+                                    smrwk->bxz[t].push_back(esdata[t]._bxz[i][j]);
+                                    smrwk->sexz[t].push_back(esdata[t]._sexz[i][j]);
+                                    smrwk->zxz[t].push_back(esdata[t]._bxz[i][j]/esdata[t]._sexz[i][j]);
+                                    if(!heidioffFlag) smrwk->freq[t].push_back(bdata->_mu[bdata->_include[j]] / 2); //for bdata, _include should be used with j, for others, fine.
+                                    else smrwk->freq[t].push_back(esdata[t]._esi_freq[j]);
+                                }
+                                smrwk->byz.push_back(gdata->byz[gdata->_include[j]]);
+                                smrwk->seyz.push_back(gdata->seyz[gdata->_include[j]]);
+                                smrwk->pyz.push_back(gdata->pvalue[gdata->_include[j]]);                                    
+                                smrwk->curId.push_back(j);
+                                smrwk->rs.push_back(esdata[0]._esi_rs[j]);
+                                smrwk->snpchrom.push_back(esdata[0]._esi_chr[j]);
+                                smrwk->allele1.push_back(esdata[0]._esi_allele1[j]);
+                                smrwk->allele2.push_back(esdata[0]._esi_allele2[j]);
+                                if(refSNP!=NULL && esdata[0]._esi_rs[j]==string(refSNP)) maxid=(smrwk->rs.size()-1);
+                                smrwk->bpsnp.push_back(esdata[0]._esi_bp[j]);
+                                
+                            } else {
+                                printf("Shown below is the technical eQTL and will be excluded from the analysis.\n");
+                                double z=(esdata[0]._bxz[i][j]/esdata[0]._sexz[i][j]);
+                                double p=pchisq(z*z, 1);
+                                string tmp=atos(esdata[0]._esi_rs[j])+"\t"+ atos(esdata[0]._esi_chr[j])+"\t"+ atos(esdata[0]._esi_bp[j])+"\t"+ atos(esdata[0]._esi_allele1[j])+"\t"+ atos(esdata[0]._esi_allele2[j])+"\t"+ atos(esdata[0]._esi_freq[j])+"\t"+ atos(esdata[0]._epi_prbID[i])+"\t"+ atos(esdata[0]._epi_chr[i])+"\t"+ atos(esdata[0]._epi_bp[i])+"\t" + atos(esdata[0]._epi_gene[i])+"\t"+ atos(esdata[0]._epi_orien[i])+"\t"+ atos(esdata[0]._bxz[i][j])+"\t"+ atos(esdata[0]._sexz[i][j])+"\t"+ dtos(p)+"\n";
+                                printf("%s\n",tmp.c_str());
+                            }
+                            
+                        } else {
+                            for( int t=0; t<outcoNum; t++)
+                            {
+                                smrwk->bxz[t].push_back(esdata[t]._bxz[i][j]);
+                                smrwk->sexz[t].push_back(esdata[t]._sexz[i][j]);
+                                smrwk->zxz[t].push_back(esdata[t]._bxz[i][j]/esdata[t]._sexz[i][j]);
+                                if(!heidioffFlag) smrwk->freq[t].push_back(bdata->_mu[bdata->_include[j]] / 2); //for bdata, _include should be used with j, for others, fine.
+                                else smrwk->freq[t].push_back(esdata[t]._esi_freq[j]);
+                            }
+                            smrwk->byz.push_back(gdata->byz[gdata->_include[j]]);
+                            smrwk->seyz.push_back(gdata->seyz[gdata->_include[j]]);
+                            smrwk->pyz.push_back(gdata->pvalue[gdata->_include[j]]);                            
+                            smrwk->curId.push_back(j);
+                            smrwk->rs.push_back(esdata[0]._esi_rs[j]);
+                            smrwk->snpchrom.push_back(esdata[0]._esi_chr[j]);
+                            smrwk->allele1.push_back(esdata[0]._esi_allele1[j]);
+                            smrwk->allele2.push_back(esdata[0]._esi_allele2[j]);
+                            if(refSNP!=NULL && esdata[0]._esi_rs[j]==string(refSNP)) maxid=(smrwk->rs.size()-1);
+                            smrwk->bpsnp.push_back(esdata[0]._esi_bp[j]);
+                            
+                        }
+                    }
+                }
+            }                     
+        }
+        
+        else{
+                vector<uint32_t> ge_rowid_common;
+                vector<uint32_t> ge_rowid_first;
+                vector<int> common_idx;
+                for( int t=0;t<outcoNum;t++)
+                {
+                    uint64_t beta_start=esdata[t]._cols[i<<1];
+                    uint64_t se_start=esdata[t]._cols[1+(i<<1)];
+                    uint64_t numsnps=se_start-beta_start;
+                    vector<uint32_t> ge_rowid_tmp;
+                    for(int j=0;j<numsnps;j++)
+                    {
+                        int ge_rowid=esdata[t]._rowid[beta_start+j];
+                        int snpbp=esdata[t]._esi_bp[ge_rowid];
+                        int snpchr=esdata[t]._esi_chr[ge_rowid];
+                        if(snpchr==esdata[t]._epi_chr[i] && ABS(esdata[t]._epi_bp[i]-snpbp)<=cis_itvl && gdata->seyz[gdata->_include[ge_rowid]]+9>1e-6)
+                        {
+                            if(t==0) {ge_rowid_first.push_back(ge_rowid);}
+                            ge_rowid_tmp.push_back(ge_rowid);
+                        }
+                    }
+                    common_idx.clear();
+                    CommFunc::match_only(ge_rowid_tmp,ge_rowid_first,common_idx);
+                    //if(common_idx.empty()) throw("Error: no common SNPs between multiple traits.");
+                    ge_rowid_common.resize(common_idx.size());
+                    #pragma omp parallel for
+                    for(int i=0;i<common_idx.size();i++)
+                    ge_rowid_common[i]=ge_rowid_first[common_idx[i]];
+                    ge_rowid_first.resize(ge_rowid_common.size());
+                    for(int i=0;i<ge_rowid_common.size();i++)
+                    ge_rowid_first[i]=ge_rowid_common[i];
+                }
+            
+                uint64_t numsnps=ge_rowid_common.size();
+                for(int j=0;j<numsnps;j++)
+                {
+                    int ge_rowid=ge_rowid_common[j];
+                    smrwk->byz.push_back(gdata->byz[gdata->_include[ge_rowid]]);
+                    smrwk->seyz.push_back(gdata->seyz[gdata->_include[ge_rowid]]);
+                    smrwk->pyz.push_back(gdata->pvalue[gdata->_include[ge_rowid]]);                            
+                    smrwk->curId.push_back(ge_rowid); //save snp id of the raw datastruct
+                    smrwk->rs.push_back(esdata[0]._esi_rs[ge_rowid]);
+                    smrwk->snpchrom.push_back(esdata[0]._esi_chr[ge_rowid]);
+                    smrwk->allele1.push_back(esdata[0]._esi_allele1[ge_rowid]);
+                    smrwk->allele2.push_back(esdata[0]._esi_allele2[ge_rowid]);
+                    if(refSNP!=NULL && esdata[0]._esi_rs[ge_rowid]==string(refSNP)) maxid=(smrwk->rs.size()-1);
+                    smrwk->bpsnp.push_back(esdata[0]._esi_bp[ge_rowid]);
+                }
+            
+                vector<int> val_idx;
+                for( int t=0;t<outcoNum;t++)
+                {
+                    uint64_t beta_start=esdata[t]._cols[i<<1];
+                    uint64_t se_start=esdata[t]._cols[1+(i<<1)];
+                    uint64_t numsnps=ge_rowid_common.size();
+                    val_idx.clear();
+                    match_only(ge_rowid_common,esdata[t]._rowid,val_idx);
+                    for(int j=0;j<numsnps;j++)
+                    {
+                        int ge_rowid=ge_rowid_common[j];
+                        int snpbp=esdata[t]._esi_bp[ge_rowid];
+
+                            if(esdata[t]._epi_start.size()>0 && esdata[t]._epi_end.size()>0)
+                            {
+                                if(esdata[t]._epi_end[i]==-9 || (snpbp>esdata[t]._epi_end[i] && snpbp<esdata[t]._epi_start[i]))
+                                {
+                                    smrwk->bxz[t].push_back(esdata[t]._val[beta_start+val_idx[j]]);
+                                    smrwk->sexz[t].push_back(esdata[t]._val[se_start+val_idx[j]]);
+                                    smrwk->zxz[t].push_back(esdata[t]._val[beta_start+val_idx[j]]/esdata[t]._val[se_start+val_idx[j]]);
+                                    if(!heidioffFlag) smrwk->freq[t].push_back(bdata->_mu[bdata->_include[ge_rowid]] / 2);
+                                    else smrwk->freq[t].push_back(esdata[t]._esi_freq[ge_rowid]);
+                                    
+                                } else {
+                                    printf("Shown below is the technical eQTL and will be excluded from the analysis.\n");
+                                    double z=(esdata[t]._bxz[i][val_idx[j]]/esdata[t]._sexz[i][val_idx[j]]);
+                                    double p=pchisq(z*z, 1);
+                                    // string tmp=atos(esdata[t]._esi_rs[j])+"\t"+ atos(esdata[t]._esi_chr[j])+"\t"+ atos(esdata[t]._esi_bp[j])+"\t"+ atos(esdata[t]._esi_allele1[j])+"\t"+ atos(esdata[t]._esi_allele2[j])+"\t"+ atos(esdata[t]._esi_freq[j])+"\t"+ atos(esdata[t]._epi_prbID[i])+"\t"+ atos(esdata[t]._epi_chr[i])+"\t"+ atos(esdata[t]._epi_bp[i])+"\t" + atos(esdata[t]._epi_gene[i])+"\t"+ atos(esdata[t]._epi_orien[i])+"\t"+ atos(esdata[t]._bxz[i][j])+"\t"+ atos(esdata[t]._sexz[i][j])+"\t"+ dtos(p)+"\n";                            
+                                    // printf("%s\n",tmp.c_str());
+                                }
+                                
+                            } else {
+                                    smrwk->bxz[t].push_back(esdata[t]._val[beta_start+val_idx[j]]);
+                                    smrwk->sexz[t].push_back(esdata[t]._val[se_start+val_idx[j]]);
+                                    smrwk->zxz[t].push_back(esdata[t]._val[beta_start+val_idx[j]]/esdata[t]._val[se_start+val_idx[j]]);
+                                    if(!heidioffFlag) smrwk->freq[t].push_back(bdata->_mu[bdata->_include[ge_rowid]] / 2);
+                                    else smrwk->freq[t].push_back(esdata[t]._esi_freq[ge_rowid]);                                
+                                }                 
+                        // }
+                    }
+                }                
+            }       
+        return maxid;
+    }    
     
     void update_snidx(MTSMRWK* smrwk,vector<int> &sn_ids,int max_snp_slct, string forwhat)
     {

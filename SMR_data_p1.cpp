@@ -3758,7 +3758,7 @@ namespace SMRDATA
         if(besd==NULL) {
             exit(EXIT_FAILURE);
         }
-        printf("Reading eQTL summary data from %s. \n",besdFileName);
+        printf("Checking the input xQTL summary data file format from %s. \n",besdFileName);
         if(fread(&headers[0], sizeof(int),RESERVEDUNITS, besd)<1)
         {
             printf("ERROR: File %s read failed!\n", besdFileName);
