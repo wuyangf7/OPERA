@@ -67,7 +67,7 @@ Columns are iteration numbers and posterior samples for each configuration from 
 
 ## Run OPERA for stage 2 analysis and heterogeneity analysis
 > opera --besd-flist mylist --gwas-summary mygwas.ma --bfile mydata --prior-pi-file myopera.pi  --out myopera
-Note: Only the cis-SNPs of each exposure sites are used, so the stage 2 analysis can be seperated by each chromosome-wide analysis. 
+* Note: Only the cis-SNPs of each exposure sites are used, so the stage 2 analysis can be seperated by each chromosome-wide analysis. 
 * --bfile reads individual-level SNP genotype data (in PLINK binary format) from a reference sample for LD estimation. 
 * --prior-pi-file reads the prior probabilities estimated from the stage 1 analysis (i.e., the posterior Mean from stage 1 analysis).  
 * --out saves the PPA and multi-exposure HEIDI test P-values for each possible association hypothesis in .ppa file (text format, see below example).
