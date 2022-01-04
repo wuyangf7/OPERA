@@ -33,7 +33,7 @@ We collected and prepared multiple public available molecular QTL data for users
 
 * --besd-flist reads a file to get the full paths of the multiple xQTL BESD files. The input format follows that for the SMR analysis (https://cnsgenomics.com/software/smr/#DataManagement). 
 * --gwas-summary reads summary-level data from GWAS. The input format follows that for GCTA-COJO analysis (http://cnsgenomics.com/software/gcta/#COJO).
-* --mbfile reads a text file with each row representing a PLINK binary file (e.g., one for each chromosome) from a reference sample for LD estimation, i.e. .bed, .bim, and .fam files.. Note that stage 1 analysis requires the genome-wide LD reference to estimate the global parameters. If the genome-wide genotype data (containing the genotype data for each chromosome) is ready, please switch the flag --bfile to read the standard PLINK bonary file as LD reference. 
+* --mbfile reads a text file with each row representing a PLINK binary file (e.g., one for each chromosome) from a reference sample for LD estimation, i.e. .bed, .bim, and .fam files.. Note that stage 1 analysis requires the genome-wide LD reference to estimate the global parameters. If the genome-wide genotype data in PLINK format (containing the genotype data for each chromosome) is ready, please switch the flag --bfile to read the standard PLINK binary file as LD reference. 
 * --out saves the estimation of prior proportions from the OPERA stage 1 analysis in .pi file (text format, see example from demo data below).
 
 ```
@@ -67,6 +67,8 @@ Columns are iteration numbers and posterior samples for each configuration from 
 
 ## Run OPERA for stage 2 analysis and heterogeneity analysis
 > opera --besd-flist mylist --gwas-summary mygwas.ma --bfile mydata --prior-pi-file myopera.pi  --out myopera
+Note: Only the cis-SNPs of each exposure sites are used, so the stage 2 analysis can be seperated by each chromosome-wide analysis. 
+* --bfile reads individual-level SNP genotype data (in PLINK binary format) from a reference sample for LD estimation. 
 * --prior-pi-file reads the prior probabilities estimated from the stage 1 analysis (i.e., the posterior Mean from stage 1 analysis).  
 * --out saves the PPA and multi-exposure HEIDI test P-values for each possible association hypothesis in .ppa file (text format, see below example).
 
