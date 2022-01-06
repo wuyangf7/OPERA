@@ -43,7 +43,8 @@ int main(int argc, char** argv) {
     time_t t = time(0);
     tm* now = localtime(&t);
     cout << "Analysis started: "<<now->tm_hour<<":"<<now->tm_min<<":"<< now->tm_sec<<","<<weeks[now->tm_wday]<<" "<<months[(now->tm_mon)]<<" "<<now->tm_mday<<","<<(now->tm_year + 1900)<<endl;
-    
+    // cout << "Analysis started: "<< ctime(&t) << endl;
+
     cout << "\nOptions:" << endl;
     try {
         option(argc, argv);
@@ -55,6 +56,7 @@ int main(int argc, char** argv) {
     t = time(0);
     now = localtime(&t);
     cout << "\nAnalysis completed: "<<now->tm_hour<<":"<<now->tm_min<<":"<< now->tm_sec<<","<<weeks[now->tm_wday]<<" "<<months[(now->tm_mon)]<<" "<<now->tm_mday<<","<<(now->tm_year + 1900)<<endl;
+    // cout << "\nAnalysis completed: "<< ctime(&t) << endl;
     time_used = time(NULL) - start;
     cout << "Computational time: " << time_used / 3600 << ":" << (time_used % 3600) / 60 << ":" << time_used % 60 << endl;
     
@@ -245,7 +247,7 @@ void option(int option_num, char* option_str[])
     bool piflag = false;
     double thresh_PP = 0.9;
     double thresh_smr = 0.05;
-    double thresh_heidi = 0;
+    double thresh_heidi = 1e-5;
     double alpha = 0.1;
     int piWind = 100;    
     string priorstr;

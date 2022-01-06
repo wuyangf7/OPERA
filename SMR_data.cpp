@@ -11640,7 +11640,7 @@ namespace SMRDATA
                 for(int j=0;j<probNum[i];j++)
                 {
                    int bptmp=smrrlts[i][j].Probe_bp;
-                   // select probes with SMR pvalue < 0.05 & HEIDI pvalue > 1e-3 for OPERA analysis
+                   // select probes with SMR pvalue < 0.05 & HEIDI pvalue > 1e-5 for OPERA analysis
                    // if(smrrlts[i][j].ProbeChr==traitchr && bptmp>=lowerbounder && bptmp<=upperbounder && smrrlts[i][j].p_SMR<=thresh_smr) {
                    if(smrrlts[i][j].ProbeChr==traitchr && bptmp>=lowerbounder && bptmp<=upperbounder && smrrlts[i][j].p_SMR<=thresh_smr && smrrlts[i][j].p_HET>=thresh_heidi) {
                         smrrltsbf.push_back(smrrlts[i][j]); countNum = countNum + 1;
@@ -11701,7 +11701,7 @@ namespace SMRDATA
             vector<long> idxcomb_smrrltsbf(expoNumbf.size()), idxcomb_smrrltsbf_last(expoNumbf.size());
             vector<eqtlInfo> esdatabf(expoNumbf.size());
             for(int i=0; i<combines.size();i++)
-            {                
+            {                                
                 vector<vector<string>> prb_cojolist;
                 vector<float> bxy(expoNum), sigma_e(expoNum), c(expoNum);
                 vector<string> outconamec(besdNum), outcogenec(besdNum); vector<long> outcobpc(besdNum);
@@ -14491,7 +14491,7 @@ namespace SMRDATA
         vector<int> sn_ids, rmsn_ids;
         MTSMRWKEXP* smrwk_tmp = smrwk;
         
-        // HEIDI instrument at p-value < 1e-3;
+        // 1. HEIDI instrument at p-value < 1e-3;
         for(int i=0;i<smrwk_tmp->zxz[0].size();i++)
         {
             int inldNum = 0;
@@ -14506,8 +14506,14 @@ namespace SMRDATA
             slctsnps.push_back("NA");
             return;
         }
+        // insert the maxids
+        for(int t=0; t<expoNum; t++) {
+            long maxid = max_abs_id(smrwk_tmp->zxz[t]);
+            sn_ids.push_back(maxid);
+        }
+        CommFunc::getUnique(sn_ids);
 
-        // LD pruning with the top SNPs;
+        // 2. LD pruning with the top SNPs;
         // update_snidx(smrwk_tmp,t,sn_ids,MAX_NUM_LD,"LD pruning");
         sort(sn_ids.begin(),sn_ids.end());
         MTSMRWKEXP smrwk_heidi;
@@ -14533,6 +14539,12 @@ namespace SMRDATA
         }
         CommFunc::getUnique(rmsn_ids);
         for(int i=0;i<rmsn_ids.size();i++) sn_ids.erase(std::remove(sn_ids.begin(), sn_ids.end(), rmsn_ids[i]), sn_ids.end());
+
+        if(sn_ids.size() < m_hetero) {
+            slctsnps.push_back("NA");
+            return;
+        }
+
         // insert the maxids
         for(int t=0; t<expoNum; t++) {
             long maxid = max_abs_id(smrwk_heidi.zxz[t]);
@@ -14540,12 +14552,7 @@ namespace SMRDATA
         }
         CommFunc::getUnique(sn_ids);
 
-        if(sn_ids.size() < m_hetero) {
-            slctsnps.push_back("NA");
-            return;
-        }
-
-        // pairwise LD pruning
+        // 3. pairwise LD pruning
         make_XMat(bdata,smrwk_heidi.curId, _X);
         update_smrwk_x(&smrwk_heidi,sn_ids,_X);
         int m = (int)smrwk_heidi.byz.size();
@@ -14559,6 +14566,7 @@ namespace SMRDATA
            slctsnps.push_back("NA");
            return;
         }
+        
         //Create new index
         sn_ids.clear();
         int qi=0;
@@ -16314,9 +16322,9 @@ namespace SMRDATA
             if(flip_slct[t_max][i]==1) {
                 gdata->byz[gin[i]]=-1.0*gdata->byz[gin[i]];
                 // switch the effect allele
-                string tmpch=gdata->allele_1[bin[i]];
-                gdata->allele_1[bin[i]]=gdata->allele_2[bin[i]];
-                gdata->allele_2[bin[i]]=tmpch;
+                string tmpch=gdata->allele_1[gin[i]];
+                gdata->allele_1[gin[i]]=gdata->allele_2[gin[i]];
+                gdata->allele_2[gin[i]]=tmpch;
             }
             // LD reference
             if(flip_slct[etraitNum][i]==1) {
