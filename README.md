@@ -104,7 +104,7 @@ The heterogeneity test (i.e., multi-exposure HEIDI) will be automatically perfor
 * --probe-chr extract the sites for each exposure on target chromosome for xQTL summary data. 
 * --prior-pi specifies the estimated prior probalities from the stage 1 analysis (i.e., the posterior Mean from stage 1 output, seperated by comma).
 * --extract-exposure-probe	extracts a subset of exposure sites for analysis.
-* --outcome-wind specifies the window around each GWAS loci for stage 2 analysis/the window around each site across exposures for stage 2 analysis when GWAS loci were not specified, e.g., 2Mb in either direction (default). 
+* --outcome-wind specifies the window around each GWAS loci for stage 2 analysis/the window around each site across exposures for stage 2 analysis when GWAS loci were not specified, e.g., 1Mb in either direction (default). 
 * --extract-GWAS-loci extracts a subset of GWAS COJO loci for analysis. The input file format is
 ```
 Chr     SNP     bp
