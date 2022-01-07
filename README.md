@@ -67,7 +67,7 @@ Columns are iteration numbers and posterior samples for each configuration from 
 
 ## Run OPERA for stage 2 analysis and heterogeneity analysis
 > opera --besd-flist mylist --gwas-summary mygwas.ma --bfile mydata --prior-pi-file myopera.pi  --out myopera
-* Note: Only the cis-SNPs of each exposure site are used, so the stage 2 analysis can be seperated by each chromosome-wide analysis. 
+* Note: Only the cis-SNPs of each exposure site are used, so the stage 2 analysis can be performed for each chromosome seperately. 
 * --bfile reads individual-level SNP genotype data (in PLINK binary format) from a reference sample for LD estimation. 
 * --prior-pi-file reads the prior probabilities estimated from the stage 1 analysis (i.e., the posterior Mean from stage 1 analysis).  
 * --out saves the PPA and multi-exposure HEIDI test P-values for each possible association hypothesis in .ppa file (text format, see below example).
@@ -98,11 +98,13 @@ Columns are probe ID, probe chromosome, gene name, probe position, SNP name, SNP
 The heterogeneity test (i.e., multi-exposure HEIDI) will be automatically performed for any combinatorial associations passed a PPA threshold (0.9 as default). If the heterogeneity test is not interested, it can be turned off by specifying --heidi-off.
 
 ### Other parameters for stage 2 analysis
-> opera --besd-flist mylist --gwas-summary mygwas.ma --bfile mydata --extract-exposure-probe myexposure --outcome-wind 1000 --thresh-PP 0.5 --thresh-SMR 0.05 --extract-target-cojo-snps mycojo --extract-GWAS-loci myloci --prior-pi 0.8,0.09,0.09,0.02 --prior-sigma 0.02,0.02 --out myopera --thread-num 3
-
+> opera --besd-flist mylist --gwas-summary mygwas.ma --bfile mydata --snp-chr 7 --probe-chr 7 --extract-exposure-probe myexposure --outcome-wind 1000 --thresh-PP 0.5 --thresh-SMR 0.05 --extract-target-cojo-snps mycojo --extract-GWAS-loci myloci --prior-pi 0.8,0.09,0.09,0.02 --prior-sigma 0.02,0.02 --out myopera --thread-num 3
+* --bfile reads individual-level SNP genotype data (in PLINK binary format) from a reference sample for LD estimation. 
+* --snp-chr extract the SNPs on target chromosome on across xQTL, GWAS summary data and LD reference data.
+* --probe-chr extract the sites for each exposure on target chromosome for xQTL summary data. 
 * --prior-pi specifies the estimated prior probalities from the stage 1 analysis (i.e., the posterior Mean from stage 1 output, seperated by comma).
 * --extract-exposure-probe	extracts a subset of exposure sites for analysis.
-* --outcome-wind specifies the window around each GWAS loci for stage 2 analysis, e.g., 500 (default). 
+* --outcome-wind specifies the window around each GWAS loci for stage 2 analysis/the window around each site across exposures for stage 2 analysis when GWAS loci were not specified, e.g., 2Mb in either direction (default). 
 * --extract-GWAS-loci extracts a subset of GWAS COJO loci for analysis. The input file format is
 ```
 Chr     SNP     bp
@@ -117,6 +119,7 @@ ENSG00000242687 rs34631688,rs187375676,rs149211972,rs219813,rs6976207,rs7789895,
 ```
 * --thresh-PP specifies significance threshold of PPA to perform heterogeneity test and output the significant results. 
 * --thresh-SMR specifies significance threshold of SMR to perform the OPERA analysis, e.g., 0.05 (default).
+* --thresh-HEIDI specifies significance threshold of single-exposure HEIDI test to perform the OPERA analysis, e.g., 0 (default).
 * --opera-smr turn on the flag of runing OPERA analysis using the estimated SMR effect rather than estimated joint-SMR effect. 
 * --thread-num specifies the number of OpenMP threads for parallel computing. 
 
