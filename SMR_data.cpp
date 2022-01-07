@@ -10979,8 +10979,8 @@ namespace SMRDATA
                     // distance between top-SNP and GWAS loci
                     // int bptmp=smrrlts[i][j].SNP_bp;
                     // if(smrrlts[i][j].SNP_Chr==locichr && bptmp>=lowerbounder && bptmp<=upperbounder) {
-                        if(smrrlts[i][j].p_SMR<=thresh_smr) {
-                        // if(smrrlts[i][j].p_SMR<=thresh_smr && smrrlts[i][j].p_HET>=thresh_heidi) {
+                        // if(smrrlts[i][j].p_SMR<=thresh_smr) {
+                        if(smrrlts[i][j].p_SMR<=thresh_smr && smrrlts[i][j].p_HET>=thresh_heidi) {
                             smrrltsbf.push_back(smrrlts[i][j]);
                             countNum = countNum + 1;
                         } 
@@ -11632,8 +11632,8 @@ namespace SMRDATA
                 vector<long> probNumbf(expoNum);
                 vector<long> expoNumbf; //for missing exposures
                 // skip exposures P_SMR > 0.05
-                if(smrrlts[tt][ii].p_SMR > thresh_smr) { continue; }
-                // if(smrrlts[tt][ii].p_SMR > thresh_smr && smrrlts[i][j].p_HET < thresh_heidi) { continue; }
+                // if(smrrlts[tt][ii].p_SMR > thresh_smr) { continue; }
+                if(smrrlts[tt][ii].p_SMR > thresh_smr || smrrlts[tt][ii].p_HET < thresh_heidi) { continue; }
                 
                 int traitchr=smrrlts[tt][ii].ProbeChr;
                 int traitbp=smrrlts[tt][ii].Probe_bp;
@@ -11648,8 +11648,8 @@ namespace SMRDATA
                         {
                            int bptmp=smrrlts[i][j].Probe_bp;
                            // select probes with SMR pvalue < 0.05 & HEIDI pvalue > 1e-5 for OPERA analysis
-                            if(smrrlts[i][j].ProbeChr==traitchr && bptmp>=lowerbounder && bptmp<=upperbounder && smrrlts[i][j].p_SMR<=thresh_smr) {
-                           // if(smrrlts[i][j].ProbeChr==traitchr && bptmp>=lowerbounder && bptmp<=upperbounder && smrrlts[i][j].p_SMR<=thresh_smr && smrrlts[i][j].p_HET>=thresh_heidi) {
+                           // if(smrrlts[i][j].ProbeChr==traitchr && bptmp>=lowerbounder && bptmp<=upperbounder && smrrlts[i][j].p_SMR<=thresh_smr) {
+                           if(smrrlts[i][j].ProbeChr==traitchr && bptmp>=lowerbounder && bptmp<=upperbounder && smrrlts[i][j].p_SMR<=thresh_smr && smrrlts[i][j].p_HET>=thresh_heidi) {
                                 smrrltsbf.push_back(smrrlts[i][j]); countNum = countNum + 1;
                            }
                         }                        

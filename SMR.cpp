@@ -247,9 +247,10 @@ void option(int option_num, char* option_str[])
     bool piflag = false;
     double thresh_PP = 0.9;
     double thresh_smr = 0.05;
-    double thresh_heidi = 1e-5;
+    double thresh_heidi = 0;
     double alpha = 0.1;
-    int piWind = 100;    
+    int piWind = 100;
+    outcomePrbWind=1000;    
     string priorstr;
     string sigmastr;
     // end
