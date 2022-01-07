@@ -394,8 +394,8 @@ namespace SMRDATA
     void cis_xqtl_probe_include_only(eqtlInfo* eqtlinfo, double p_smr, int cis_itvl, string eqtlFileName);
     void e2gconvert(eqtlInfo* etrait, gwasData* gdata, int &ii);
     void e2econvert(eqtlInfo* etrait, eqtlInfo* esdata);
-    void e2econvert_old(eqtlInfo* etrait, eqtlInfo* esdata);
-    void e2econvert_old2(eqtlInfo* etrait, eqtlInfo* esdata);
+    void e2econvert_old(eqtlInfo* etrait, eqtlInfo* esdata); // Not used; failed to improve
+    void e2econvert_old2(eqtlInfo* etrait, eqtlInfo* esdata); // Not used; failed to improve
     void allele_check_multi(bInfo* bdata, vector<eqtlInfo> &etrait, gwasData* gdata, eqtlInfo* esdata);
     void allele_check_multi(bInfo* bdata, vector<eqtlInfo> &etrait, eqtlInfo* esdata);
     void allele_check_multi(vector<eqtlInfo> &etrait, gwasData* gdata, eqtlInfo* esdata);
@@ -410,8 +410,11 @@ namespace SMRDATA
     void update_geIndx(bInfo* bdata, vector<eqtlInfo> &etrait, gwasData* gdata, eqtlInfo* esdata);
     void update_geIndx(bInfo* bdata, vector<eqtlInfo> &etrait, eqtlInfo* esdata);
     void update_geIndx(bInfo* bdata, vector<eqtlInfo> &etrait, gwasData* gdata);
+    void extract_ldata_by_chr(lociData* lociData, int prbchr);
     void allele_compare(string a1, string a2, string s1,string s2, int &Id, int &flip);
+    // original function from SMR
     void smr_heidi_func_old(vector<SMRRLT> &smrrlts, char* outFileName, bInfo* bdata,gwasData* gdata,eqtlInfo* esdata, int cis_itvl, bool heidioffFlag, const char* refSNP,double p_hetero,double ld_top,int m_hetero , double p_smr,double threshpsmrest, bool new_het_mtd, bool opt, double ld_min,int opt_hetero, bool sampleoverlap, double pmecs, int minCor,map<string, string> &prb_snp, bool targetLstFlg);
+    // parallele version
     void smr_heidi_func(vector<SMRRLT> &smrrlts, char* outFileName, bInfo* bdata,gwasData* gdata,eqtlInfo* esdata, int cis_itvl, bool heidioffFlag, const char* refSNP,double p_hetero,double ld_top,int m_hetero , double p_smr,double threshpsmrest, bool new_het_mtd, bool opt, double ld_min,int opt_hetero, bool sampleoverlap, double pmecs, int minCor,map<string, string> &prb_snp, bool targetLstFlg);
     void multi_heidi_func(vector<SMRRLT> &smrrlts, char* outFileName, bInfo* bdata, vector<gwasData> &gdata,eqtlInfo* esdata, int cis_itvl, bool heidioffFlag, const char* refSNP,double p_hetero,double ld_top,int m_hetero , double p_smr,double threshpsmrest, bool new_heidi_mth, bool opt, double ld_min,int opt_hetero, bool sampleoverlap, double pmecs, int minCor);
     void multi_heidi_func(vector<SMRRLT> &smrrlts, char* outFileName, bInfo* bdata, gwasData* gdata, vector<eqtlInfo> &esdata, int cis_itvl, bool heidioffFlag, const char* refSNP,double p_hetero,double ld_top,int m_hetero , double p_smr,double threshpsmrest, bool new_heidi_mth, bool opt, double ld_min,int opt_hetero, bool sampleoverlap, double pmecs, int minCor);

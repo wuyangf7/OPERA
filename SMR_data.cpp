@@ -2639,7 +2639,18 @@ namespace SMRDATA
         eqtlinfo->_include=newIcld;
         cout << eqtlinfo->_include.size() << " probes are extracted from chromosome [" + atos(prbchr) + "]." << endl;
     }
-
+    void extract_ldata_by_chr(lociData* lociData, int prbchr)
+    {
+        vector<int> newIcld;
+        for(int i=0;i<lociData->_include.size();i++)
+        {
+            int tmpint=lociData->_include[i];
+            if(lociData->_chr[tmpint]==prbchr) newIcld.push_back(tmpint);
+        }
+        lociData->_include.clear();
+        lociData->_include=newIcld;
+        cout << lociData->_include.size() << " GWAS loci are extracted from chromosome [" + atos(prbchr) + "]." << endl;
+    }
 	void extract_eqtl_snp(eqtlInfo* eqtlinfo, string snplstName)
 	{
 		vector<string> snplist;
@@ -10804,6 +10815,7 @@ namespace SMRDATA
         lociData ldata;
         if(GWAScojosnplstName!=NULL) {
             read_GWAS_cojo_snplist(&ldata, GWAScojosnplstName);
+            if(prbchr!=0) extract_ldata_by_chr(&ldata,prbchr);
         }
 
         // 5. allele checking between data
@@ -10943,8 +10955,8 @@ namespace SMRDATA
             vector<long> probNumbf(besdNum,0); 
             vector<long> expoNumbf; //for missing exposures
 
-            int locichr=ldata._chr[ii];
-            int locibp=ldata._bp[ii];
+            int locichr=ldata._chr[ldata._include[ii]];
+            int locibp=ldata._bp[ldata._include[ii]];
             int lowerbounder=(locibp-exposure_probe_wind)>0?(locibp-exposure_probe_wind):0;
             int upperbounder=locibp+exposure_probe_wind;
             
@@ -10987,24 +10999,17 @@ namespace SMRDATA
             // update esdata._esi_include/gdata1._include/bdata._include with only SNPs in the cis-window; 
             lowerbounder=(locibp-cis_itvl*1000)>0?(locibp-cis_itvl*1000):0;
             upperbounder=locibp+cis_itvl*1000;
-            esdata[0]._esi_include.clear(); gdata1._include.clear(); bdata._include.clear();
+            for(int i=0;i<expoNum;i++) esdata[i]._esi_include.clear();                 
+            gdata1._include.clear(); bdata._include.clear();
             for(int j=0;j<esdata[0]._snpNum;j++) {
                int bptmp=esdata[0]._esi_bp[j];
                if(esdata[0]._esi_chr[j]==locichr && bptmp>=lowerbounder && bptmp<=upperbounder) {
-                   esdata[0]._esi_include.push_back(j);
+                   for(int i=0;i<expoNum;i++) {
+                        esdata[i]._esi_include.push_back(j); 
+                   } 
                    gdata1._include.push_back(j);
                    bdata._include.push_back(j);
                }
-            }
-            // update esdata._esi_include for other exposures 
-            for(int i=1;i<besdNum;i++) {
-                esdata[i]._esi_include.clear();
-                for(int j=0;j<esdata[0]._snpNum;j++) {
-                   int bptmp=esdata[0]._esi_bp[j];
-                   if(esdata[0]._esi_chr[j]==locichr && bptmp>=lowerbounder && bptmp<=upperbounder) {
-                       esdata[i]._esi_include.push_back(j);
-                   }
-                }
             }
             // skip the GWAS loci without an exposure probe with significant instrument
             int expocout = 0, missNum = 0; 
@@ -11014,7 +11019,7 @@ namespace SMRDATA
                 } else { missNum += 1;}
                 missexpoNum[i] = missNum;
             }
-            if(expocout == 0) { continue; }
+            // if(expocout == 0) { continue; }
             
             // illustrate all the combinations
             vector<vector<int>> indexall;
@@ -11049,14 +11054,12 @@ namespace SMRDATA
                     else if(crcomb==0.25) crcomb+=0.5;
                     else crcomb+=0.25;
                 }
-                //vector<eqtlInfo> esdatabf;
                 vector<vector<string>> prb_cojolist;
                 vector<float> bxy(expoNum), sigma_e(expoNum), c(expoNum);
                 vector<string> outconamec(besdNum), outcogenec(besdNum); vector<long> outcobpc(besdNum);
                 vector<float> Pr(combNum),HH(combNum),PO(combNum),PP(combNum),PIP(combNum);
                 MatrixXd lh(2,expoNum);
                 // find the probe in smrrltsbf and esdata
-                outstr=atos(locichr)+'\t';
                 long postmp = 0; idxcomb_smrrltsbf.clear(), idxcomb_smrrltsbf.resize(expoNumbf.size());
                 if(operasmrflag) jointsmrflag = false;
                 for(int t=0; t<besdNum; t++)
@@ -11080,7 +11083,6 @@ namespace SMRDATA
                                     esdata[t]._include.push_back(itt->second);
                                     e2econvert(&esdata[t], &esdatatmp);
                                     esdatabf[t_new] = esdatatmp;
-                                    //esdatabf.push_back(esdatatmp);
                                 }
                             }                            
                             if(targetcojosnplstName!=NULL) {
@@ -11096,30 +11098,30 @@ namespace SMRDATA
                     
                     } else {
                         outconamec[t] = "NA"; outcogenec[t] = "NA"; outcobpc[t] = 0;
-                    }                        
-                    outstr+=outconamec[t]+'\t'+atos(outcobpc[t])+'\t';
+                    }                                            
                 }
                 idxcomb_smrrltsbf_last = idxcomb_smrrltsbf;
 
-                // perform the SMR or joint-SMR analysis, including unbalanced exposures
-                vector<SMRRLT> smrrlts_joint;
                 if(esdatabf.size()!=0 && esdatabf.size() != expocout) { continue; } 
 
+                // perform the SMR or joint-SMR analysis, including unbalanced exposures
+                vector<SMRRLT> smrrlts_joint;
                 if(!operasmrflag) { // compute the joint SMR effect
                     if(targetcojosnplstName!=NULL) {
                      multi_joint_smr_func(smrrlts_joint, NULL, &bdata, &gdata1, esdatabf, prb_cojolist, cis_itvl, heidioffFlag,refSNP,p_hetero,ld_top,m_hetero,p_smr,threshpsmrest,new_het_mth,opt,ld_min,opt_hetero,sampleoverlap,pmecs,minCor);
                     } else { multi_joint_smr_func(smrrlts_joint, NULL, &bdata, &gdata1, esdatabf, cis_itvl, heidioffFlag,refSNP,p_hetero,ld_top,m_hetero,p_smr,threshpsmrest,new_het_mth,opt,ld_min,opt_hetero,sampleoverlap,pmecs,minCor); }
                 } else { // compute the marginal SMR effect
-                    // for(int es=0; es<esdatabf.size(); es++) {
-                    //     vector<SMRRLT> smrrlt_esdata;
-                    //     smr_heidi_func(smrrlt_esdata, NULL, &bdata, &gdata1, &esdatabf[es],cis_itvl, heidioffFlag, refSNP,p_hetero,ld_top, m_hetero, p_smr, threshpsmrest,new_het_mth,opt,ld_min,opt_hetero,sampleoverlap,pmecs,minCor,prb_snp,targetLstflg);
-                    //     smrrlts_joint.push_back(smrrlt_esdata[0]);
-                    // }
                     for(int s=0; s<idxcomb_smrrltsbf.size(); s++) {
                         smrrlts_joint.push_back(smrrltsbf[idxcomb_smrrltsbf[s]]);
                     }
                 }
-                
+                // skip no joint SMR effect due to no common SNPs
+                if(smrrlts_joint.size() != expocout) { continue; }
+                // output the probe information;
+                outstr=atos(locichr)+'\t';
+                for(int t=0; t<besdNum; t++) {
+                    outstr+=outconamec[t]+'\t'+atos(outcobpc[t])+'\t';
+                }
                 //get the bxy, sigma_b and sigma_e from joint-SMR
                 int k_joint = 0;
                 for(int t=0; t<expoNum; t++)
@@ -11456,7 +11458,6 @@ namespace SMRDATA
                 exit(EXIT_FAILURE);
             }
         }
-
         // read gwas
         if(gwasFileName!=NULL) {
             read_gwas_data(&gdata1, gwasFileName);
@@ -11609,276 +11610,295 @@ namespace SMRDATA
             exit(EXIT_FAILURE);
         }
 
-        // 8. loop with probes for exposure #1; test all possible combinations at each probe loci
-        double cr=0;
-        for(int ii=0;ii<probNum[0];ii++)
-        {
-            double desti=1.0*ii/(probNum[0]);
-            if(desti>=cr)
-            {
-                printf("%3.0f%%\r", 100.0*desti);
-                fflush(stdout);
-                if(cr==0) cr+=0.05;
-                else if(cr==0.05) cr+=0.2;
-                else if(cr==0.25) cr+=0.5;
-                else cr+=0.25;
-            }
-            vector<SMRRLT> smrrltsbf;
-            vector<long> probNumbf;
-            vector<long> expoNumbf; //for missing exposures
-
-            smrrltsbf.push_back(smrrlts[0][ii]); 
-            probNumbf.push_back(1);
-            int traitchr=smrrlts[0][ii].ProbeChr;
-            int traitbp=smrrlts[0][ii].Probe_bp;
-            int lowerbounder=(traitbp-exposure_probe_wind)>0?(traitbp-exposure_probe_wind):0;
-            int upperbounder=traitbp+exposure_probe_wind;
-            // find other exposure probes in the cis-window of 1st exposure
-            for(int i=1;i<besdNum;i++)
-            {
-                int countNum = 0;
-                for(int j=0;j<probNum[i];j++)
+        // 8. loop with each SMR < 0.05 loci and test all possible combinations at each probe loci;
+        int process = 0;
+        map<string, long> combname_set;
+        for(int tt=0;tt<expoNum;tt++) {            
+            double cr=0;
+            
+            for(int ii=0;ii<probNum[tt];ii++) {
+                process = process + 1;
+                double desti=1.0*process/itemcount;
+                if(desti>=cr)
                 {
-                   int bptmp=smrrlts[i][j].Probe_bp;
-                   // select probes with SMR pvalue < 0.05 & HEIDI pvalue > 1e-5 for OPERA analysis
-                   if(smrrlts[i][j].ProbeChr==traitchr && bptmp>=lowerbounder && bptmp<=upperbounder && smrrlts[i][j].p_SMR<=thresh_smr) {
-                   // if(smrrlts[i][j].ProbeChr==traitchr && bptmp>=lowerbounder && bptmp<=upperbounder && smrrlts[i][j].p_SMR<=thresh_smr && smrrlts[i][j].p_HET>=thresh_heidi) {
-                        smrrltsbf.push_back(smrrlts[i][j]); countNum = countNum + 1;
+                    printf("%3.0f%%\r", 100.0*desti);
+                    fflush(stdout);
+                    if(cr==0) cr+=0.05;
+                    else if(cr==0.05) cr+=0.2;
+                    else if(cr==0.25) cr+=0.5;
+                    else cr+=0.25;
+                }
+                vector<SMRRLT> smrrltsbf;
+                vector<long> probNumbf(expoNum);
+                vector<long> expoNumbf; //for missing exposures
+                // skip exposures P_SMR > 0.05
+                if(smrrlts[tt][ii].p_SMR > thresh_smr) { continue; }
+                // if(smrrlts[tt][ii].p_SMR > thresh_smr && smrrlts[i][j].p_HET < thresh_heidi) { continue; }
+                
+                int traitchr=smrrlts[tt][ii].ProbeChr;
+                int traitbp=smrrlts[tt][ii].Probe_bp;
+                int lowerbounder=(traitbp-exposure_probe_wind)>0?(traitbp-exposure_probe_wind):0;
+                int upperbounder=traitbp+exposure_probe_wind;
+                // find other exposure probes in the cis-window of target exposure
+                for(int i=0;i<expoNum;i++)
+                {
+                    int countNum = 0;
+                    if(i != tt) {
+                        for(int j=0;j<probNum[i];j++)
+                        {
+                           int bptmp=smrrlts[i][j].Probe_bp;
+                           // select probes with SMR pvalue < 0.05 & HEIDI pvalue > 1e-5 for OPERA analysis
+                            if(smrrlts[i][j].ProbeChr==traitchr && bptmp>=lowerbounder && bptmp<=upperbounder && smrrlts[i][j].p_SMR<=thresh_smr) {
+                           // if(smrrlts[i][j].ProbeChr==traitchr && bptmp>=lowerbounder && bptmp<=upperbounder && smrrlts[i][j].p_SMR<=thresh_smr && smrrlts[i][j].p_HET>=thresh_heidi) {
+                                smrrltsbf.push_back(smrrlts[i][j]); countNum = countNum + 1;
+                           }
+                        }                        
+                    } 
+                    if(i == tt) {                        
+                        smrrltsbf.push_back(smrrlts[tt][ii]); countNum = countNum + 1;
+                    }
+                    probNumbf[i] = countNum;                                                
+                }
+                // update esdata._esi_include/gdata1._include/bdata._include with only SNPs in the cis-window; 
+                // use the exposure tt bp as gold standard; gdata1, bdata and esdata included SNPs are the same;
+                lowerbounder=(traitbp-cis_itvl*1000)>0?(traitbp-cis_itvl*1000):0;
+                upperbounder=traitbp+cis_itvl*1000;
+                for(int i=0;i<expoNum;i++) esdata[i]._esi_include.clear();                 
+                gdata1._include.clear(); bdata._include.clear();
+                for(int j=0;j<esdata[tt]._snpNum;j++) {
+                   int bptmp=esdata[tt]._esi_bp[j];
+                   if(esdata[tt]._esi_chr[j]==traitchr && bptmp>=lowerbounder && bptmp<=upperbounder) {
+                       for(int i=0;i<expoNum;i++) {
+                            esdata[i]._esi_include.push_back(j); 
+                       } 
+                       gdata1._include.push_back(j);
+                       bdata._include.push_back(j);
                    }
                 }
-                probNumbf.push_back(countNum);
-            }
-            // update esdata._esi_include/gdata1._include/bdata._include with only SNPs in the cis-window; 
-            // use the 1st exposure bp as gold standard; gdata1, bdata and esdata included SNPs are the same;
-            lowerbounder=(traitbp-cis_itvl*1000)>0?(traitbp-cis_itvl*1000):0;
-            upperbounder=traitbp+cis_itvl*1000;
-            esdata[0]._esi_include.clear(); gdata1._include.clear(); bdata._include.clear();
-            for(int j=0;j<esdata[0]._snpNum;j++) {
-               int bptmp=esdata[0]._esi_bp[j];
-               if(esdata[0]._esi_chr[j]==traitchr && bptmp>=lowerbounder && bptmp<=upperbounder) {
-                   esdata[0]._esi_include.push_back(j);
-                   gdata1._include.push_back(j);
-                   bdata._include.push_back(j);
-               }
-            }
-            // update esdata._esi_include for other exposures 
-            for(int i=1;i<besdNum;i++) {
-                esdata[i]._esi_include.clear();
-                for(int j=0;j<esdata[0]._snpNum;j++) {
-                   int bptmp=esdata[0]._esi_bp[j];
-                   if(esdata[0]._esi_chr[j]==traitchr && bptmp>=lowerbounder && bptmp<=upperbounder) {
-                       esdata[i]._esi_include.push_back(j);
-                   }
+                // skip the exposure probe where no nearby probes from other exposure with SMR effect
+                int expocout = 0, missNum = 0;
+                vector<int> missexpoNum(expoNum);
+                for(int i=0;i<expoNum;i++) {
+                    if(probNumbf[i]>0) { expocout+=1; expoNumbf.push_back(i);
+                    } else { missNum += 1;}
+                    missexpoNum[i] = missNum;
                 }
-            }
-            // skip the probe of 1st exposure where no nearby probes from other exposure with SMR effect
-            int expocout = 0, missNum = 0;
-            vector<int> missexpoNum(expoNum);
-            for(int i=0;i<expoNum;i++) {
-                if(probNumbf[i]>0) { expocout+=1; expoNumbf.push_back(i);
-                } else { missNum += 1;}
-                missexpoNum[i] = missNum;
-            }
-            if(expocout == 0) { continue; } 
+                // if(expocout == 0) { continue; } // not possible
 
-            // illustrate all the combinations
-            vector<vector<int>> indexall;
-            for(int i=0;i<probNumbf.size();i++) {
-                if(probNumbf[i] > 0) {
-                    vector<int> index(probNumbf[i]);
-                    std::iota(index.begin(),index.end(),0);
-                    indexall.push_back(index);
-                } else {
-                    vector<int> index;
-                    index.push_back(0);
-                    indexall.push_back(index);
+                // illustrate all the combinations
+                vector<vector<int>> indexall;
+                for(int i=0;i<probNumbf.size();i++) {
+                    if(probNumbf[i] > 0) {
+                        vector<int> index(probNumbf[i]);
+                        std::iota(index.begin(),index.end(),0);
+                        indexall.push_back(index);
+                    } else {
+                        vector<int> index;
+                        index.push_back(0);
+                        indexall.push_back(index);
+                    }
                 }
-            }
-            vector<vector<int>> combines;
-            permute_vector(indexall, combines);
+                vector<vector<int>> combines;
+                permute_vector(indexall, combines);
 
-            // loop with all the possible combinations
-            vector<long> idxcomb_smrrltsbf(expoNumbf.size()), idxcomb_smrrltsbf_last(expoNumbf.size());
-            vector<eqtlInfo> esdatabf(expoNumbf.size());
-            for(int i=0; i<combines.size();i++)
-            {                                
-                vector<vector<string>> prb_cojolist;
-                vector<float> bxy(expoNum), sigma_e(expoNum), c(expoNum);
-                vector<string> outconamec(besdNum), outcogenec(besdNum); vector<long> outcobpc(besdNum);
-                vector<float> Pr(combNum),HH(combNum),PO(combNum),PP(combNum),PIP(combNum);
-                MatrixXd lh(2,expoNum);
-                // find the probe in smrrltsbf and esdata
-                outstr=atos(traitchr)+'\t';
-                long postmp = 0; idxcomb_smrrltsbf.clear(), idxcomb_smrrltsbf.resize(expoNumbf.size());
-                if(operasmrflag) jointsmrflag = false;
-                for(int t=0; t<besdNum; t++)
-                {   
-                    if(probNumbf[t] > 0) {
-                        int t_new = t - missexpoNum[t];
-                        long idxtmp = combines[i][t] + postmp;
-                        idxcomb_smrrltsbf[t_new] = idxtmp;
-                        outconamec[t] = smrrltsbf[idxtmp].ProbeID;
-                        outcogenec[t] = smrrltsbf[idxtmp].Gene;
-                        outcobpc[t] = smrrltsbf[idxtmp].Probe_bp;
-                        postmp = postmp + probNumbf[t];
-                        if(!heidioffFlag || jointsmrflag) {
-                            if(idxcomb_smrrltsbf[t_new] != idxcomb_smrrltsbf_last[t_new] || i==0) {
-                                esdata[t]._include.clear();
-                                map<string, int>::iterator itt;
-                                eqtlInfo esdatatmp;
-                                itt = esdata[t]._probe_name_map.find(outconamec[t]);
-                                if(itt != esdata[t]._probe_name_map.end()) {
-                                    esdata[t]._include.push_back(itt->second);
-                                    e2econvert(&esdata[t], &esdatatmp);                                
-                                    esdatabf[t_new] = esdatatmp;
-                                    // esdatabf.push_back(esdatatmp);
+                 // loop with all the possible combinations
+                vector<long> idxcomb_smrrltsbf(expoNumbf.size()), idxcomb_smrrltsbf_last(expoNumbf.size());
+                vector<eqtlInfo> esdatabf(expoNumbf.size());
+                for(int cc=0; cc<combines.size(); cc++)
+                {
+                    vector<vector<string>> prb_cojolist;
+                    vector<float> bxy(expoNum), sigma_e(expoNum), c(expoNum);                    
+                    vector<float> Pr(combNum),HH(combNum),PO(combNum),PP(combNum),PIP(combNum);
+                    vector<string> outconamec(besdNum), outcogenec(besdNum); vector<long> outcobpc(besdNum);
+                    MatrixXd lh(2,expoNum);                    
+                    // get the target combination name
+                    long postmp = 0; string combname;
+                    for(int t=0; t<besdNum; t++)
+                    {   
+                        if(probNumbf[t] > 0) {
+                            long idxtmp = combines[cc][t] + postmp;
+                            outconamec[t] = smrrltsbf[idxtmp].ProbeID;
+                            outcogenec[t] = smrrltsbf[idxtmp].Gene;
+                            outcobpc[t] = smrrltsbf[idxtmp].Probe_bp;
+                            postmp = postmp + probNumbf[t];
+                        } else {
+                            outconamec[t] = "NA"; outcogenec[t] = "NA"; outcobpc[t] = 0;
+                        }
+                        combname.append(outconamec[t]);                        
+                    }
+                    // skip the tested combination
+                    map<string, long>::iterator comb_pos;
+                    comb_pos = combname_set.find(combname);
+                    if(comb_pos != combname_set.end()) { continue; } 
+
+                    combname_set.insert(pair<string, long>(combname, itercounttest)); 
+                    // find the probe in smrrltsbf and esdata                    
+                    postmp = 0; idxcomb_smrrltsbf.clear(); idxcomb_smrrltsbf.resize(expoNumbf.size());
+                    if(operasmrflag) jointsmrflag = false;
+                    for(int t=0; t<besdNum; t++)
+                    {   
+                        if(probNumbf[t] > 0) {
+                            int t_new = t - missexpoNum[t];
+                            long idxtmp = combines[cc][t] + postmp;
+                            idxcomb_smrrltsbf[t_new] = idxtmp;
+                            postmp = postmp + probNumbf[t];
+                            if(!heidioffFlag || jointsmrflag) {
+                                if(idxcomb_smrrltsbf[t_new] != idxcomb_smrrltsbf_last[t_new] || cc==0) {
+                                    esdata[t]._include.clear();
+                                    map<string, int>::iterator itt;
+                                    eqtlInfo esdatatmp;
+                                    itt = esdata[t]._probe_name_map.find(outconamec[t]);
+                                    if(itt != esdata[t]._probe_name_map.end()) {
+                                        esdata[t]._include.push_back(itt->second);
+                                        e2econvert(&esdata[t], &esdatatmp);                                
+                                        esdatabf[t_new] = esdatatmp;
+                                    }
+                                }                            
+                                if(targetcojosnplstName!=NULL) {
+                                    // find the target probe COJO signals
+                                    map<string, vector<string>>::iterator prb_pos;
+                                    prb_pos = prb_cojosnps.find(outconamec[t]);
+                                    vector<string> navector; navector.push_back("");
+                                    if(prb_pos!=prb_cojosnps.end()) {
+                                        prb_cojolist.push_back(prb_pos->second);
+                                    } else { prb_cojolist.push_back(navector); }
                                 }
-                            }                            
-                            if(targetcojosnplstName!=NULL) {
-                                // find the target probe COJO signals
-                                map<string, vector<string>>::iterator prb_pos;
-                                prb_pos = prb_cojosnps.find(outconamec[t]);
-                                vector<string> navector; navector.push_back("");
-                                if(prb_pos!=prb_cojosnps.end()) {
-                                    prb_cojolist.push_back(prb_pos->second);
-                                } else { prb_cojolist.push_back(navector); }
+                            }                        
+                        }                                                
+                    }
+                    idxcomb_smrrltsbf_last = idxcomb_smrrltsbf;
+                    
+                    if(esdatabf.size()!=0 && esdatabf.size() != expocout) { continue; } 
+
+                    // perform joint-SMR analysis or extract the SMR effect                
+                    vector<SMRRLT> smrrlts_joint;
+                    if(!operasmrflag) { // compute the joint SMR effect
+                        if(targetcojosnplstName!=NULL) {
+                            multi_joint_smr_func(smrrlts_joint, NULL, &bdata, &gdata1, esdatabf, prb_cojolist, cis_itvl, heidioffFlag,refSNP,p_hetero,ld_top,m_hetero,p_smr,threshpsmrest,new_het_mth,opt,ld_min,opt_hetero,sampleoverlap,pmecs,minCor);
+                        } else { multi_joint_smr_func(smrrlts_joint, NULL, &bdata, &gdata1, esdatabf, cis_itvl, heidioffFlag,refSNP,p_hetero,ld_top,m_hetero,p_smr,threshpsmrest,new_het_mth,opt,ld_min,opt_hetero,sampleoverlap,pmecs,minCor); }
+                    } else { // compute the marginal SMR effect
+                        for(int s=0; s<idxcomb_smrrltsbf.size(); s++) {
+                            smrrlts_joint.push_back(smrrltsbf[idxcomb_smrrltsbf[s]]);
+                        }
+                    }
+                    // skip no joint SMR effect due to no common SNPs
+                    if(smrrlts_joint.size() != expocout) { continue; }
+                    // output the probe information;
+                    outstr=atos(traitchr)+'\t';
+                    for(int t=0; t<besdNum; t++) {
+                        outstr+=outconamec[t]+'\t'+atos(outcobpc[t])+'\t';
+                    }
+                    //get the bxy, sigma_b and sigma_e from joint-SMR
+                    int k_joint = 0;
+                    for(int t=0; t<expoNum; t++)
+                    {
+                        if(probNumbf[t] > 0) {
+                            bxy[t] = smrrlts_joint[k_joint].b_SMR;
+                            sigma_e[t] = pow(smrrlts_joint[k_joint].se_SMR,2);
+                            c[t] = 1+sigma_e[t]/sigma_b[t];
+                            k_joint = k_joint + 1;
+                        } else {
+                            bxy[t] = 0; sigma_e[t] = 0; c[t] = 0;
+                        }
+                    }
+                    // get the H0 and H1 prior pi and likelihood
+                    const double PI = 3.141592653589793238463;
+                    for(int t=0;t<expoNum;t++) {
+                        if(probNumbf[t] > 0) {
+                            lh(0,t)=pow(2*PI,-0.5)*pow(sigma_e[t],-0.5)*exp(-1*pow(bxy[t],2)/(2*sigma_e[t]));
+                            lh(1,t)=pow(2*PI,-0.5)*pow(c[t]*sigma_b[t],-0.5)*exp((1/c[t]-1)*pow(bxy[t],2)/(2*sigma_e[t]));
+                        } else {
+                            lh(0,t) = 1; lh(1,t) = 0;
+                        }
+                    }
+                    // caculate the posterier probablity
+                    for(int i=0;i<combNum;i++) {
+                        HH[i]=1.0;
+                        for(int t=0;t<expoNum;t++)
+                        {
+                            HH[i] *= lh(combins[i][t],t);
+                        }
+                    }
+                    float POall = 0;
+                    for(int i=0;i<combNum;i++) {
+                        PO[i] = HH[i]*prior[i];
+                        POall+=PO[i];
+                    }
+                    for(int i=0;i<combNum;i++) {
+                        PP[i] = PO[i]/POall;
+                    }
+                    for(int i=0;i<combmarg.size();i++) {
+                        for(int j=0;j<idxmarg[i].size();j++) {
+                            PIP[i] += PP[idxmarg[i][j]];
+                        }
+                    }
+                    for(int i=0;i<PIP.size();i++) {
+                        outstr = outstr + atos(PIP[i])+'\t';
+                    }
+                    bool sigflag = false; vector<int> sigcomb;  
+                    for(int i=1;i<combmarg.size();i++) {
+                        if(PIP[i]>=thresh_PP) { sigflag = true; sigcomb.push_back(i); }
+                    }
+                    
+                    // multi-exposure HEIDI test
+                    vector<vector<SMRRLT>> smrrltsheidi(combmarg.size());
+                    if(! heidioffFlag && sigflag) {
+                        for(int h=0;h<sigcomb.size();h++) {
+                            vector<eqtlInfo> esdataheidi;
+                            int tmpidx = sigcomb[h];
+                            string prbname;
+                            for(int c=0;c<combmarg[tmpidx].size();c++) {
+                                int combidx = combmarg[tmpidx][c]-1;
+                                for(int k=0;k<expoNumbf.size();k++) {
+                                    if(expoNumbf[k] == combidx) {
+                                        esdataheidi.push_back(esdatabf[k]);
+                                        prbname.append(esdatabf[k]._epi_prbID[0]);
+                                    }
+                                }                                                            
+                            }
+                            map<string, double>::iterator itmp;
+                            itmp = hdirlts.find(prbname);
+                            if(itmp != hdirlts.end()) {
+                                SMRRLT currlt;
+                                currlt.p_HET = itmp->second;
+                                currlt.ProbeID = prbname;
+                                smrrltsheidi[tmpidx].push_back(currlt);
+                            } else {
+                                multi_heidi_func(smrrltsheidi[tmpidx], NULL, &bdata, &gdata1, esdataheidi, cis_itvl, heidioffFlag, refSNP,p_hetero,ld_top, m_hetero, p_smr, threshpsmrest,new_het_mth,opt,ld_min,opt_hetero,sampleoverlap,pmecs,minCor);
+                                hdirlts.insert(pair<string, double>(prbname,smrrltsheidi[tmpidx][0].p_HET));
                             }
                         }
-                    
+                        // output heidi pvalue
+                        for(int i=1;i<combmarg.size();i++) {
+                            if(smrrltsheidi[i].size()>0) {
+                                if(i<(combmarg.size()-1)) {outstr=outstr+(smrrltsheidi[i][0].p_HET >= 0 ? dtos(smrrltsheidi[i][0].p_HET) : "NA") + '\t' ;
+                                } else {outstr=outstr+(smrrltsheidi[i][0].p_HET >= 0 ? dtos(smrrltsheidi[i][0].p_HET) : "NA") + '\n';}
+                            } else {
+                                if(i<(combmarg.size()-1)) {outstr=outstr + "NA" + '\t';
+                                } else {outstr=outstr + "NA" + '\n';}
+                            }
+                        }                
                     } else {
-                        outconamec[t] = "NA"; outcogenec[t] = "NA"; outcobpc[t] = 0;
-                    }                        
-                    outstr+=outconamec[t]+'\t'+atos(outcobpc[t])+'\t';
-                }
-                idxcomb_smrrltsbf_last = idxcomb_smrrltsbf;
-                
-                if(esdatabf.size()!=0 && esdatabf.size() != expocout) { continue; } 
+                         for(int i=1;i<combmarg.size();i++) {
+                             if(i<(combmarg.size()-1)) { outstr=outstr + "NA" + '\t';
+                             } else { outstr=outstr + "NA" + '\n'; }
+                        }
+                    }
+                    if(sigflag) {
+                        itercountmlt+=1;
+                        if(fputs_checked(outstr.c_str(),smr2))
+                        {
+                            printf("ERROR: in writing file %s .\n", smrfile2.c_str());
+                            exit(EXIT_FAILURE);
+                        }
+                    }   
+                    itercounttest+=1;
 
-                // perform joint-SMR analysis or extract the SMR effect                
-                vector<SMRRLT> smrrlts_joint;
-                if(!operasmrflag) { // compute the joint SMR effect
-                    if(targetcojosnplstName!=NULL) {
-                        multi_joint_smr_func(smrrlts_joint, NULL, &bdata, &gdata1, esdatabf, prb_cojolist, cis_itvl, heidioffFlag,refSNP,p_hetero,ld_top,m_hetero,p_smr,threshpsmrest,new_het_mth,opt,ld_min,opt_hetero,sampleoverlap,pmecs,minCor);
-                    } else { multi_joint_smr_func(smrrlts_joint, NULL, &bdata, &gdata1, esdatabf, cis_itvl, heidioffFlag,refSNP,p_hetero,ld_top,m_hetero,p_smr,threshpsmrest,new_het_mth,opt,ld_min,opt_hetero,sampleoverlap,pmecs,minCor); }
-                } else { // compute the marginal SMR effect
-                    // for(int s=0; s<esdatabf.size(); s++) {
-                    //     vector<SMRRLT> smrrlt_esdata;
-                    //     smr_heidi_func(smrrlt_esdata, NULL, &bdata, &gdata1, &esdatabf[s],cis_itvl, heidioffFlag, refSNP,p_hetero,ld_top, m_hetero, p_smr, threshpsmrest,new_het_mth,opt,ld_min,opt_hetero,sampleoverlap,pmecs,minCor,prb_snp,targetLstflg);
-                    //     smrrlts_joint.push_back(smrrlt_esdata[0]);
-                    // }
-                    for(int s=0; s<idxcomb_smrrltsbf.size(); s++) {
-                        smrrlts_joint.push_back(smrrltsbf[idxcomb_smrrltsbf[s]]);
-                    }
-                }
-
-                //get the bxy, sigma_b and sigma_e from joint-SMR
-                int k_joint = 0;
-                for(int t=0; t<expoNum; t++)
-                {
-                    if(probNumbf[t] > 0) {
-                        bxy[t] = smrrlts_joint[k_joint].b_SMR;
-                        sigma_e[t] = pow(smrrlts_joint[k_joint].se_SMR,2);
-                        c[t] = 1+sigma_e[t]/sigma_b[t];
-                        k_joint = k_joint + 1;
-                    } else {
-                        bxy[t] = 0; sigma_e[t] = 0; c[t] = 0;
-                    }
-                }
-                // get the H0 and H1 prior pi and likelihood
-                const double PI = 3.141592653589793238463;
-                for(int t=0;t<expoNum;t++) {
-                    if(probNumbf[t] > 0) {
-                        lh(0,t)=pow(2*PI,-0.5)*pow(sigma_e[t],-0.5)*exp(-1*pow(bxy[t],2)/(2*sigma_e[t]));
-                        lh(1,t)=pow(2*PI,-0.5)*pow(c[t]*sigma_b[t],-0.5)*exp((1/c[t]-1)*pow(bxy[t],2)/(2*sigma_e[t]));
-                    } else {
-                        lh(0,t) = 1; lh(1,t) = 0;
-                    }
-                }
-                // caculate the posterier probablity
-                for(int i=0;i<combNum;i++) {
-                    HH[i]=1.0;
-                    for(int t=0;t<expoNum;t++)
-                    {
-                        HH[i] *= lh(combins[i][t],t);
-                    }
-                }
-                float POall = 0;
-                for(int i=0;i<combNum;i++) {
-                    PO[i] = HH[i]*prior[i];
-                    POall+=PO[i];
-                }
-                for(int i=0;i<combNum;i++) {
-                    PP[i] = PO[i]/POall;
-                }
-                for(int i=0;i<combmarg.size();i++) {
-                    for(int j=0;j<idxmarg[i].size();j++) {
-                        PIP[i] += PP[idxmarg[i][j]];
-                    }
-                }
-                for(int i=0;i<PIP.size();i++) {
-                    outstr = outstr + atos(PIP[i])+'\t';
-                }
-                bool sigflag = false; vector<int> sigcomb;  
-                for(int i=1;i<combmarg.size();i++) {
-                    if(PIP[i]>=thresh_PP) { sigflag = true; sigcomb.push_back(i); }
                 }
                 
-                // multi-exposure HEIDI test
-                vector<vector<SMRRLT>> smrrltsheidi(combmarg.size());
-                if(! heidioffFlag && sigflag) {
-                    for(int h=0;h<sigcomb.size();h++) {
-                        vector<eqtlInfo> esdataheidi;
-                        int tmpidx = sigcomb[h];
-                        string prbname;
-                        for(int c=0;c<combmarg[tmpidx].size();c++) {
-                            int combidx = combmarg[tmpidx][c]-1;
-                            for(int k=0;k<expoNumbf.size();k++) {
-                                if(expoNumbf[k] == combidx) {
-                                    esdataheidi.push_back(esdatabf[k]);
-                                    prbname.append(esdatabf[k]._epi_prbID[0]);
-                                }
-                            }                                                            
-                        }
-                        map<string, double>::iterator itmp;
-                        itmp = hdirlts.find(prbname);
-                        if(itmp != hdirlts.end()) {
-                            SMRRLT currlt;
-                            currlt.p_HET = itmp->second;
-                            currlt.ProbeID = prbname;
-                            smrrltsheidi[tmpidx].push_back(currlt);
-                        } else {
-                        multi_heidi_func(smrrltsheidi[tmpidx], NULL, &bdata, &gdata1, esdataheidi, cis_itvl, heidioffFlag, refSNP,p_hetero,ld_top, m_hetero, p_smr, threshpsmrest,new_het_mth,opt,ld_min,opt_hetero,sampleoverlap,pmecs,minCor);
-                        hdirlts.insert(pair<string, double>(prbname,smrrltsheidi[tmpidx][0].p_HET));
-                        }
-                    }
-                    // output heidi pvalue
-                    for(int i=1;i<combmarg.size();i++) {
-                        if(smrrltsheidi[i].size()>0) {
-                            if(i<(combmarg.size()-1)) {outstr=outstr+(smrrltsheidi[i][0].p_HET >= 0 ? dtos(smrrltsheidi[i][0].p_HET) : "NA") + '\t' ;
-                            } else {outstr=outstr+(smrrltsheidi[i][0].p_HET >= 0 ? dtos(smrrltsheidi[i][0].p_HET) : "NA") + '\n';}
-                        } else {
-                            if(i<(combmarg.size()-1)) {outstr=outstr + "NA" + '\t';
-                            } else {outstr=outstr + "NA" + '\n';}
-                        }
-                    }                
-                } else {
-                     for(int i=1;i<combmarg.size();i++) {
-                         if(i<(combmarg.size()-1)) { outstr=outstr + "NA" + '\t';
-                         } else { outstr=outstr + "NA" + '\n'; }
-                    }
-                }
-                if(sigflag) {
-                    itercountmlt+=1;
-                    if(fputs_checked(outstr.c_str(),smr2))
-                    {
-                        printf("ERROR: in writing file %s .\n", smrfile2.c_str());
-                        exit(EXIT_FAILURE);
-                    }
-                }   
-                itercounttest+=1;
             }
-            
         }
+        
         fclose(smr2);
         printf("\nOPERA analyses for %ld combinations between %ld exposures and 1 outcome completed.\nPosterior probability and HEIDI results of %ld combinations have been saved in the file %s.\n",itercounttest,expoNum,itercountmlt,smrfile2.c_str());
     }
@@ -12059,8 +12079,14 @@ namespace SMRDATA
                 exit(EXIT_FAILURE);
             }
         }
-        // Yang Wu read gwas
-        if(gwasFileName!=NULL) read_gwas_data(&gdata1, gwasFileName);
+        // read gwas
+        if(gwasFileName!=NULL) {
+            read_gwas_data(&gdata1, gwasFileName);
+            if (snplstName!= NULL) {
+                extract_gwas_snp(&gdata1, snplstName);
+                update_gwas(&gdata1);
+            } 
+        }
         // allele checking between data
         if(!heidioffFlag)
         {
@@ -13532,9 +13558,9 @@ namespace SMRDATA
                 esdata->_sexz[i].resize(etrait->_esi_include.size());
             }
             
-            for (int j = 0; j<etrait->_esi_include.size(); j++)
+            for (int ii = 0; ii<etrait->_include.size(); ii++)
             {
-                for (int ii = 0; ii<etrait->_include.size(); ii++)
+                for (int j = 0; j<etrait->_esi_include.size(); j++)
                 {
                     // Here the values in etrait->_include should be 0,1,2,....
                     esdata->_bxz[ii][j]=etrait->_bxz[ii][etrait->_esi_include[j]];
@@ -17221,26 +17247,35 @@ namespace SMRDATA
             }       
         return maxid;
     }
-    // need to update the function to extract the workspace for cis variants
+    // updated; need to update the function to extract the workspace for cis variants
     long fill_smr_wk_mlt(bInfo* bdata,gwasData* gdata,vector<eqtlInfo> &esdata,MTSMRWKEXP* smrwk,const char* refSNP,int cis_itvl,bool heidioffFlag)
     {
         int i=smrwk->cur_prbidx;
         long maxid =-9;
         long outcoNum=esdata.size();
+        // find the exposure Num with smallest number of cis-SNPs
+        int t_min = 0; 
 
         if(esdata[0]._rowid.empty())
         {
-            for (int j = 0; j<esdata[0]._esi_include.size() ; j++)// bdata._include.size() == esdata._esi_include.size() == gdata._include.size()
+            long num_tmp = esdata[0]._bxz[i].size();
+            for(int t=0; t<outcoNum; t++) {
+                if(esdata[t]._bxz[i].size() < num_tmp) {
+                    num_tmp = esdata[t]._bxz[i].size();
+                    t_min = t;
+                }
+            }
+            for (int j = 0; j<esdata[t_min]._esi_include.size() ; j++)// bdata._include.size() == esdata._esi_include.size() == gdata._include.size()
             {
-                if (fabs(esdata[0]._bxz[i][j] + 9) > 1e-6)
+                if (fabs(esdata[t_min]._bxz[i][j] + 9) > 1e-6)
                 {
-                    int snpbp=esdata[0]._esi_bp[j];
-                    int snpchr=esdata[0]._esi_chr[j];
-                    if(snpchr==esdata[0]._epi_chr[i] && ABS(esdata[0]._epi_bp[i]-snpbp)<=cis_itvl && gdata->seyz[gdata->_include[j]]+9>1e-6)
+                    int snpbp=esdata[t_min]._esi_bp[j];
+                    int snpchr=esdata[t_min]._esi_chr[j];
+                    if(snpchr==esdata[t_min]._epi_chr[i] && ABS(esdata[t_min]._epi_bp[i]-snpbp)<=cis_itvl && gdata->seyz[gdata->_include[j]]+9>1e-6)
                     {
-                        if(esdata[0]._epi_start.size()>0 && esdata[0]._epi_end.size()>0) //technical eQTLs should be removed
+                        if(esdata[t_min]._epi_start.size()>0 && esdata[t_min]._epi_end.size()>0) //technical eQTLs should be removed
                         {
-                            if(esdata[0]._epi_end[i]==-9 || (snpbp>esdata[0]._epi_end[i] && snpbp<esdata[0]._epi_start[i]))
+                            if(esdata[t_min]._epi_end[i]==-9 || (snpbp>esdata[t_min]._epi_end[i] && snpbp<esdata[t_min]._epi_start[i]))
                             {
                                 for( int t=0; t<outcoNum; t++)
                                 {
@@ -17254,18 +17289,18 @@ namespace SMRDATA
                                 smrwk->seyz.push_back(gdata->seyz[gdata->_include[j]]);
                                 smrwk->pyz.push_back(gdata->pvalue[gdata->_include[j]]);                                    
                                 smrwk->curId.push_back(j);
-                                smrwk->rs.push_back(esdata[0]._esi_rs[j]);
-                                smrwk->snpchrom.push_back(esdata[0]._esi_chr[j]);
-                                smrwk->allele1.push_back(esdata[0]._esi_allele1[j]);
-                                smrwk->allele2.push_back(esdata[0]._esi_allele2[j]);
-                                if(refSNP!=NULL && esdata[0]._esi_rs[j]==string(refSNP)) maxid=(smrwk->rs.size()-1);
-                                smrwk->bpsnp.push_back(esdata[0]._esi_bp[j]);
+                                smrwk->rs.push_back(esdata[t_min]._esi_rs[j]);
+                                smrwk->snpchrom.push_back(esdata[t_min]._esi_chr[j]);
+                                smrwk->allele1.push_back(esdata[t_min]._esi_allele1[j]);
+                                smrwk->allele2.push_back(esdata[t_min]._esi_allele2[j]);
+                                if(refSNP!=NULL && esdata[t_min]._esi_rs[j]==string(refSNP)) maxid=(smrwk->rs.size()-1);
+                                smrwk->bpsnp.push_back(esdata[t_min]._esi_bp[j]);
                                 
                             } else {
                                 printf("Shown below is the technical eQTL and will be excluded from the analysis.\n");
-                                double z=(esdata[0]._bxz[i][j]/esdata[0]._sexz[i][j]);
+                                double z=(esdata[t_min]._bxz[i][j]/esdata[t_min]._sexz[i][j]);
                                 double p=pchisq(z*z, 1);
-                                string tmp=atos(esdata[0]._esi_rs[j])+"\t"+ atos(esdata[0]._esi_chr[j])+"\t"+ atos(esdata[0]._esi_bp[j])+"\t"+ atos(esdata[0]._esi_allele1[j])+"\t"+ atos(esdata[0]._esi_allele2[j])+"\t"+ atos(esdata[0]._esi_freq[j])+"\t"+ atos(esdata[0]._epi_prbID[i])+"\t"+ atos(esdata[0]._epi_chr[i])+"\t"+ atos(esdata[0]._epi_bp[i])+"\t" + atos(esdata[0]._epi_gene[i])+"\t"+ atos(esdata[0]._epi_orien[i])+"\t"+ atos(esdata[0]._bxz[i][j])+"\t"+ atos(esdata[0]._sexz[i][j])+"\t"+ dtos(p)+"\n";
+                                string tmp=atos(esdata[t_min]._esi_rs[j])+"\t"+ atos(esdata[t_min]._esi_chr[j])+"\t"+ atos(esdata[t_min]._esi_bp[j])+"\t"+ atos(esdata[t_min]._esi_allele1[j])+"\t"+ atos(esdata[t_min]._esi_allele2[j])+"\t"+ atos(esdata[t_min]._esi_freq[j])+"\t"+ atos(esdata[t_min]._epi_prbID[i])+"\t"+ atos(esdata[t_min]._epi_chr[i])+"\t"+ atos(esdata[t_min]._epi_bp[i])+"\t" + atos(esdata[t_min]._epi_gene[i])+"\t"+ atos(esdata[t_min]._epi_orien[i])+"\t"+ atos(esdata[t_min]._bxz[i][j])+"\t"+ atos(esdata[t_min]._sexz[i][j])+"\t"+ dtos(p)+"\n";
                                 printf("%s\n",tmp.c_str());
                             }
                             
@@ -17282,12 +17317,12 @@ namespace SMRDATA
                             smrwk->seyz.push_back(gdata->seyz[gdata->_include[j]]);
                             smrwk->pyz.push_back(gdata->pvalue[gdata->_include[j]]);                            
                             smrwk->curId.push_back(j);
-                            smrwk->rs.push_back(esdata[0]._esi_rs[j]);
-                            smrwk->snpchrom.push_back(esdata[0]._esi_chr[j]);
-                            smrwk->allele1.push_back(esdata[0]._esi_allele1[j]);
-                            smrwk->allele2.push_back(esdata[0]._esi_allele2[j]);
-                            if(refSNP!=NULL && esdata[0]._esi_rs[j]==string(refSNP)) maxid=(smrwk->rs.size()-1);
-                            smrwk->bpsnp.push_back(esdata[0]._esi_bp[j]);
+                            smrwk->rs.push_back(esdata[t_min]._esi_rs[j]);
+                            smrwk->snpchrom.push_back(esdata[t_min]._esi_chr[j]);
+                            smrwk->allele1.push_back(esdata[t_min]._esi_allele1[j]);
+                            smrwk->allele2.push_back(esdata[t_min]._esi_allele2[j]);
+                            if(refSNP!=NULL && esdata[t_min]._esi_rs[j]==string(refSNP)) maxid=(smrwk->rs.size()-1);
+                            smrwk->bpsnp.push_back(esdata[t_min]._esi_bp[j]);
                             
                         }
                     }
@@ -17296,6 +17331,13 @@ namespace SMRDATA
         }
         
         else{
+                long num_tmp = esdata[0]._valNum;
+                for(int t=0; t<outcoNum; t++) {
+                    if(esdata[t]._valNum < num_tmp) {
+                        num_tmp = esdata[t]._valNum;
+                        t_min = t;
+                    }
+                }
                 vector<uint32_t> ge_rowid_common;
                 vector<uint32_t> ge_rowid_first;
                 vector<int> common_idx;
@@ -17327,64 +17369,66 @@ namespace SMRDATA
                     for(int i=0;i<ge_rowid_common.size();i++)
                     ge_rowid_first[i]=ge_rowid_common[i];
                 }
-            
-                uint64_t numsnps=ge_rowid_common.size();
-                for(int j=0;j<numsnps;j++)
-                {
-                    int ge_rowid=ge_rowid_common[j];
-                    smrwk->byz.push_back(gdata->byz[gdata->_include[ge_rowid]]);
-                    smrwk->seyz.push_back(gdata->seyz[gdata->_include[ge_rowid]]);
-                    smrwk->pyz.push_back(gdata->pvalue[gdata->_include[ge_rowid]]);                            
-                    smrwk->curId.push_back(ge_rowid); //save snp id of the raw datastruct
-                    smrwk->rs.push_back(esdata[0]._esi_rs[ge_rowid]);
-                    smrwk->snpchrom.push_back(esdata[0]._esi_chr[ge_rowid]);
-                    smrwk->allele1.push_back(esdata[0]._esi_allele1[ge_rowid]);
-                    smrwk->allele2.push_back(esdata[0]._esi_allele2[ge_rowid]);
-                    if(refSNP!=NULL && esdata[0]._esi_rs[ge_rowid]==string(refSNP)) maxid=(smrwk->rs.size()-1);
-                    smrwk->bpsnp.push_back(esdata[0]._esi_bp[ge_rowid]);
-                }
-            
-                vector<int> val_idx;
-                for( int t=0;t<outcoNum;t++)
-                {
-                    uint64_t beta_start=esdata[t]._cols[i<<1];
-                    uint64_t se_start=esdata[t]._cols[1+(i<<1)];
+                if(ge_rowid_common.size()!=0) {
                     uint64_t numsnps=ge_rowid_common.size();
-                    val_idx.clear();
-                    match_only(ge_rowid_common,esdata[t]._rowid,val_idx);
                     for(int j=0;j<numsnps;j++)
                     {
                         int ge_rowid=ge_rowid_common[j];
-                        int snpbp=esdata[t]._esi_bp[ge_rowid];
+                        smrwk->byz.push_back(gdata->byz[gdata->_include[ge_rowid]]);
+                        smrwk->seyz.push_back(gdata->seyz[gdata->_include[ge_rowid]]);
+                        smrwk->pyz.push_back(gdata->pvalue[gdata->_include[ge_rowid]]);                            
+                        smrwk->curId.push_back(ge_rowid); //save snp id of the raw datastruct
+                        smrwk->rs.push_back(esdata[t_min]._esi_rs[ge_rowid]);
+                        smrwk->snpchrom.push_back(esdata[t_min]._esi_chr[ge_rowid]);
+                        smrwk->allele1.push_back(esdata[t_min]._esi_allele1[ge_rowid]);
+                        smrwk->allele2.push_back(esdata[t_min]._esi_allele2[ge_rowid]);
+                        if(refSNP!=NULL && esdata[t_min]._esi_rs[ge_rowid]==string(refSNP)) maxid=(smrwk->rs.size()-1);
+                        smrwk->bpsnp.push_back(esdata[t_min]._esi_bp[ge_rowid]);
+                    }
+                
+                    vector<int> val_idx;
+                    for( int t=0;t<outcoNum;t++)
+                    {
+                        uint64_t beta_start=esdata[t]._cols[i<<1];
+                        uint64_t se_start=esdata[t]._cols[1+(i<<1)];
+                        uint64_t numsnps=ge_rowid_common.size();
+                        val_idx.clear();
+                        match_only(ge_rowid_common,esdata[t]._rowid,val_idx);
+                        for(int j=0;j<numsnps;j++)
+                        {
+                            int ge_rowid=ge_rowid_common[j];
+                            int snpbp=esdata[t]._esi_bp[ge_rowid];
 
-                            if(esdata[t]._epi_start.size()>0 && esdata[t]._epi_end.size()>0)
-                            {
-                                if(esdata[t]._epi_end[i]==-9 || (snpbp>esdata[t]._epi_end[i] && snpbp<esdata[t]._epi_start[i]))
+                                if(esdata[t]._epi_start.size()>0 && esdata[t]._epi_end.size()>0)
                                 {
-                                    smrwk->bxz[t].push_back(esdata[t]._val[beta_start+val_idx[j]]);
-                                    smrwk->sexz[t].push_back(esdata[t]._val[se_start+val_idx[j]]);
-                                    smrwk->zxz[t].push_back(esdata[t]._val[beta_start+val_idx[j]]/esdata[t]._val[se_start+val_idx[j]]);
-                                    if(!heidioffFlag) smrwk->freq[t].push_back(bdata->_mu[bdata->_include[ge_rowid]] / 2);
-                                    else smrwk->freq[t].push_back(esdata[t]._esi_freq[ge_rowid]);
+                                    if(esdata[t]._epi_end[i]==-9 || (snpbp>esdata[t]._epi_end[i] && snpbp<esdata[t]._epi_start[i]))
+                                    {
+                                        smrwk->bxz[t].push_back(esdata[t]._val[beta_start+val_idx[j]]);
+                                        smrwk->sexz[t].push_back(esdata[t]._val[se_start+val_idx[j]]);
+                                        smrwk->zxz[t].push_back(esdata[t]._val[beta_start+val_idx[j]]/esdata[t]._val[se_start+val_idx[j]]);
+                                        if(!heidioffFlag) smrwk->freq[t].push_back(bdata->_mu[bdata->_include[ge_rowid]] / 2);
+                                        else smrwk->freq[t].push_back(esdata[t]._esi_freq[ge_rowid]);
+                                        
+                                    } else {
+                                        printf("Shown below is the technical eQTL and will be excluded from the analysis.\n");
+                                        double z=(esdata[t]._bxz[i][val_idx[j]]/esdata[t]._sexz[i][val_idx[j]]);
+                                        double p=pchisq(z*z, 1);
+                                        // string tmp=atos(esdata[t]._esi_rs[j])+"\t"+ atos(esdata[t]._esi_chr[j])+"\t"+ atos(esdata[t]._esi_bp[j])+"\t"+ atos(esdata[t]._esi_allele1[j])+"\t"+ atos(esdata[t]._esi_allele2[j])+"\t"+ atos(esdata[t]._esi_freq[j])+"\t"+ atos(esdata[t]._epi_prbID[i])+"\t"+ atos(esdata[t]._epi_chr[i])+"\t"+ atos(esdata[t]._epi_bp[i])+"\t" + atos(esdata[t]._epi_gene[i])+"\t"+ atos(esdata[t]._epi_orien[i])+"\t"+ atos(esdata[t]._bxz[i][j])+"\t"+ atos(esdata[t]._sexz[i][j])+"\t"+ dtos(p)+"\n";                            
+                                        // printf("%s\n",tmp.c_str());
+                                    }
                                     
                                 } else {
-                                    printf("Shown below is the technical eQTL and will be excluded from the analysis.\n");
-                                    double z=(esdata[t]._bxz[i][val_idx[j]]/esdata[t]._sexz[i][val_idx[j]]);
-                                    double p=pchisq(z*z, 1);
-                                    // string tmp=atos(esdata[t]._esi_rs[j])+"\t"+ atos(esdata[t]._esi_chr[j])+"\t"+ atos(esdata[t]._esi_bp[j])+"\t"+ atos(esdata[t]._esi_allele1[j])+"\t"+ atos(esdata[t]._esi_allele2[j])+"\t"+ atos(esdata[t]._esi_freq[j])+"\t"+ atos(esdata[t]._epi_prbID[i])+"\t"+ atos(esdata[t]._epi_chr[i])+"\t"+ atos(esdata[t]._epi_bp[i])+"\t" + atos(esdata[t]._epi_gene[i])+"\t"+ atos(esdata[t]._epi_orien[i])+"\t"+ atos(esdata[t]._bxz[i][j])+"\t"+ atos(esdata[t]._sexz[i][j])+"\t"+ dtos(p)+"\n";                            
-                                    // printf("%s\n",tmp.c_str());
-                                }
-                                
-                            } else {
-                                    smrwk->bxz[t].push_back(esdata[t]._val[beta_start+val_idx[j]]);
-                                    smrwk->sexz[t].push_back(esdata[t]._val[se_start+val_idx[j]]);
-                                    smrwk->zxz[t].push_back(esdata[t]._val[beta_start+val_idx[j]]/esdata[t]._val[se_start+val_idx[j]]);
-                                    if(!heidioffFlag) smrwk->freq[t].push_back(bdata->_mu[bdata->_include[ge_rowid]] / 2);
-                                    else smrwk->freq[t].push_back(esdata[t]._esi_freq[ge_rowid]);                                
-                                }                 
-                        // }
+                                        smrwk->bxz[t].push_back(esdata[t]._val[beta_start+val_idx[j]]);
+                                        smrwk->sexz[t].push_back(esdata[t]._val[se_start+val_idx[j]]);
+                                        smrwk->zxz[t].push_back(esdata[t]._val[beta_start+val_idx[j]]/esdata[t]._val[se_start+val_idx[j]]);
+                                        if(!heidioffFlag) smrwk->freq[t].push_back(bdata->_mu[bdata->_include[ge_rowid]] / 2);
+                                        else smrwk->freq[t].push_back(esdata[t]._esi_freq[ge_rowid]);                                
+                                    }                 
+                            // }
+                        }
                     }
-                }                
+
+                }                                          
             }       
         return maxid;
     }    
