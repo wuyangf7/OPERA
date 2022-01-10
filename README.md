@@ -33,7 +33,7 @@ We collected and prepared multiple public available molecular QTL data for users
 
 * --besd-flist reads a file to get the full paths of the multiple xQTL BESD files. The input format follows that for the SMR analysis (https://cnsgenomics.com/software/smr/#DataManagement). 
 * --gwas-summary reads summary-level data from GWAS. The input format follows that for GCTA-COJO analysis (http://cnsgenomics.com/software/gcta/#COJO).
-* --mbfile reads a text file with each row representing a PLINK binary file (e.g., one for each chromosome) from a reference sample for LD estimation, i.e. .bed, .bim, and .fam files.. Note that stage 1 analysis requires the genome-wide LD reference to estimate the global parameters. If the genome-wide genotype data in PLINK format (containing the genotype data for each chromosome) is ready, please switch the flag --bfile to read the standard PLINK binary file as LD reference. 
+* --mbfile reads a text file with each row representing a PLINK binary file (e.g., one for each chromosome) from a reference sample for LD estimation, i.e. .bed, .bim, and .fam files. The chromosome-wide .fam files are required to contain the same individuals. Note that stage 1 analysis requires the genome-wide LD reference to estimate the global parameters. If the genome-wide genotype data in PLINK format (containing the genotype data for each chromosome) is ready, please switch the flag --bfile to read the standard PLINK binary file as LD reference. 
 * --out saves the estimation of prior proportions from the OPERA stage 1 analysis in .pi file (text format, see example from demo data below).
 
 ```
