@@ -28,7 +28,7 @@ int main(int argc, char** argv) {
    
     cout << "*******************************************************************" << endl;
     cout << "* Omics pleiotropic association (OPERA)" << endl;
-    cout << "* version 1.01"<< endl;
+    cout << "* version 1.06"<< endl;
     cout << "* (C) 2021 Yang Wu, Jian Zeng and Jian Yang" << endl;
     cout << "* The University of Queensland" << endl;
     cout << "* MIT License" << endl;
@@ -249,8 +249,8 @@ void option(int option_num, char* option_str[])
     double thresh_smr = 0.05;
     double thresh_heidi = 0;
     double alpha = 0.1;
-    int piWind = 200;
-    outcomePrbWind=1000;    
+    int piWind = 500;
+    outcomePrbWind = 1000;
     string priorstr;
     string sigmastr;
     // end

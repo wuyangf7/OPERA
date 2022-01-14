@@ -410,7 +410,7 @@ namespace SMRDATA
              bdata->_snp_name_map.insert(pair<string, int>(bdata->_snp_name[i], i));
          }
          bdata->_ref_A = bdata->_allele1; bdata->_other_A = bdata->_allele2;
-         printf(" %ld SNPs to be included from PLINK BIM files.\n", bdata->_snp_num);
+         printf("%ld SNPs to be included from PLINK BIM files.\n", bdata->_snp_num);
      }
 
      void update_include(bInfo* bdata, bInfo* bdatatmp, int file_indx, map<string, string> &snp_name_per_chr)
@@ -474,7 +474,7 @@ namespace SMRDATA
 
      void read_multi_famfiles(bInfo* bdata, vector<string> multi_bfiles)
      {
-         cout << "Reading the PLINK BIM files ..." << endl;
+         cout << "Reading the PLINK FAM files ..." << endl;
          int i=0, nbfiles = multi_bfiles.size();
          string famfile = "";
 
@@ -493,7 +493,7 @@ namespace SMRDATA
 
          // Sample size
          bdata->_indi_num = bdata->_fid.size();
-         printf(" %ld individuals have been included from the PLINK FAM files.\n", bdata->_indi_num);
+         printf("%ld individuals have been included from the PLINK FAM files.\n", bdata->_indi_num);
      }
 
      void update_keep(bInfo* bdata, bInfo* bdatatmp, string famfile)
@@ -813,7 +813,7 @@ namespace SMRDATA
                 }
 
                 gdata->pvalue.push_back(atof(vs_buf[6].c_str()));
-                gdata->splSize.push_back(atoi(vs_buf[7].c_str()));
+                gdata->splSize.push_back(atof(vs_buf[7].c_str()));
                 gdata->_include.push_back(lineNum);
                 lineNum++;
             }
@@ -2252,7 +2252,7 @@ namespace SMRDATA
         
         X.resize(0,0);
         X.resize(n, m);
-//#pragma omp parallel for private(j)
+        //#pragma omp parallel for private(j)
         for (i = 0; i < n; i++) {
             if (bdata->_dosage_flag) {
                 for (j = 0; j < m; j++) {
@@ -7639,26 +7639,27 @@ namespace SMRDATA
            read_besdfile(&etrait[i], string(besds[i])+".besd");
            if(etrait[i]._rowid.empty() && etrait[i]._bxz.empty())
            {
-               printf("ERROR: no data included in the analysis.\n");
+               printf("ERROR: no data included in the OPERA analysis.\n");
                exit(EXIT_FAILURE);
            }
            // extract probe with a xQTL
            cis_xqtl_probe_include_only(&etrait[i], p_smr, cis_itvl, besds[i]);
         }
-        
+
         // 5. select the indepedent (no overlap) genomic loci for stage 1 analysis
         // find the molecular trait with minimum num. of probes
         long minprbnum=etrait[0]._include.size();
         int minexpnum=0;
-        for(int i=0;i<besdNum;i++) {
-            stable_sort(etrait[i]._include.begin(),etrait[i]._include.end());
-            if(etrait[i]._include.size() < minprbnum) {
+        for(int i=0;i<besdNum;i++) {            
+            if(etrait[i]._include.size() < minprbnum) {                
                 minprbnum = etrait[i]._include.size();
                 minexpnum = i;
             }
+            stable_sort(etrait[i]._include.begin(),etrait[i]._include.end());
         }
         // find the num. of independent loci as the num. of no overlap probes for molecular trait with minimum probes
-        int exposure_probe_wind=op_wind*1000;
+        int exposure_probe_wind = op_wind*1000;
+        int cis_itvl_wind = cis_itvl*1000;
         int indwin = piWind*1000;  // the epi_bp are required to be sorted
         vector<vector<int>> includepi(besdNum);
         includepi[minexpnum].push_back(etrait[minexpnum]._include[0]);
@@ -7712,8 +7713,8 @@ namespace SMRDATA
                 int idxtmp=etrait[i]._include[k];
                 int probechr=etrait[i]._epi_chr[idxtmp];
                 int probebp=etrait[i]._epi_bp[idxtmp];
-                int lowerbounder=(probebp-exposure_probe_wind)>0?(probebp-exposure_probe_wind):0;
-                int upperbounder=probebp+exposure_probe_wind;
+                int lowerbounder=(probebp-cis_itvl_wind)>0?(probebp-cis_itvl_wind):0;
+                int upperbounder=probebp+cis_itvl_wind;
                for(int j=0;j<etrait[i]._esi_include.size();j++)
                {
                    int idxtmp = etrait[i]._esi_include[j];
@@ -7723,7 +7724,6 @@ namespace SMRDATA
                }
             }
         }
-
         // 6. allele checking between data
         // update the esi_include SNPs
         for(int i=0;i<besdNum;i++) {
@@ -7735,7 +7735,6 @@ namespace SMRDATA
             }
             stable_sort(etrait[i]._esi_include.begin(),etrait[i]._esi_include.end());
         }
-
         // read the final besd file with updated esi_include and _include
         // for(int i=0;i<besdNum;i++) {
         //    read_besdfile(&etrait[i], string(besds[i])+".besd");
@@ -7790,7 +7789,10 @@ namespace SMRDATA
         {
             allele_check_multi(etrait_sig,&gdata1);
         }
-        if(gwasFileName!=NULL)  update_gwas(&gdata1);
+        double ngwas = 0.0;
+        if(gwasFileName!=NULL)  {
+            update_gwas(&gdata1); ngwas = median(gdata1.splSize);
+        }
         // update the SNPs after allele checking
         #pragma omp parallel for
         for(int i=0;i<besdNum;i++) {
@@ -7821,7 +7823,7 @@ namespace SMRDATA
             printf("ERROR: open error %s\n", pifile.c_str());
             exit(1);
         }
-
+        
         // 8. compute the pairwise SMR effect for all exposure probes
         printf("\nPerforming SMR analysis ...\n");
         vector<vector<SMRRLT>> smrrlts;
@@ -7922,8 +7924,8 @@ namespace SMRDATA
                 vector<SMRRLT> smrrlts_joint;
                 if(!operasmrflag) {
                     if(targetcojosnplstName!=NULL) {
-                    multi_joint_smr_func(smrrlts_joint, NULL, &bdata, &gdata1, esdatacond, prb_cojolist, cis_itvl, heidioffFlag, refSNP,p_hetero,ld_top, m_hetero, p_smr, threshpsmrest,new_het_mth,opt,ld_min,opt_hetero,sampleoverlap,pmecs,minCor);
-                    } else {multi_joint_smr_func(smrrlts_joint, NULL, &bdata, &gdata1, esdatacond, cis_itvl, heidioffFlag, refSNP,p_hetero,ld_top, m_hetero, p_smr, threshpsmrest,new_het_mth,opt,ld_min,opt_hetero,sampleoverlap,pmecs,minCor);}
+                        multi_joint_smr_func(smrrlts_joint, NULL, &bdata, &gdata1, esdatacond, ngwas, prb_cojolist, cis_itvl, heidioffFlag, refSNP,p_hetero,ld_top, m_hetero, p_smr, threshpsmrest,new_het_mth,opt,ld_min,opt_hetero,sampleoverlap,pmecs,minCor);
+                    } else {multi_joint_smr_func(smrrlts_joint, NULL, &bdata, &gdata1, esdatacond, ngwas, cis_itvl, heidioffFlag, refSNP,p_hetero,ld_top, m_hetero, p_smr, threshpsmrest,new_het_mth,opt,ld_min,opt_hetero,sampleoverlap,pmecs,minCor);}
                 } else {
                     for(int es=0; es<esdatacond.size(); es++) {
                         vector<SMRRLT> smrrlt_esdata;
@@ -8007,7 +8009,7 @@ namespace SMRDATA
                         ngamma[i]+=PP(ii,i);
                     }
                 }                                            
-            }                
+            }
             Pripi=Prob.sample(combNum,ngamma);
             logpistr=atos(l);
             for(int c=0;c<combNum;c++) {
@@ -8348,7 +8350,10 @@ namespace SMRDATA
         {
               allele_check_multi(etrait_sig,&gdata1);
         }
-        if(gwasFileName!=NULL)  update_gwas(&gdata1);
+        double ngwas = 0.0;
+        if(gwasFileName!=NULL)  {
+            update_gwas(&gdata1); ngwas = median(gdata1.splSize);
+        }
         // update the SNPs after allele checking 
         #pragma omp parallel for
         for(int i=0;i<besdNum;i++) {
@@ -8477,8 +8482,8 @@ namespace SMRDATA
                 vector<SMRRLT> smrrlts_joint;
                 if(!operasmrflag) { 
                     if(targetcojosnplstName!=NULL) {
-                    multi_joint_smr_func(smrrlts_joint, NULL, &bdata, &gdata1, esdatacond, prb_cojolist, cis_itvl, heidioffFlag, refSNP,p_hetero,ld_top, m_hetero, p_smr, threshpsmrest,new_het_mth,opt,ld_min,opt_hetero,sampleoverlap,pmecs,minCor);
-                    } else {multi_joint_smr_func(smrrlts_joint, NULL, &bdata, &gdata1, esdatacond, cis_itvl, heidioffFlag, refSNP,p_hetero,ld_top, m_hetero, p_smr, threshpsmrest,new_het_mth,opt,ld_min,opt_hetero,sampleoverlap,pmecs,minCor);}
+                    multi_joint_smr_func(smrrlts_joint, NULL, &bdata, &gdata1, esdatacond, ngwas, prb_cojolist, cis_itvl, heidioffFlag, refSNP,p_hetero,ld_top, m_hetero, p_smr, threshpsmrest,new_het_mth,opt,ld_min,opt_hetero,sampleoverlap,pmecs,minCor);
+                    } else {multi_joint_smr_func(smrrlts_joint, NULL, &bdata, &gdata1, esdatacond, ngwas, cis_itvl, heidioffFlag, refSNP,p_hetero,ld_top, m_hetero, p_smr, threshpsmrest,new_het_mth,opt,ld_min,opt_hetero,sampleoverlap,pmecs,minCor);}
                 } else {
                     for(int es=0; es<esdatacond.size(); es++) {
                         vector<SMRRLT> smrrlt_esdata;
@@ -8822,7 +8827,7 @@ namespace SMRDATA
         // update the _include epi probes list for etrait
         for(int i=0;i<besdNum;i++) {
             getUnique(includepi[i]);
-            printf("There are %ld probes included for exposure %ld.\n",includepi[i].size(),i);
+            printf("There are %ld probes included for exposure %ld.\n",includepi[i].size(),i+1);
             etrait[i]._include.clear();
             for(int l=0;l<includepi[i].size();l++) {
                     etrait[i]._include.push_back(includepi[i][l]);
@@ -8853,7 +8858,7 @@ namespace SMRDATA
         // update the _esi_include SNPs
         for(int i=0;i<besdNum;i++) {
             getUnique(slctsnpidx[i]);
-            printf("There are %ld SNPs included for exposure %ld.\n",slctsnpidx[i].size(),i);
+            printf("There are %ld SNPs included for exposure %ld.\n",slctsnpidx[i].size(),i+1);
             etrait[i]._esi_include.clear();
             for(int m=0;m<slctsnpidx[i].size();m++) {
                     etrait[i]._esi_include.push_back(slctsnpidx[i][m]);
@@ -10842,7 +10847,10 @@ namespace SMRDATA
             allele_check_multi(etrait,&gdata1);
         }
         // update the SNPs after allele checking
-        if(gwasFileName!=NULL)  update_gwas(&gdata1);
+        double ngwas = 0.0;
+        if(gwasFileName!=NULL)  {
+            update_gwas(&gdata1); ngwas = median(gdata1.splSize);
+        }
         // update the SNPs after allele checking
         #pragma omp parallel for
         for(int i=0;i<besdNum;i++) {
@@ -11108,8 +11116,8 @@ namespace SMRDATA
                 vector<SMRRLT> smrrlts_joint;
                 if(!operasmrflag) { // compute the joint SMR effect
                     if(targetcojosnplstName!=NULL) {
-                     multi_joint_smr_func(smrrlts_joint, NULL, &bdata, &gdata1, esdatabf, prb_cojolist, cis_itvl, heidioffFlag,refSNP,p_hetero,ld_top,m_hetero,p_smr,threshpsmrest,new_het_mth,opt,ld_min,opt_hetero,sampleoverlap,pmecs,minCor);
-                    } else { multi_joint_smr_func(smrrlts_joint, NULL, &bdata, &gdata1, esdatabf, cis_itvl, heidioffFlag,refSNP,p_hetero,ld_top,m_hetero,p_smr,threshpsmrest,new_het_mth,opt,ld_min,opt_hetero,sampleoverlap,pmecs,minCor); }
+                     multi_joint_smr_func(smrrlts_joint, NULL, &bdata, &gdata1, esdatabf, ngwas, prb_cojolist, cis_itvl, heidioffFlag,refSNP,p_hetero,ld_top,m_hetero,p_smr,threshpsmrest,new_het_mth,opt,ld_min,opt_hetero,sampleoverlap,pmecs,minCor);
+                    } else { multi_joint_smr_func(smrrlts_joint, NULL, &bdata, &gdata1, esdatabf, ngwas, cis_itvl, heidioffFlag,refSNP,p_hetero,ld_top,m_hetero,p_smr,threshpsmrest,new_het_mth,opt,ld_min,opt_hetero,sampleoverlap,pmecs,minCor); }
                 } else { // compute the marginal SMR effect
                     for(int s=0; s<idxcomb_smrrltsbf.size(); s++) {
                         smrrlts_joint.push_back(smrrltsbf[idxcomb_smrrltsbf[s]]);
@@ -11497,7 +11505,10 @@ namespace SMRDATA
             allele_check_multi(etrait,&gdata1);
         }
         // update the SNPs after allele checking
-        if(gwasFileName!=NULL)  update_gwas(&gdata1);
+        double ngwas = 0.0;
+        if(gwasFileName!=NULL)  {
+            update_gwas(&gdata1); ngwas = median(gdata1.splSize);
+        }
 
         // update the SNPs after allele checking
         #pragma omp parallel for
@@ -11774,8 +11785,8 @@ namespace SMRDATA
                     vector<SMRRLT> smrrlts_joint;
                     if(!operasmrflag) { // compute the joint SMR effect
                         if(targetcojosnplstName!=NULL) {
-                            multi_joint_smr_func(smrrlts_joint, NULL, &bdata, &gdata1, esdatabf, prb_cojolist, cis_itvl, heidioffFlag,refSNP,p_hetero,ld_top,m_hetero,p_smr,threshpsmrest,new_het_mth,opt,ld_min,opt_hetero,sampleoverlap,pmecs,minCor);
-                        } else { multi_joint_smr_func(smrrlts_joint, NULL, &bdata, &gdata1, esdatabf, cis_itvl, heidioffFlag,refSNP,p_hetero,ld_top,m_hetero,p_smr,threshpsmrest,new_het_mth,opt,ld_min,opt_hetero,sampleoverlap,pmecs,minCor); }
+                            multi_joint_smr_func(smrrlts_joint, NULL, &bdata, &gdata1, esdatabf, ngwas, prb_cojolist, cis_itvl, heidioffFlag,refSNP,p_hetero,ld_top,m_hetero,p_smr,threshpsmrest,new_het_mth,opt,ld_min,opt_hetero,sampleoverlap,pmecs,minCor);
+                        } else { multi_joint_smr_func(smrrlts_joint, NULL, &bdata, &gdata1, esdatabf, ngwas, cis_itvl, heidioffFlag,refSNP,p_hetero,ld_top,m_hetero,p_smr,threshpsmrest,new_het_mth,opt,ld_min,opt_hetero,sampleoverlap,pmecs,minCor); }
                     } else { // compute the marginal SMR effect
                         for(int s=0; s<idxcomb_smrrltsbf.size(); s++) {
                             smrrlts_joint.push_back(smrrltsbf[idxcomb_smrrltsbf[s]]);
@@ -12642,7 +12653,10 @@ namespace SMRDATA
         {
             allele_check_multi(etrait,&gdata1);
         }
-        if(gwasFileName!=NULL)  update_gwas(&gdata1);
+        double ngwas = 0.0;
+        if(gwasFileName!=NULL)  {
+            update_gwas(&gdata1); ngwas = median(gdata1.splSize);
+        }
         for(int i=0;i<besdNum;i++) {
             e2econvert(&etrait[i], &esdata[i]);
         }
@@ -12837,8 +12851,8 @@ namespace SMRDATA
                     vector<SMRRLT> smrrlts_joint;
                     if(esdatabf.size() == expoNum) {
                         if(targetcojosnplstName!=NULL) {
-                            multi_joint_smr_func(smrrlts_joint, NULL, &bdata, &gdata1, esdatabf, prb_cojolist, cis_itvl, heidioffFlag,refSNP,p_hetero,ld_top,m_hetero,p_smr,threshpsmrest,new_het_mth,opt,ld_min,opt_hetero,sampleoverlap,pmecs,minCor);
-                        } else { multi_joint_smr_func(smrrlts_joint, NULL, &bdata, &gdata1, esdatabf, cis_itvl, heidioffFlag,refSNP,p_hetero,ld_top,m_hetero,p_smr,threshpsmrest,new_het_mth,opt,ld_min,opt_hetero,sampleoverlap,pmecs,minCor); }                        
+                            multi_joint_smr_func(smrrlts_joint, NULL, &bdata, &gdata1, esdatabf, ngwas, prb_cojolist, cis_itvl, heidioffFlag,refSNP,p_hetero,ld_top,m_hetero,p_smr,threshpsmrest,new_het_mth,opt,ld_min,opt_hetero,sampleoverlap,pmecs,minCor);
+                        } else { multi_joint_smr_func(smrrlts_joint, NULL, &bdata, &gdata1, esdatabf, ngwas, cis_itvl, heidioffFlag,refSNP,p_hetero,ld_top,m_hetero,p_smr,threshpsmrest,new_het_mth,opt,ld_min,opt_hetero,sampleoverlap,pmecs,minCor); }
                     }
                     if(smrrlts_joint.size() == expoNum) {
                         //get the bxy, sigma_b and sigma_e from joint-SMR
@@ -12907,7 +12921,7 @@ namespace SMRDATA
         printf("\nOPERA analyses for %ld exposures and 1 outcome completed.\nPosterior probability and HEIDI results of %ld combinations have been saved in the file %s .\n",expoNum,itercountmlt,smrfile2.c_str());
     }
 
-    void multi_joint_smr_func(vector<SMRRLT> &smrrlts, char* outFileName, bInfo* bdata, gwasData* gdata, vector<eqtlInfo> &esdata, int cis_itvl, bool heidioffFlag, const char* refSNP,double p_hetero,double ld_top,int m_hetero , double p_smr,double threshpsmrest, bool new_heidi_mth, bool opt, double ld_min,int opt_hetero, bool sampleoverlap, double pmecs, int minCor)
+    void multi_joint_smr_func(vector<SMRRLT> &smrrlts, char* outFileName, bInfo* bdata, gwasData* gdata, vector<eqtlInfo> &esdata, double ngwas, int cis_itvl, bool heidioffFlag, const char* refSNP,double p_hetero,double ld_top,int m_hetero , double p_smr,double threshpsmrest, bool new_heidi_mth, bool opt, double ld_min,int opt_hetero, bool sampleoverlap, double pmecs, int minCor)
     {
         MatrixXd _X;
         MTSMRWKEXP smrwk;
@@ -12916,9 +12930,8 @@ namespace SMRDATA
         smrwk.bxz.resize(expoNum); smrwk.sexz.resize(expoNum);
         smrwk.zxz.resize(expoNum); smrwk.freq.resize(expoNum);
         // compute the average GWAS sample size
-        double ngwas = 0.0;
-        for(int i=0; i<gdata->splSize.size(); i++) ngwas+=gdata->splSize[i];
-        ngwas/=double(gdata->splSize.size());
+        // double ngwas = 0.0;
+        // ngwas = median(gdata->splSize);
         
         cis_itvl=cis_itvl*1000;
         for(int ii=0;ii<probNum;ii++)
@@ -13050,7 +13063,7 @@ namespace SMRDATA
         }
     }
 
-    void multi_joint_smr_func(vector<SMRRLT> &smrrlts, char* outFileName, bInfo* bdata, gwasData* gdata, vector<eqtlInfo> &esdata, vector<vector<string>> &prbcojolist, int cis_itvl, bool heidioffFlag, const char* refSNP,double p_hetero,double ld_top,int m_hetero , double p_smr,double threshpsmrest, bool new_heidi_mth, bool opt, double ld_min,int opt_hetero, bool sampleoverlap, double pmecs, int minCor)
+    void multi_joint_smr_func(vector<SMRRLT> &smrrlts, char* outFileName, bInfo* bdata, gwasData* gdata, vector<eqtlInfo> &esdata, double ngwas, vector<vector<string>> &prbcojolist, int cis_itvl, bool heidioffFlag, const char* refSNP,double p_hetero,double ld_top,int m_hetero , double p_smr,double threshpsmrest, bool new_heidi_mth, bool opt, double ld_min,int opt_hetero, bool sampleoverlap, double pmecs, int minCor)
     {
         MatrixXd _X;
         MTSMRWKEXP smrwk;
@@ -13059,8 +13072,8 @@ namespace SMRDATA
         smrwk.bxz.resize(expoNum); smrwk.sexz.resize(expoNum);
         smrwk.zxz.resize(expoNum); smrwk.freq.resize(expoNum);
         // compute the average GWAS sample size
-        double ngwas = 0.0;
-        ngwas = median(gdata->splSize);
+        // double ngwas = 0.0;
+        // ngwas = median(gdata->splSize);
         
         cis_itvl=cis_itvl*1000;
         for(int ii=0;ii<probNum;ii++)
@@ -16248,6 +16261,18 @@ namespace SMRDATA
             for(int i=0; i<cmmsnp.size(); i++)
                 slctsnp[i]=cmmsnp[i];        
         }
+        // reorder the SNP rsIDs based on bp positions using bfile
+        #pragma omp parallel for
+        for(int i=0; i<bdata->_include.size(); i++)
+            bsnp[i]=bdata->_snp_name[bdata->_include[i]];
+        vector<int> bidtmp;
+        match_only(slctsnp, bsnp, bidtmp);        
+        if(bidtmp.empty()) throw("Error: no common SNPs found between data! Please check your LD reference data.");
+        sort(bidtmp.begin(), bidtmp.end());
+        slctsnp.clear(); slctsnp.resize(bidtmp.size());
+        for(int i=0; i<bidtmp.size(); i++) {
+            slctsnp[i] = bsnp[bidtmp[i]];
+        }        
         // step 2: allele compare between SNPs in common; use [0:t-1]:etrait[0:t-1]vsGWAS; [t]:LDrefvsGWAS;         
         vector<int> incld_slct_tmp(slctsnp.size()), bintmp(slctsnp.size()), gintmp(slctsnp.size());
         vector<vector<int>> flip_slct(cmpnum), flip_slct_tmp(cmpnum , vector<int>(slctsnp.size())), eintmp(etraitNum, vector<int>(slctsnp.size()));
@@ -16352,7 +16377,7 @@ namespace SMRDATA
                 gdata->allele_1[gin[i]]=gdata->allele_2[gin[i]];
                 gdata->allele_2[gin[i]]=tmpch;
             }
-            // LD reference
+            // LD reference etraitNum
             if(flip_slct[etraitNum][i]==1) {
                 string tmpch=bdata->_ref_A[bin[i]];
                 bdata->_ref_A[bin[i]]=bdata->_other_A[bin[i]];
@@ -16361,12 +16386,9 @@ namespace SMRDATA
         }
 
         // step 5: update _include with common SNPs index
-        stable_sort(bin.begin(),bin.end());
-        stable_sort(gin.begin(),gin.end());
         bdata->_include.swap(bin);
         gdata->_include.swap(gin);
         for(int t=0; t<etraitNum; t++) {
-            stable_sort(ein[t].begin(),ein[t].end());
             etrait[t]._esi_include.swap(ein[t]);
         }
         printf("%ld SNPs are included after allele checking.\n",bdata->_include.size());
@@ -16761,28 +16783,24 @@ namespace SMRDATA
     void update_geIndx(bInfo* bdata, vector<eqtlInfo> &etrait, gwasData* gdata)
     {
         long etraitNum=etrait.size();
-        vector<int> tmpIdx1;
-        vector<int> tmpIdx2;
-        vector<int> tmpIdx3;
+        vector<int> gtmpIdx;
+        vector<int> etmpIdx;
         for (int i = 0; i < bdata->_include.size(); i++)
         {
-            //tmpIdx1.push_back(etrait->_esi_include[bdata->_include[i]]);
-            tmpIdx3.push_back(gdata->_include[bdata->_include[i]]);
+            gtmpIdx.push_back(gdata->_include[bdata->_include[i]]);
         }
-
-        //etrait->_esi_include.clear();
         gdata->_include.clear();
-        //etrait->_esi_include = tmpIdx1;
-        gdata->_include = tmpIdx3;
+        gdata->_include = gtmpIdx;
+        
         for(int t=0;t<etraitNum;t++)
         {
             for (int i = 0; i < bdata->_include.size(); i++)
             {
-                tmpIdx1.push_back(etrait[t]._esi_include[bdata->_include[i]]);
+                etmpIdx.push_back(etrait[t]._esi_include[bdata->_include[i]]);
             }
             etrait[t]._esi_include.clear();
-            etrait[t]._esi_include = tmpIdx1;
-            tmpIdx1.clear();
+            etrait[t]._esi_include = etmpIdx;
+            etmpIdx.clear();
         }
     }
     void update_geIndx(bInfo* bdata, vector<eqtlInfo> &etrait, gwasData* gdata, eqtlInfo* esdata)
@@ -17080,6 +17098,7 @@ namespace SMRDATA
         
         return maxid;
     }
+
     // need to update the function to extract the workspace for cis variants
     long fill_smr_wk_mlt_old(bInfo* bdata,gwasData* gdata,vector<eqtlInfo> &esdata,MTSMRWKEXP* smrwk,const char* refSNP,int cis_itvl,bool heidioffFlag)
     {
@@ -17247,6 +17266,176 @@ namespace SMRDATA
             }       
         return maxid;
     }
+    // updated; need to update the function to extract the workspace for cis variants
+    long fill_smr_wk_mlt_old2(bInfo* bdata,gwasData* gdata,vector<eqtlInfo> &esdata,MTSMRWKEXP* smrwk,const char* refSNP,int cis_itvl,bool heidioffFlag)
+    {
+        int i=smrwk->cur_prbidx;
+        long maxid =-9;
+        long outcoNum=esdata.size();
+
+        if(esdata[0]._rowid.empty())
+        {
+            for (int j = 0; j<esdata[0]._esi_include.size() ; j++)// bdata._include.size() == esdata._esi_include.size() == gdata._include.size()
+            {
+                if (fabs(esdata[0]._bxz[i][j] + 9) > 1e-6)
+                {
+                    int snpbp=esdata[0]._esi_bp[j];
+                    int snpchr=esdata[0]._esi_chr[j];
+                    if(snpchr==esdata[0]._epi_chr[i] && ABS(esdata[0]._epi_bp[i]-snpbp)<=cis_itvl && gdata->seyz[gdata->_include[j]]+9>1e-6)
+                    {
+                        if(esdata[0]._epi_start.size()>0 && esdata[0]._epi_end.size()>0) //technical eQTLs should be removed
+                        {
+                            if(esdata[0]._epi_end[i]==-9 || (snpbp>esdata[0]._epi_end[i] && snpbp<esdata[0]._epi_start[i]))
+                            {
+                                for( int t=0; t<outcoNum; t++)
+                                {
+                                    smrwk->bxz[t].push_back(esdata[t]._bxz[i][j]);
+                                    smrwk->sexz[t].push_back(esdata[t]._sexz[i][j]);
+                                    smrwk->zxz[t].push_back(esdata[t]._bxz[i][j]/esdata[t]._sexz[i][j]);
+                                    if(!heidioffFlag) smrwk->freq[t].push_back(bdata->_mu[bdata->_include[j]] / 2); //for bdata, _include should be used with j, for others, fine.
+                                    else smrwk->freq[t].push_back(esdata[t]._esi_freq[j]);
+                                }
+                                smrwk->byz.push_back(gdata->byz[gdata->_include[j]]);
+                                smrwk->seyz.push_back(gdata->seyz[gdata->_include[j]]);
+                                smrwk->pyz.push_back(gdata->pvalue[gdata->_include[j]]);                                                                        
+                                smrwk->curId.push_back(j);
+                                smrwk->rs.push_back(esdata[0]._esi_rs[j]);
+                                smrwk->snpchrom.push_back(esdata[0]._esi_chr[j]);
+                                smrwk->allele1.push_back(esdata[0]._esi_allele1[j]);
+                                smrwk->allele2.push_back(esdata[0]._esi_allele2[j]);
+                                if(refSNP!=NULL && esdata[0]._esi_rs[j]==string(refSNP)) maxid=(smrwk->rs.size()-1);
+                                smrwk->bpsnp.push_back(esdata[0]._esi_bp[j]);
+                                
+                            } else {
+                                printf("Shown below is the technical eQTL and will be excluded from the analysis.\n");
+                                double z=(esdata[0]._bxz[i][j]/esdata[0]._sexz[i][j]);
+                                double p=pchisq(z*z, 1);
+                                string tmp=atos(esdata[0]._esi_rs[j])+"\t"+ atos(esdata[0]._esi_chr[j])+"\t"+ atos(esdata[0]._esi_bp[j])+"\t"+ atos(esdata[0]._esi_allele1[j])+"\t"+ atos(esdata[0]._esi_allele2[j])+"\t"+ atos(esdata[0]._esi_freq[j])+"\t"+ atos(esdata[0]._epi_prbID[i])+"\t"+ atos(esdata[0]._epi_chr[i])+"\t"+ atos(esdata[0]._epi_bp[i])+"\t" + atos(esdata[0]._epi_gene[i])+"\t"+ atos(esdata[0]._epi_orien[i])+"\t"+ atos(esdata[0]._bxz[i][j])+"\t"+ atos(esdata[0]._sexz[i][j])+"\t"+ dtos(p)+"\n";
+                                printf("%s\n",tmp.c_str());
+                            }
+                            
+                        } else {
+                            for( int t=0; t<outcoNum; t++)
+                            {
+                                smrwk->bxz[t].push_back(esdata[t]._bxz[i][j]);
+                                smrwk->sexz[t].push_back(esdata[t]._sexz[i][j]);
+                                smrwk->zxz[t].push_back(esdata[t]._bxz[i][j]/esdata[t]._sexz[i][j]);
+                                if(!heidioffFlag) smrwk->freq[t].push_back(bdata->_mu[bdata->_include[j]] / 2); //for bdata, _include should be used with j, for others, fine.
+                                else smrwk->freq[t].push_back(esdata[t]._esi_freq[j]);
+                            }
+                            smrwk->byz.push_back(gdata->byz[gdata->_include[j]]);
+                            smrwk->seyz.push_back(gdata->seyz[gdata->_include[j]]);
+                            smrwk->pyz.push_back(gdata->pvalue[gdata->_include[j]]);                             
+                            smrwk->curId.push_back(j);
+                            smrwk->rs.push_back(esdata[0]._esi_rs[j]);
+                            smrwk->snpchrom.push_back(esdata[0]._esi_chr[j]);
+                            smrwk->allele1.push_back(esdata[0]._esi_allele1[j]);
+                            smrwk->allele2.push_back(esdata[0]._esi_allele2[j]);
+                            if(refSNP!=NULL && esdata[0]._esi_rs[j]==string(refSNP)) maxid=(smrwk->rs.size()-1);
+                            smrwk->bpsnp.push_back(esdata[0]._esi_bp[j]);
+                            
+                        }
+                    }
+                }
+            }                     
+        }
+        
+        else{
+                vector<uint32_t> ge_rowid_common;
+                vector<uint32_t> ge_rowid_first;
+                vector<int> common_idx;
+                for( int t=0;t<outcoNum;t++)
+                {
+                    uint64_t beta_start=esdata[t]._cols[i<<1];
+                    uint64_t se_start=esdata[t]._cols[1+(i<<1)];
+                    uint64_t numsnps=se_start-beta_start;
+                    vector<uint32_t> ge_rowid_tmp;
+                    for(int j=0;j<numsnps;j++)
+                    {
+                        int ge_rowid=esdata[t]._rowid[beta_start+j];
+                        int snpbp=esdata[t]._esi_bp[ge_rowid];
+                        int snpchr=esdata[t]._esi_chr[ge_rowid];
+                        if(snpchr==esdata[t]._epi_chr[i] && ABS(esdata[t]._epi_bp[i]-snpbp)<=cis_itvl && gdata->seyz[gdata->_include[ge_rowid]]+9>1e-6)
+                        {
+                            if(t==0) {ge_rowid_first.push_back(ge_rowid);}
+                            ge_rowid_tmp.push_back(ge_rowid);
+                        }
+                    }
+                    common_idx.clear();
+                    CommFunc::match_only(ge_rowid_tmp,ge_rowid_first,common_idx);
+                    //if(common_idx.empty()) throw("Error: no common SNPs between multiple traits.");
+                    ge_rowid_common.resize(common_idx.size());
+                    #pragma omp parallel for
+                    for(int i=0;i<common_idx.size();i++)
+                    ge_rowid_common[i]=ge_rowid_first[common_idx[i]];
+                    ge_rowid_first.resize(ge_rowid_common.size());
+                    for(int i=0;i<ge_rowid_common.size();i++)
+                    ge_rowid_first[i]=ge_rowid_common[i];
+                }
+                if(ge_rowid_common.size()!=0) {
+                    uint64_t numsnps=ge_rowid_common.size();
+                    for(int j=0;j<numsnps;j++)
+                    {
+                        int ge_rowid=ge_rowid_common[j];
+                        smrwk->byz.push_back(gdata->byz[gdata->_include[ge_rowid]]);
+                        smrwk->seyz.push_back(gdata->seyz[gdata->_include[ge_rowid]]);
+                        smrwk->pyz.push_back(gdata->pvalue[gdata->_include[ge_rowid]]);                           
+                        smrwk->curId.push_back(ge_rowid); //save snp id of the raw datastruct
+                        smrwk->rs.push_back(esdata[0]._esi_rs[ge_rowid]);
+                        smrwk->snpchrom.push_back(esdata[0]._esi_chr[ge_rowid]);
+                        smrwk->allele1.push_back(esdata[0]._esi_allele1[ge_rowid]);
+                        smrwk->allele2.push_back(esdata[0]._esi_allele2[ge_rowid]);
+                        if(refSNP!=NULL && esdata[0]._esi_rs[ge_rowid]==string(refSNP)) maxid=(smrwk->rs.size()-1);
+                        smrwk->bpsnp.push_back(esdata[0]._esi_bp[ge_rowid]);
+                    }
+                
+                    vector<int> val_idx;
+                    for( int t=0;t<outcoNum;t++)
+                    {
+                        uint64_t beta_start=esdata[t]._cols[i<<1];
+                        uint64_t se_start=esdata[t]._cols[1+(i<<1)];
+                        uint64_t numsnps=ge_rowid_common.size();
+                        val_idx.clear();
+                        match_only(ge_rowid_common,esdata[t]._rowid,val_idx);
+                        for(int j=0;j<numsnps;j++)
+                        {
+                            int ge_rowid=ge_rowid_common[j];
+                            int snpbp=esdata[t]._esi_bp[ge_rowid];
+
+                                if(esdata[t]._epi_start.size()>0 && esdata[t]._epi_end.size()>0)
+                                {
+                                    if(esdata[t]._epi_end[i]==-9 || (snpbp>esdata[t]._epi_end[i] && snpbp<esdata[t]._epi_start[i]))
+                                    {
+                                        smrwk->bxz[t].push_back(esdata[t]._val[beta_start+val_idx[j]]);
+                                        smrwk->sexz[t].push_back(esdata[t]._val[se_start+val_idx[j]]);
+                                        smrwk->zxz[t].push_back(esdata[t]._val[beta_start+val_idx[j]]/esdata[t]._val[se_start+val_idx[j]]);
+                                        if(!heidioffFlag) smrwk->freq[t].push_back(bdata->_mu[bdata->_include[ge_rowid]] / 2);
+                                        else smrwk->freq[t].push_back(esdata[t]._esi_freq[ge_rowid]);
+                                        
+                                    } else {
+                                        printf("Shown below is the technical eQTL and will be excluded from the analysis.\n");
+                                        double z=(esdata[t]._bxz[i][val_idx[j]]/esdata[t]._sexz[i][val_idx[j]]);
+                                        double p=pchisq(z*z, 1);
+                                        // string tmp=atos(esdata[t]._esi_rs[j])+"\t"+ atos(esdata[t]._esi_chr[j])+"\t"+ atos(esdata[t]._esi_bp[j])+"\t"+ atos(esdata[t]._esi_allele1[j])+"\t"+ atos(esdata[t]._esi_allele2[j])+"\t"+ atos(esdata[t]._esi_freq[j])+"\t"+ atos(esdata[t]._epi_prbID[i])+"\t"+ atos(esdata[t]._epi_chr[i])+"\t"+ atos(esdata[t]._epi_bp[i])+"\t" + atos(esdata[t]._epi_gene[i])+"\t"+ atos(esdata[t]._epi_orien[i])+"\t"+ atos(esdata[t]._bxz[i][j])+"\t"+ atos(esdata[t]._sexz[i][j])+"\t"+ dtos(p)+"\n";                            
+                                        // printf("%s\n",tmp.c_str());
+                                    }
+                                    
+                                } else {
+                                        smrwk->bxz[t].push_back(esdata[t]._val[beta_start+val_idx[j]]);
+                                        smrwk->sexz[t].push_back(esdata[t]._val[se_start+val_idx[j]]);
+                                        smrwk->zxz[t].push_back(esdata[t]._val[beta_start+val_idx[j]]/esdata[t]._val[se_start+val_idx[j]]);
+                                        if(!heidioffFlag) smrwk->freq[t].push_back(bdata->_mu[bdata->_include[ge_rowid]] / 2);
+                                        else smrwk->freq[t].push_back(esdata[t]._esi_freq[ge_rowid]);                                
+                                    }                 
+                            // }
+                        }
+                    } 
+
+                }                              
+            }       
+        return maxid;
+    }
+
     // updated; need to update the function to extract the workspace for cis variants
     long fill_smr_wk_mlt(bInfo* bdata,gwasData* gdata,vector<eqtlInfo> &esdata,MTSMRWKEXP* smrwk,const char* refSNP,int cis_itvl,bool heidioffFlag)
     {
