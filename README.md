@@ -123,7 +123,7 @@ ENSG00000242687 rs34631688,rs187375676,rs149211972,rs219813,rs6976207,rs7789895,
 * --opera-smr turn on the flag of runing OPERA analysis using the estimated SMR effect rather than estimated joint-SMR effect. 
 * --thread-num specifies the number of OpenMP threads for parallel computing. 
 
-## Extract the significant combinatorial pleiotropic associations from stage 2 analysis and estimated the FDR
+## Extract the significant associations and estimate FDR
 > opera --ppa-file cd_expo5_new_v2_stage2.ppa --summary-ppa --thresh-HEIDI 0.01 --thresh-PP 0.9 --out myopera
 
 OPERA shares the same data management function and flags with the SMR software, for a full list of option reference, please see [here](https://cnsgenomics.com/software/smr/#OptionsReference). 
