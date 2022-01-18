@@ -148,7 +148,7 @@ Chr	Expo1_ID	Expo1_bp	Expo2_ID	Expo2_bp	PPA(1,2)	p_HEIDI(1,2)
 7	ENSG00000146828	100444536	cg15140703	99775532	0.951848	1.043300e-01
 ...
 ```
-The output includes the estimated FDR for any combinatorial associations, which are also printed in the log file, for example,
+The output also includes the estimated FDR for any combinatorial associations, which are also printed in the log file, for example,
 ```
 PPA results for 8 combinatorial associations between 1 exposure(s) and 1 outcome have been extracted and saved in the file myopera_1_exposures_ppa.summary.
 The estimated FDR is 0.0287806 for combinatorial associations between 1 exposure(s) and 1 outcome.
