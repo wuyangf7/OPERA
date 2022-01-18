@@ -67,6 +67,7 @@ Columns are iteration numbers and posterior samples for each configuration from 
 
 ## Run OPERA for stage 2 analysis and heterogeneity analysis
 > opera --besd-flist mylist --snp-chr 7 --probe-chr 7 --gwas-summary mygwas.ma --bfile mydata --prior-pi-file myopera.pi --out myopera_chr7
+
 Note: Only the cis-SNPs of each exposure site are used, so the stage 2 analysis can be performed for each chromosome seperately. The genome-wide analysis results can be combined through shell command below,
 > awk 'NR==1 || FNR>1' myopera_chr*.ppa > myopera.ppa
 * --snp-chr specifies the SNP chromosome for chromosome-wide opera stage 2 analysis.
