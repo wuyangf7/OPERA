@@ -129,7 +129,33 @@ ENSG00000242687 rs34631688,rs187375676,rs149211972,rs219813,rs6976207,rs7789895,
 * --summary-ppa turns on the flag to extract the significant combinatorial pleiotropic associations of molecular phenotypes with the complex trait. 
 * --thresh-PP specifies significance threshold of PPA (0.9 as default).
 * --thresh-HEIDI specifies significance threshold of heterogenity test (0.01 as default). 
-* --out saves the significant results passed the PPA and HEIDI threshold for any combinatorial associations (text format, see below example). 
+* --out saves the significant results passed the PPA and HEIDI threshold for any combinatorial associations (text format, see 2 exposures below example), including associations between 1 exposure(s) and 1 outcome
+```
+Chr	Expo1_ID	Expo1_bp	PPA(1)	p_HEIDI(1)
+7	ENSG00000085514	99981436	0.998417	5.470704e-02
+7	ENSG00000146828	100444536	0.95185	3.293829e-02
+7	cg01869186	100423987	0.923638	9.337960e-02
+7	cg08582801	99588335	0.990217	8.152293e-02
+...
+```
+and including associations between 2 exposure(s) and 1 outcome.
+```
+Chr	Expo1_ID	Expo1_bp	Expo2_ID	Expo2_bp	PPA(1,2)	p_HEIDI(1,2)
+7	ENSG00000085514	99981436	cg13210467	99775443	0.99814	1.787164e-02
+7	ENSG00000085514	99981436	cg19116668	99932089	0.998417	3.297637e-02
+7	ENSG00000146828	100444536	cg04305808	99614209	0.925821	1.859709e-01
+7	ENSG00000146828	100444536	cg08582801	99588335	0.939578	1.691938e-01
+7	ENSG00000146828	100444536	cg15140703	99775532	0.951848	1.043300e-01
+...
+```
+The output includes the estimated FDR for any combinatorial associations, which are also printed in the log file, for example,
+```
+PPA results for 8 combinatorial associations between 1 exposure(s) and 1 outcome have been extracted and saved in the file myopera_1_exposures_ppa.summary.
+The estimated FDR is 0.0287806 for combinatorial associations between 1 exposure(s) and 1 outcome.
+
+PPA results for 12 combinatorial associations between 2 exposure(s) and 1 outcome have been extracted and saved in the file myopera_2_exposures_ppa.summary.
+The estimated FDR is 0.0500069 for combinatorial associations between 2 exposure(s) and 1 outcome.
+```
 
 OPERA shares the same data management function and flags with the SMR software, for a full list of option reference, please see [here](https://cnsgenomics.com/software/smr/#OptionsReference). 
 
