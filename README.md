@@ -66,8 +66,11 @@ Columns are iteration numbers and posterior samples for each configuration from 
 * --thread-num specifies the number of OpenMP threads for parallel computing.
 
 ## Run OPERA for stage 2 analysis and heterogeneity analysis
-> opera --besd-flist mylist --gwas-summary mygwas.ma --bfile mydata --prior-pi-file myopera.pi  --out myopera
-* Note: Only the cis-SNPs of each exposure site are used, so the stage 2 analysis can be performed for each chromosome seperately. 
+> opera --besd-flist mylist --snp-chr 7 --probe-chr 7 --gwas-summary mygwas.ma --bfile mydata --prior-pi-file myopera.pi --out myopera_chr7
+Note: Only the cis-SNPs of each exposure site are used, so the stage 2 analysis can be performed for each chromosome seperately. The genome-wide analysis results can be combined through shell command below,
+> awk 'NR==1 || FNR>1' myopera_chr*.ppa > myopera.ppa
+* --snp-chr specifies the SNP chromosome for chromosome-wide opera stage 2 analysis.
+* --probe-chr specifies the exposure sites for chromosome-wide opera stage 2 analysis.
 * --bfile reads individual-level SNP genotype data (in PLINK binary format) from a reference sample for LD estimation. 
 * --prior-pi-file reads the prior probabilities estimated from the stage 1 analysis (i.e., the posterior Mean from stage 1 analysis).  
 * --out saves the PPA and multi-exposure HEIDI test P-values for each possible association hypothesis in .ppa file (text format, see below example).
