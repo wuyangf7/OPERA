@@ -101,6 +101,13 @@ Columns are probe ID, probe chromosome, gene name, probe position, SNP name, SNP
 
 The heterogeneity test (i.e., multi-exposure HEIDI) will be automatically performed for any combinatorial associations passed a PPA threshold (0.9 as default). If the heterogeneity test is not interested, it can be turned off by specifying --heidi-off.
 
+To estimated the false positive rate and false discovery rate, OPERA also automatically outputs the total number of test for different exposure combinations in the .num file
+
+```
+expoNum	1_exposure	2_exposures
+testNum	22	105
+```
+
 ### Other parameters for stage 2 analysis
 > opera --besd-flist mylist --gwas-summary mygwas.ma --bfile mydata --snp-chr 7 --probe-chr 7 --extract-exposure-probe myexposure --outcome-wind 1000 --thresh-PP 0.5 --thresh-SMR 0.05 --extract-target-cojo-snps mycojo --extract-GWAS-loci myloci --prior-pi 0.8,0.09,0.09,0.02 --prior-sigma 0.02,0.02 --out myopera --thread-num 3
 * --bfile reads individual-level SNP genotype data (in PLINK binary format) from a reference sample for LD estimation. 
@@ -128,8 +135,10 @@ ENSG00000242687 rs34631688,rs187375676,rs149211972,rs219813,rs6976207,rs7789895,
 * --thread-num specifies the number of OpenMP threads for parallel computing. 
 
 ## Extract the significant associations and estimate FDR
-> opera --ppa-file myopera.ppa --summary-ppa --thresh-HEIDI 0.01 --thresh-PP 0.9 --out myopera
+> opera --ppa-file myopera.ppa --summary-ppa --prior-pi-file myopera.pi --num-file myopera.num --thresh-HEIDI 0.01 --thresh-PP 0.9 --out myopera
 * --ppa-file reads the PPA and HEIDI results estimated from the stage 2 analysis.
+* --prior-pi-file reads the prior probabilities estimated from the stage 1 analysis (i.e., the posterior Mean from stage 1 analysis).
+* --num-file reads the number of tests for any exposure combinations performed in the stage 2 analysis.
 * --summary-ppa turns on the flag to extract the significant combinatorial pleiotropic associations of molecular phenotypes with the complex trait. 
 * --thresh-PP specifies significance threshold of PPA (0.9 as default).
 * --thresh-HEIDI specifies significance threshold of heterogenity test (0.01 as default). 
@@ -154,11 +163,13 @@ Chr	Expo1_ID	Expo1_bp	Expo2_ID	Expo2_bp	PPA(1,2)	p_HEIDI(1,2)
 ```
 The output also includes the estimated FDR for any combinatorial associations, which are also printed in the log file, for example,
 ```
-PPA results for 8 combinatorial associations between 1 exposure(s) and 1 outcome have been extracted and saved in the file myopera_1_exposures_ppa.summary.
-The estimated FDR is 0.0287806 for combinatorial associations between 1 exposure(s) and 1 outcome.
+PPA results for 7 combinatorial associations between 1 exposure(s) and 1 outcome have been extracted and saved in the file myopera_1_exposures_ppa.summary.
+The estimated FDR is 0.025599 for combinatorial associations between 1 exposure(s) and 1 outcome.
+The estimated FPR is 0.0134532 for combinatorial associations between 1 exposure(s) and 1 outcome.
 
 PPA results for 12 combinatorial associations between 2 exposure(s) and 1 outcome have been extracted and saved in the file myopera_2_exposures_ppa.summary.
 The estimated FDR is 0.0500069 for combinatorial associations between 2 exposure(s) and 1 outcome.
+The estimated FPR is 1.15589e-06 for combinatorial associations between 2 exposure(s) and 1 outcome.
 ```
 
 OPERA shares the same data management function and flags with the SMR software, for a full list of option reference, please see [here](https://cnsgenomics.com/software/smr/#OptionsReference). 
