@@ -162,7 +162,7 @@ Chr	Expo1_ID	Expo1_bp	Expo2_ID	Expo2_bp	PPA(1,2)	p_HEIDI(1,2)
 7	ENSG00000146828	100444536	cg15140703	99775532	0.951848	1.043300e-01
 ...
 ```
-The output also includes the estimated FDR for any combinatorial associations, which are also printed in the log file, for example,
+The output also includes the estimated FDR and false positive rate (FPR) for any combinatorial associations, which are also printed in the log file, for example,
 ```
 PPA results for 7 combinatorial associations between 1 exposure(s) and 1 outcome have been extracted and saved in the file myopera_1_exposures_ppa.summary.
 The estimated FDR is 0.025599 for combinatorial associations between 1 exposure(s) and 1 outcome.
@@ -172,6 +172,7 @@ PPA results for 12 combinatorial associations between 2 exposure(s) and 1 outcom
 The estimated FDR is 0.0500069 for combinatorial associations between 2 exposure(s) and 1 outcome.
 The estimated FPR is 1.15589e-06 for combinatorial associations between 2 exposure(s) and 1 outcome.
 ```
+Note: we suggest a PPA threshold of 0.9 to roughly control the FDR below 0.05. However, if more strigent FPR is required, the increase of PPA threshold can acheive this (e.g., 0.995). 
 
 OPERA shares the same data management function and flags with the SMR software, for a full list of option reference, please see [here](https://cnsgenomics.com/software/smr/#OptionsReference). 
 
