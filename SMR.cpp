@@ -232,8 +232,12 @@ void option(int option_num, char* option_str[])
     // use joint-SMR as default
     char* mbFileName=NULL;
     char* piFileName=NULL;
-    bool bfileflag = false;
-    bool inputpiflag= false;
+    char* sigmaFileName=NULL;
+    char* numFilename = NULL;
+    char* ppaFilename = NULL;
+    bool bfileflag = false;    
+    bool inputpiflag = false;
+    bool inputsigmaflag = false;
     bool jointsmrflag = true;
     bool operasmrflag = false;
     bool condismrflag = false;    
@@ -245,9 +249,11 @@ void option(int option_num, char* option_str[])
     char* targetcojosnplstName = NULL;
     char* GWAScojosnplstName = NULL;
     bool piflag = false;
+    bool summaryppaflag= false;
     double thresh_PP = 0.9;
-    double thresh_smr = 0.05;
-    double thresh_heidi = 0;
+    double thresh_smr = 0.01;
+    double thresh_heidi = 1e-5;
+    double sigma_def = 0.02;
     double alpha = 0.1;
     int piWind = 500;
     outcomePrbWind = 1000;
@@ -434,33 +440,6 @@ void option(int option_num, char* option_str[])
             if(p_smr<0 || p_smr>1)
             {
                 fprintf (stderr, "Error: --peqtl-smr should be within the range from 0 to 1.\n");
-                exit (EXIT_FAILURE);
-            }
-        }
-        else if (0 == strcmp(option_str[i], "--thresh-PP")){
-            thresh_PP = atof(option_str[++i]);
-            printf("--thresh-PP %10.2e\n", thresh_PP);
-            if(thresh_PP<0 || thresh_PP>1)
-            {
-                fprintf (stderr, "Error: --thresh-PP should be within the range from 0 to 1.\n");
-                exit (EXIT_FAILURE);
-            }
-        }
-        else if (0 == strcmp(option_str[i], "--thresh-SMR")){
-            thresh_smr = atof(option_str[++i]);
-            printf("--thresh-SMR %10.2e\n", thresh_smr);
-            if(thresh_smr<0 || thresh_smr>1)
-            {
-                fprintf (stderr, "Error: --thresh-SMR should be within the range from 0 to 1.\n");
-                exit (EXIT_FAILURE);
-            }
-        }
-        else if (0 == strcmp(option_str[i], "--thresh-HEIDI")){
-            thresh_heidi = atof(option_str[++i]);
-            printf("--thresh-HEIDI %10.2e\n", thresh_heidi);
-            if(thresh_heidi<0 || thresh_heidi>1)
-            {
-                fprintf (stderr, "Error: --thresh-HEIDI should be within the range from 0 to 1.\n");
                 exit (EXIT_FAILURE);
             }
         }
@@ -1051,7 +1030,7 @@ void option(int option_num, char* option_str[])
         }
 
         // multi-omics SMR starts from here
-        // multi-smr Yang Wu 04.06.2018 
+        // multi-smr Yang Wu 04.06.2018         
         else if(0==strcmp(option_str[i],"--multi-exposure-smr")) {
             multiexposuresmrflag=true;
             printf("--multi-exposure-smr \n");
@@ -1063,6 +1042,50 @@ void option(int option_num, char* option_str[])
         else if(0==strcmp(option_str[i],"--estimate-pi")){
             piflag=true;
             printf("--estimate-pi \n");
+        }
+        else if(0==strcmp(option_str[i],"--summary-ppa")){
+            summaryppaflag=true;
+            printf("--summary-ppa \n");
+            thresh_heidi = 0.01;
+        }
+        else if (0 == strcmp(option_str[i], "--thresh-PP")){
+            thresh_PP = atof(option_str[++i]);
+            printf("--thresh-PP %10.2e\n", thresh_PP);
+            if(thresh_PP<0 || thresh_PP>1)
+            {
+                fprintf (stderr, "Error: --thresh-PP should be within the range from 0 to 1.\n");
+                exit (EXIT_FAILURE);
+            }
+        }
+        else if (0 == strcmp(option_str[i], "--thresh-SMR")){
+            thresh_smr = atof(option_str[++i]);
+            printf("--thresh-SMR %10.2e\n", thresh_smr);
+            if(thresh_smr<0 || thresh_smr>1)
+            {
+                fprintf (stderr, "Error: --thresh-SMR should be within the range from 0 to 1.\n");
+                exit (EXIT_FAILURE);
+            }
+        }
+        else if (0 == strcmp(option_str[i], "--thresh-HEIDI")){
+            thresh_heidi = atof(option_str[++i]);
+            printf("--thresh-HEIDI %10.2e\n", thresh_heidi);
+            if(thresh_heidi<0 || thresh_heidi>1)
+            {
+                fprintf (stderr, "Error: --thresh-HEIDI should be within the range from 0 to 1.\n");
+                exit (EXIT_FAILURE);
+            }
+        }
+        else if(0==strcmp(option_str[i],"--ppa-file")){
+            ppaFilename=option_str[++i];
+            FLAG_VALID_CK("--ppa-file", ppaFilename);
+            printf("--ppa-file %s\n",ppaFilename);
+            FileExist(ppaFilename);
+        }
+        else if(0==strcmp(option_str[i],"--num-file")){
+            numFilename=option_str[++i];
+            FLAG_VALID_CK("--num-file", numFilename);
+            printf("--num-file %s\n",numFilename);
+            FileExist(numFilename);
         }
         else if(0==strcmp(option_str[i],"--opera-conditional-smr")){
             condismrflag=true;
@@ -1114,6 +1137,7 @@ void option(int option_num, char* option_str[])
             piFileName=option_str[++i];
             FLAG_VALID_CK("--prior-pi-file", piFileName);
             printf("--prior-pi-file %s\n",piFileName);
+            FileExist(piFileName);
             if(inputpiflag)
             {
                 fprintf (stderr, "Error: --prior-pi-file conflicts with --prior-pi, please turn off one.\n");
@@ -1123,8 +1147,26 @@ void option(int option_num, char* option_str[])
         }
         else if(0==strcmp(option_str[i],"--prior-sigma")){
             sigmastr = option_str[++i];
-            //FLAG_VALID_CK("--sigma", sigmastr);
+            // FLAG_VALID_CK("--prior-sigma", sigmastr);
             printf("--prior-sigma %s\n", sigmastr.c_str());
+            if(inputsigmaflag)
+            {
+                fprintf (stderr, "Error: --prior-sigma conflicts with --prior-sigma-file, please turn off one.\n");
+                exit (EXIT_FAILURE);
+            }
+            inputsigmaflag = true;
+        }
+        else if(0==strcmp(option_str[i],"--prior-sigma-file")){
+            sigmaFileName=option_str[++i];
+            FLAG_VALID_CK("--prior-sigma-file", sigmaFileName);
+            printf("--prior-sigma-file %s\n",sigmaFileName);
+            FileExist(sigmaFileName);
+            if(inputsigmaflag)
+            {
+                fprintf (stderr, "Error: --prior-sigma-file conflicts with --prior-sigma, please turn off one.\n");
+                exit (EXIT_FAILURE);
+            }
+            inputsigmaflag = true;
         }
         // end //
 
@@ -1237,14 +1279,15 @@ void option(int option_num, char* option_str[])
     else if (est_effe_spl_size_flg) est_effect_splsize(eqtlsmaslstName,eqtlFileName, snplstName,problstName,snplst2exclde, problst2exclde,p_smr);
     else if(smr_flag && smr_trans_flag) smr_trans_region(outFileName, bFileName,gwasFileName, eqtlFileName,  maf, indilstName, snplstName,problstName, bFlag, p_hetero, ld_prune, m_hetero ,opt_hetero,indilst2remove,snplst2exclde, problst2exclde,  transThres, refSNP,  heidioffFlag, cis_itvl, trans_itvl,genelistName,  chr, prbchr, prbname,  fromprbname,  toprbname, prbWind, fromprbkb,  toprbkb, prbwindFlag, genename,snpchr,snprs,fromsnprs, tosnprs, snpWind, fromsnpkb,  tosnpkb, snpwindFlag, cis_flag, threshpsmrest,  new_het_mth, p_smr,opt_slct_flag,ld_min, diff_freq,diff_freq_ratio);
     // multi-smr Yang wu 04.06.2018 //
-    else if(multiexposuresmrflag && !interanlflg && eqtlsmaslstName!= NULL && piflag && operasmrflag)  multiexposurepi(outFileName,bFileName,mbFileName,eqtlsmaslstName,gwasFileName,maf, sigmastr, indilstName,  snplstName, problstName, oproblstName, eproblstName,bFlag,p_hetero,ld_prune,m_hetero, opt_hetero, indilst2remove,  snplst2exclde,  problst2exclde,  oproblst2exclde, eproblst2exclde,p_smr, refSNP, heidioffFlag,cis_itvl,piWind,snpchr,prbchr,traitlstName,outcomePrbWind, oprobe, eprobe, oprobe2rm,eprobe2rm, threshpsmrest, new_het_mth,opt_slct_flag,ld_min,cis2all,sampleoverlap,pmecs,minsnpcor,targetcojosnplstName,snpproblstName,diff_freq,diff_freq_ratio); 
+    else if(multiexposuresmrflag && !interanlflg && eqtlsmaslstName!= NULL && piflag && operasmrflag)  multiexposurepi(outFileName,bFileName,mbFileName,eqtlsmaslstName,gwasFileName,maf, sigmastr, sigma_def, indilstName,  snplstName, problstName, oproblstName, eproblstName,bFlag,p_hetero,ld_prune,m_hetero, opt_hetero, indilst2remove,  snplst2exclde,  problst2exclde,  oproblst2exclde, eproblst2exclde,p_smr, refSNP, heidioffFlag,cis_itvl,piWind,snpchr,prbchr,traitlstName,outcomePrbWind, oprobe, eprobe, oprobe2rm,eprobe2rm, threshpsmrest, new_het_mth,opt_slct_flag,ld_min,cis2all,sampleoverlap,pmecs,minsnpcor,targetcojosnplstName,snpproblstName,diff_freq,diff_freq_ratio); 
     else if(multiexposuresmrflag && !interanlflg && eqtlsmaslstName!= NULL && piflag && condismrflag)  multiexposurepi_condsmr(outFileName,bFileName,eqtlsmaslstName,gwasFileName,maf, sigmastr, indilstName,  snplstName, problstName, oproblstName, eproblstName,bFlag,p_hetero,ld_prune,m_hetero, opt_hetero, indilst2remove,  snplst2exclde,  problst2exclde,  oproblst2exclde, eproblst2exclde,p_smr, refSNP, heidioffFlag,condismrflag,cis_itvl,piWind,snpchr,prbchr,traitlstName,outcomePrbWind, oprobe, eprobe, oprobe2rm,eprobe2rm, threshpsmrest, new_het_mth,opt_slct_flag,ld_min,cis2all,sampleoverlap,pmecs,minsnpcor,targetcojosnplstName,snpproblstName,diff_freq,diff_freq_ratio);
-    else if(multiexposuresmrflag && !interanlflg && eqtlsmaslstName!= NULL && piflag && jointsmrflag && !inputlociflag)  multiexposurepi_jointsmr(outFileName,bFileName,mbFileName,eqtlsmaslstName,gwasFileName,maf, sigmastr, indilstName,  snplstName, problstName, oproblstName, eproblstName,bFlag,p_hetero,ld_prune,m_hetero, opt_hetero, indilst2remove,  snplst2exclde,  problst2exclde,  oproblst2exclde, eproblst2exclde,p_smr, refSNP, heidioffFlag,jointsmrflag,cis_itvl,piWind,snpchr,prbchr,traitlstName,outcomePrbWind, oprobe, eprobe, oprobe2rm,eprobe2rm, threshpsmrest, new_het_mth,opt_slct_flag,ld_min,cis2all,sampleoverlap,pmecs,minsnpcor,targetcojosnplstName,snpproblstName,diff_freq,diff_freq_ratio); 
-    else if(multiexposuresmrflag && !interanlflg && eqtlsmaslstName!= NULL && piflag && jointsmrflag && inputlociflag)  multiexposurepi_jointsmr_loci(outFileName,bFileName,mbFileName,eqtlsmaslstName,gwasFileName,maf, sigmastr, indilstName,  snplstName, problstName, oproblstName, eproblstName,bFlag,p_hetero,ld_prune,m_hetero, opt_hetero, indilst2remove,  snplst2exclde,  problst2exclde,  oproblst2exclde, eproblst2exclde,p_smr, refSNP, heidioffFlag,jointsmrflag,cis_itvl,piWind,snpchr,prbchr,traitlstName,outcomePrbWind, oprobe, eprobe, oprobe2rm,eprobe2rm, threshpsmrest, new_het_mth,opt_slct_flag,ld_min,cis2all,sampleoverlap,pmecs,minsnpcor,targetcojosnplstName,GWAScojosnplstName,snpproblstName,diff_freq,diff_freq_ratio);     
-    else if(multiexposuresmrflag && !interanlflg && eqtlsmaslstName!= NULL && jointsmrflag && !inputlociflag)  multiexposure_jointsmr(outFileName,bFileName,mbFileName,piFileName,eqtlsmaslstName,gwasFileName,maf,priorstr, sigmastr, indilstName,  snplstName, problstName, oproblstName, eproblstName,bFlag,p_hetero,ld_prune,m_hetero, opt_hetero, indilst2remove,  snplst2exclde,  problst2exclde,  oproblst2exclde, eproblst2exclde,p_smr, thresh_PP,thresh_smr,thresh_heidi, refSNP, heidioffFlag,jointsmrflag,operasmrflag,cis_itvl,snpchr,prbchr,traitlstName,outcomePrbWind, oprobe, eprobe, oprobe2rm,eprobe2rm, threshpsmrest, new_het_mth,opt_slct_flag,ld_min,cis2all,sampleoverlap,pmecs,minsnpcor,targetcojosnplstName,snpproblstName,diff_freq,diff_freq_ratio);
-    else if(multiexposuresmrflag && !interanlflg && eqtlsmaslstName!= NULL && jointsmrflag && inputlociflag)  multiexposure_jointsmr_loci(outFileName,bFileName,mbFileName,piFileName,eqtlsmaslstName,gwasFileName,maf,priorstr, sigmastr, indilstName,  snplstName, problstName, oproblstName, eproblstName,bFlag,p_hetero,ld_prune,m_hetero, opt_hetero, indilst2remove,  snplst2exclde,  problst2exclde,  oproblst2exclde, eproblst2exclde,p_smr,thresh_PP,thresh_smr,thresh_heidi,refSNP, heidioffFlag,jointsmrflag,operasmrflag,cis_itvl,snpchr,prbchr,traitlstName,outcomePrbWind, oprobe, eprobe, oprobe2rm,eprobe2rm, threshpsmrest, new_het_mth,opt_slct_flag,ld_min,cis2all,sampleoverlap,pmecs,minsnpcor,targetcojosnplstName,GWAScojosnplstName,snpproblstName,diff_freq,diff_freq_ratio);     
-    else if(multiexposuresmrflag && !interanlflg && eqtlsmaslstName!= NULL && !inputlociflag)  multiexposuresmr(outFileName,bFileName,eqtlsmaslstName,gwasFileName,maf,priorstr, sigmastr, indilstName,  snplstName, problstName, oproblstName, eproblstName,bFlag,p_hetero,ld_prune,m_hetero, opt_hetero, indilst2remove,  snplst2exclde,  problst2exclde,  oproblst2exclde, eproblst2exclde,p_smr, refSNP, heidioffFlag,cis_itvl,snpchr,prbchr,traitlstName,outcomePrbWind, oprobe, eprobe, oprobe2rm,eprobe2rm, threshpsmrest, new_het_mth,opt_slct_flag,ld_min,cis2all,sampleoverlap,pmecs,minsnpcor,targetcojosnplstName,snpproblstName,diff_freq,diff_freq_ratio); 
-    else if(multiexposuresmrflag && !interanlflg && eqtlsmaslstName!= NULL && inputlociflag)  multiexposuresmr_loci(outFileName,bFileName,eqtlsmaslstName,gwasFileName,maf,priorstr, sigmastr, indilstName,  snplstName, problstName, oproblstName, eproblstName,bFlag,p_hetero,ld_prune,m_hetero, opt_hetero, indilst2remove,  snplst2exclde,  problst2exclde,  oproblst2exclde, eproblst2exclde,p_smr,thresh_PP,refSNP, heidioffFlag,cis_itvl,snpchr,prbchr,traitlstName,outcomePrbWind, oprobe, eprobe, oprobe2rm,eprobe2rm, threshpsmrest, new_het_mth,opt_slct_flag,ld_min,cis2all,sampleoverlap,pmecs,minsnpcor,targetcojosnplstName,GWAScojosnplstName,snpproblstName,diff_freq,diff_freq_ratio); 
-        if(multioutcomesmrflag && !interanlflg && eqtlsmaslstName!= NULL)  multioutcomesmr(outFileName,bFileName,mbFileName,piFileName,eqtlFileName,eqtlsmaslstName,gwasFileName,maf,priorstr, sigmastr, indilstName,  snplstName, problstName, oproblstName, eproblstName,bFlag,p_hetero,ld_prune,m_hetero, opt_hetero, indilst2remove,  snplst2exclde,  problst2exclde,  oproblst2exclde, eproblst2exclde,p_smr, refSNP, heidioffFlag,cis_itvl, snpchr,prbchr,traitlstName,outcomePrbWind, oprobe, eprobe, oprobe2rm,eprobe2rm, threshpsmrest, new_het_mth,opt_slct_flag,ld_min,cis2all,sampleoverlap,pmecs,minsnpcor,targetcojosnplstName,snpproblstName,diff_freq,diff_freq_ratio);
+    else if(multiexposuresmrflag && !interanlflg && eqtlsmaslstName!= NULL && piflag && jointsmrflag && !inputlociflag)  multiexposurepi_jointsmr(outFileName,bFileName,mbFileName,eqtlsmaslstName,gwasFileName,maf, sigmastr, sigma_def, indilstName,  snplstName, problstName, oproblstName, eproblstName,bFlag,p_hetero,ld_prune,m_hetero, opt_hetero, indilst2remove,  snplst2exclde,  problst2exclde,  oproblst2exclde, eproblst2exclde,p_smr, refSNP, heidioffFlag,jointsmrflag,cis_itvl,piWind,snpchr,prbchr,traitlstName,outcomePrbWind, oprobe, eprobe, oprobe2rm,eprobe2rm, threshpsmrest, new_het_mth,opt_slct_flag,ld_min,cis2all,sampleoverlap,pmecs,minsnpcor,targetcojosnplstName,snpproblstName,diff_freq,diff_freq_ratio); 
+    else if(multiexposuresmrflag && !interanlflg && eqtlsmaslstName!= NULL && piflag && jointsmrflag && inputlociflag)  multiexposurepi_jointsmr_loci(outFileName,bFileName,mbFileName,eqtlsmaslstName,gwasFileName,maf, sigmastr, sigma_def, indilstName,  snplstName, problstName, oproblstName, eproblstName,bFlag,p_hetero,ld_prune,m_hetero, opt_hetero, indilst2remove,  snplst2exclde,  problst2exclde,  oproblst2exclde, eproblst2exclde,p_smr, refSNP, heidioffFlag,jointsmrflag,cis_itvl,piWind,snpchr,prbchr,traitlstName,outcomePrbWind, oprobe, eprobe, oprobe2rm,eprobe2rm, threshpsmrest, new_het_mth,opt_slct_flag,ld_min,cis2all,sampleoverlap,pmecs,minsnpcor,targetcojosnplstName,GWAScojosnplstName,snpproblstName,diff_freq,diff_freq_ratio);     
+    else if(multiexposuresmrflag && !interanlflg && eqtlsmaslstName!= NULL && jointsmrflag && !inputlociflag)  multiexposure_jointsmr(outFileName,bFileName,mbFileName,piFileName,sigmaFileName,eqtlsmaslstName,gwasFileName,maf,priorstr, sigmastr, sigma_def, indilstName,  snplstName, problstName, oproblstName, eproblstName,bFlag,p_hetero,ld_prune,m_hetero, opt_hetero, indilst2remove,  snplst2exclde,  problst2exclde,  oproblst2exclde, eproblst2exclde,p_smr, thresh_PP,thresh_smr,thresh_heidi, refSNP, heidioffFlag,jointsmrflag,operasmrflag,cis_itvl,snpchr,prbchr,traitlstName,outcomePrbWind, oprobe, eprobe, oprobe2rm,eprobe2rm, threshpsmrest, new_het_mth,opt_slct_flag,ld_min,cis2all,sampleoverlap,pmecs,minsnpcor,targetcojosnplstName,snpproblstName,diff_freq,diff_freq_ratio);
+    else if(multiexposuresmrflag && !interanlflg && eqtlsmaslstName!= NULL && jointsmrflag && inputlociflag)  multiexposure_jointsmr_loci(outFileName,bFileName,mbFileName,piFileName,sigmaFileName,eqtlsmaslstName,gwasFileName,maf,priorstr, sigmastr, sigma_def, indilstName,  snplstName, problstName, oproblstName, eproblstName,bFlag,p_hetero,ld_prune,m_hetero, opt_hetero, indilst2remove,  snplst2exclde,  problst2exclde,  oproblst2exclde, eproblst2exclde,p_smr,thresh_PP,thresh_smr,thresh_heidi,refSNP, heidioffFlag,jointsmrflag,operasmrflag,cis_itvl,snpchr,prbchr,traitlstName,outcomePrbWind, oprobe, eprobe, oprobe2rm,eprobe2rm, threshpsmrest, new_het_mth,opt_slct_flag,ld_min,cis2all,sampleoverlap,pmecs,minsnpcor,targetcojosnplstName,GWAScojosnplstName,snpproblstName,diff_freq,diff_freq_ratio);     
+    else if(multiexposuresmrflag && !interanlflg && eqtlsmaslstName!= NULL && !inputlociflag)  multiexposuresmr(outFileName,bFileName,eqtlsmaslstName,gwasFileName,maf,priorstr, sigmastr,sigma_def, indilstName, snplstName, problstName, oproblstName, eproblstName,bFlag,p_hetero,ld_prune,m_hetero, opt_hetero, indilst2remove,  snplst2exclde,  problst2exclde,  oproblst2exclde, eproblst2exclde,p_smr, refSNP, heidioffFlag,cis_itvl,snpchr,prbchr,traitlstName,outcomePrbWind, oprobe, eprobe, oprobe2rm,eprobe2rm, threshpsmrest, new_het_mth,opt_slct_flag,ld_min,cis2all,sampleoverlap,pmecs,minsnpcor,targetcojosnplstName,snpproblstName,diff_freq,diff_freq_ratio); 
+    else if(multiexposuresmrflag && !interanlflg && eqtlsmaslstName!= NULL && inputlociflag)  multiexposuresmr_loci(outFileName,bFileName,eqtlsmaslstName,gwasFileName,maf,priorstr, sigmastr, sigma_def, indilstName,  snplstName, problstName, oproblstName, eproblstName,bFlag,p_hetero,ld_prune,m_hetero, opt_hetero, indilst2remove,  snplst2exclde,  problst2exclde,  oproblst2exclde, eproblst2exclde,p_smr,thresh_PP,refSNP, heidioffFlag,cis_itvl,snpchr,prbchr,traitlstName,outcomePrbWind, oprobe, eprobe, oprobe2rm,eprobe2rm, threshpsmrest, new_het_mth,opt_slct_flag,ld_min,cis2all,sampleoverlap,pmecs,minsnpcor,targetcojosnplstName,GWAScojosnplstName,snpproblstName,diff_freq,diff_freq_ratio); 
+    else if(summaryppaflag)  ppafile_summary(ppaFilename, numFilename, piFileName, outFileName, thresh_PP, thresh_heidi);
+        if(multioutcomesmrflag && !interanlflg && eqtlsmaslstName!= NULL)  multioutcomesmr(outFileName,bFileName,mbFileName,piFileName,sigmaFileName,eqtlFileName,eqtlsmaslstName,gwasFileName,maf,priorstr, sigmastr, indilstName,  snplstName, problstName, oproblstName, eproblstName,bFlag,p_hetero,ld_prune,m_hetero, opt_hetero, indilst2remove,  snplst2exclde,  problst2exclde,  oproblst2exclde, eproblst2exclde,p_smr, refSNP, heidioffFlag,cis_itvl, snpchr,prbchr,traitlstName,outcomePrbWind, oprobe, eprobe, oprobe2rm,eprobe2rm, threshpsmrest, new_het_mth,opt_slct_flag,ld_min,cis2all,sampleoverlap,pmecs,minsnpcor,targetcojosnplstName,snpproblstName,diff_freq,diff_freq_ratio);
     // end //
    }

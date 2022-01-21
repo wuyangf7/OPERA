@@ -165,6 +165,13 @@ void StrFunc::rewind_if(std::istream &in_file)
 	in_file.seekg(ios::beg);
 }
 
+void StrFunc::getUnique(vector<string> &a)
+{
+    sort(a.begin(),a.end());
+    vector<string> ::iterator it=unique(a.begin(),a.end());
+    a.erase(it,a.end());
+}
+
 void StrFunc::match(const vector<string> &VecA, const vector<string> &VecB, vector<int> &VecC)
 {
     int i=0;

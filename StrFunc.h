@@ -45,6 +45,7 @@ namespace StrFunc
 	void rewind_if(std::istream &in_file);
 
 	// match two vectors
+	void getUnique(vector<string> &a);
 	void match(const vector<string> &VecA, const vector<string> &VecB, vector<int> &VecC);
 	void match_only(const vector<string> &VecA, const vector<string> &VecB, vector<int> &VecC);
    
