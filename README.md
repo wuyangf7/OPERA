@@ -105,8 +105,8 @@ The heterogeneity test (i.e., multi-exposure HEIDI) will be automatically perfor
 To estimated the false positive rate and false discovery rate, OPERA also automatically outputs the total number of test for different exposure combinations in the .num file
 
 ```
-expoNum	1_exposure	2_exposures
-testNum	22	105
+ExpoNum	1_exposure	2_exposures
+TestNum	22	105
 ```
 
 ### Other parameters for stage 2 analysis
