@@ -70,6 +70,7 @@ Columns are iteration numbers and posterior samples for each configuration from 
 
 Note: Only the cis-SNPs of each exposure site are used, so the stage 2 analysis can be performed for each chromosome seperately. The genome-wide analysis results can be combined through shell command below,
 > awk 'NR==1 || FNR>1' myopera_chr*.ppa > myopera.ppa
+> awk 'NR==1 || FNR>1' myopera_chr*.num > myopera.num
 * --snp-chr specifies the SNP chromosome for chromosome-wide opera stage 2 analysis.
 * --probe-chr specifies the exposure sites for chromosome-wide opera stage 2 analysis.
 * --bfile reads individual-level SNP genotype data (in PLINK binary format) from a reference sample for LD estimation. 
