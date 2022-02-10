@@ -174,13 +174,13 @@ The estimated FPR is 1.15589e-06 for combinatorial associations between 2 exposu
 ```
 Note: we suggest a PPA threshold of 0.9 to roughly control the FDR below 0.05. However, if more strigent FPR is required, the increase of PPA threshold can acheive this (e.g., 0.995). 
 
-## command line to generate a data file for xQTL plot
+## Command line to generate a data file for xQTL plot
 > opera --besd-flist mylist1 --gwas-summary mygwas.ma --bfile mydata --beqtl-summary xQTL1 --out myplot --plot --probe ENSG00000085514 --probe-wind 500 --gene-list glist-hg19
 * --beqtl-summary reads the BESD file for one type of xQTL (e.g.,eQTL).
 * --besd-flist reads a file to get the full paths of the other xQTL BESD files.
 * --gene-list specifies a gene range list, which is available for download [here](https://cnsgenomics.com/software/smr/#DataResource).
 
-Please see the omics SMR plot page for generating the loucs plot (https://plot.cnsgenomics.com/omicsplot/)
+To generate the loucs omics plot with extracted file, please see the omics SMR plot page  (https://plot.cnsgenomics.com/omicsplot/).
 
 OPERA shares the same data management function and flags with the SMR software, for a full list of option reference, please see [here](https://cnsgenomics.com/software/smr/#OptionsReference). 
 
