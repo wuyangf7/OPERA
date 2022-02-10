@@ -185,7 +185,7 @@ To generate the loucs omics plot with extracted file, please see the omics SMR p
 
 We also provide an [R scirpt](https://github.com/wuyangf7/OPERA/blob/main/demo/plot/plot_OmicsSMR_xQTL.r) to plot the omics SMR plot as presented in Wu et al.. Please see the demo plot below.  
 
-# R commands to draw the plots
+## R commands to draw the plots
 ```
 source("./plot/plot_OmicsSMR_xQTL.r") 
 SMRData = ReadomicSMRData("./plot/myplot.ENSG00000085514.txt")
