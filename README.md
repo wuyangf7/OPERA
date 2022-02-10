@@ -186,9 +186,11 @@ To generate the loucs omics plot with extracted file, please see the omics SMR p
 We also provide an R scirpt to plot the omics SMR plot as presented in Wu et al.. Please see the demo plot below.  
 
 # R commands to draw the plots
-> source("./plot/plot_OmicsSMR_xQTL.r") 
-> SMRData = ReadomicSMRData("./plot/myplot.ENSG00000085514.txt")
-> omicSMRLocusPlot(data=SMRData,esmr_thresh=1e-4,msmr_thresh=1e-4,eprobeNEARBY="ENSG00000085514",mprobeNEARBY=c("cg13210467"),trait_name="Test",funcAnnoFile="./plot/funcAnno.RData")
+```
+source("./plot/plot_OmicsSMR_xQTL.r") 
+SMRData = ReadomicSMRData("./plot/myplot.ENSG00000085514.txt")
+omicSMRLocusPlot(data=SMRData,esmr_thresh=1e-4,msmr_thresh=1e-4,eprobeNEARBY="ENSG00000085514",mprobeNEARBY=c("cg13210467"),trait_name="Test",funcAnnoFile="./plot/funcAnno.RData")
+```
 * esmr_thresh and msmr_thresh are the threshold for first xQTL and other xQTLs, respectively
 * eprobeNEARBY specifies the eQTL association pattern for specific gene
 * mprobeNEARBY specifies the xQTL association pattern for other specific sites
