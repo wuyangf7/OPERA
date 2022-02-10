@@ -177,6 +177,8 @@ Note: we suggest a PPA threshold of 0.9 to roughly control the FDR below 0.05. H
 > opera --besd-flist mylist1 --gwas-summary mygwas.ma --bfile mydata --beqtl-summary xQTL1 --out myplot --plot --probe ENSG00000085514 --probe-wind 500 --gene-list glist-hg19
 * --beqtl-summary reads the BESD file for one type of xQTL (e.g.,eQTL).
 * --besd-flist reads a file to get the full paths of the other xQTL BESD files.
+* --probe specifies a probe site (e.g., often a gene) as locus center to generate the plot.
+* --probe-wind specifies a window to extract the exposure site in the window
 * --gene-list specifies a gene range list, which is available for download [here](https://github.com/wuyangf7/OPERA/blob/main/demo/glist-hg19).
 
 To generate the loucs omics plot with extracted file, please see the omics SMR plot page  (https://plot.cnsgenomics.com/omicsplot/).
