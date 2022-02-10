@@ -183,7 +183,7 @@ Note: we suggest a PPA threshold of 0.9 to roughly control the FDR below 0.05. H
 
 To generate the loucs omics plot with extracted file, please see the omics SMR plot page (https://plot.cnsgenomics.com/omicsplot/).
 
-We also provide an R scirpt to plot the omics SMR plot as presented in Wu et al.. Please see the demo plot below.  
+We also provide an [R scirpt](https://github.com/wuyangf7/OPERA/blob/main/demo/plot/plot_OmicsSMR_xQTL.r) to plot the omics SMR plot as presented in Wu et al.. Please see the demo plot below.  
 
 # R commands to draw the plots
 ```
@@ -194,7 +194,7 @@ omicSMRLocusPlot(data=SMRData,esmr_thresh=1e-4,msmr_thresh=1e-4,eprobeNEARBY="EN
 * esmr_thresh and msmr_thresh are the threshold for first xQTL and other xQTLs, respectively
 * eprobeNEARBY specifies the eQTL association pattern for specific gene
 * mprobeNEARBY specifies the xQTL association pattern for other specific sites
-* funcAnnoFile reads the epigenome annotation data from the Roadmap Epigenomics Consortium, which can be downloaded [here] (https://cnsgenomics.com/software/smr/#OptionsReference).
+* funcAnnoFile reads the epigenome annotation data from the Roadmap Epigenomics Consortium, which can be downloaded [here](https://www.dropbox.com/s/0rf4hmdjzostuv2/funcAnno.RData?dl=0).
 
 OPERA shares the same data management function and flags with the SMR software, for a full list of option reference, please see [here](https://cnsgenomics.com/software/smr/#OptionsReference). 
 
