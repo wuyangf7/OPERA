@@ -181,7 +181,20 @@ Note: we suggest a PPA threshold of 0.9 to roughly control the FDR below 0.05. H
 * --probe-wind specifies a window to extract the exposure site in the window
 * --gene-list specifies a gene range list, which is available for download [here](https://github.com/wuyangf7/OPERA/blob/main/demo/glist-hg19).
 
-To generate the loucs omics plot with extracted file, please see the omics SMR plot page  (https://plot.cnsgenomics.com/omicsplot/).
+To generate the loucs omics plot with extracted file, please see the omics SMR plot page (https://plot.cnsgenomics.com/omicsplot/).
+
+We also provide an R scirpt to plot the omics SMR plot as presented in Wu et al.. 
+
+# R commands to draw the plots
+> source("plot_SMR.r") 
+> # Read the data file in R:
+> SMRData = ReadSMRData("myplot.ILMN_123.txt")
+> # Plot the SMR results in a genomic region centred around a probe:
+> SMRLocusPlot(data=SMRData, smr_thresh=8.4e-6, heidi_thresh=0.05, plotWindow=1000, max_anno_probe=16)
+> # smr_thresh: genome-wide significance level for the SMR test.
+> # heidi_thresh: threshold for the HEIDI test. The default value is 0.05.
+> # cis_wind: size of a window centred around the probe to select cis-eQTLs for plot. The default value is 2000Kb.
+> # max_anno_probe: maximum number of probe names to be displayed on the figure. The default value is 16.
 
 OPERA shares the same data management function and flags with the SMR software, for a full list of option reference, please see [here](https://cnsgenomics.com/software/smr/#OptionsReference). 
 
