@@ -56,11 +56,12 @@ Iteration       Pi1(0:0)        Pi2(0:1)        Pi3(1:0)        Pi4(1:1)
 Columns are iteration numbers and posterior samples for each configuration from the MCMC.  
 
 ### Other parameters for stage 1 analysis
-> opera --besd-flist mylist --gwas-summary mygwas.ma --bfile mydata --estimate-pi --extract-snp mysnplist --prior-sigma 0.02,0.02 --pi-wind 100 --out myopera --thread-num 3
+> opera --besd-flist mylist --gwas-summary mygwas.ma --bfile mydata --sample-overlap --estimate-pi --extract-snp mysnplist --prior-sigma 0.02,0.02 --pi-wind 100 --out myopera --thread-num 3
 
 * --bfile reads individual-level SNP genotype data (in PLINK binary format) from a reference sample for LD estimation, i.e. .bed, .bim, and .fam files. 
 * --extract-snp specifies a snplist (e.g., [Hapmap3 SNP list](https://github.com/wuyangf7/OPERA/blob/main/demo/hapmap.snplist)) to be extracted across LD reference, xQTL data and GWAS summary data, and used for stage 1 analysis. 
 * –-prior-sigma specifies the estimated variance of the non-zero mediated effects for each molecular trait on the complex trait. It can be computed by the variance of the estimated SMR effects of each molecular trait on complex trait at the nominal significance level (i.e., 0.05) adjusting for the estimation errors, e.g., 0.02 (default).
+* --sample-overlap specifies the flag to let OPERA consider the between-study correlations due to overlapping samples. OPERA will automatically output the estimated correlations in .rho file. 
 * --opera-smr turns on the flag of using the estimated smr effect rather than the estimated joint smr effect to run the stage 1 analysis.  
 * --pi-wind defines a window centered on the molecular phenotype with smallest number of sites to select no overlap independent loci, e.g., 200 Kb (default). 
 * --thread-num specifies the number of OpenMP threads for parallel computing.
@@ -109,11 +110,12 @@ ExpoNum	1_exposure	2_exposures
 TestNum	22	105
 ```
 ### Other parameters for stage 2 analysis
-> opera --besd-flist mylist --gwas-summary mygwas.ma --bfile mydata --snp-chr 7 --probe-chr 7 --extract-exposure-probe myexposure --outcome-wind 1000 --thresh-PP 0.5 --thresh-SMR 0.05 --extract-target-cojo-snps mycojo --extract-GWAS-loci myloci --prior-pi 0.8,0.09,0.09,0.02 --prior-sigma 0.02,0.02 --out myopera --thread-num 3
+> opera --besd-flist mylist --gwas-summary mygwas.ma --bfile mydata --snp-chr 7 --probe-chr 7 --extract-exposure-probe myexposure --sample-overlap --rho-file myopera.rho --outcome-wind 1000 --thresh-PP 0.5 --thresh-SMR 0.05 --extract-target-cojo-snps mycojo --extract-GWAS-loci myloci --prior-pi 0.8,0.09,0.09,0.02 --prior-sigma 0.02,0.02 --out myopera --thread-num 3
 * --bfile reads individual-level SNP genotype data (in PLINK binary format) from a reference sample for LD estimation. 
 * --snp-chr extract the SNPs on target chromosome on across xQTL, GWAS summary data and LD reference data.
 * --probe-chr extract the sites for each exposure on target chromosome for xQTL summary data. 
 * --prior-pi specifies the estimated prior probalities from the stage 1 analysis (i.e., the posterior Mean from stage 1 output, seperated by comma).
+* --rho-file specifies the estimated between-study correlations due to sample overlap from the stage 1 analysis.
 * --extract-exposure-probe	extracts a subset of exposure sites for analysis.
 * --outcome-wind specifies the window around each GWAS loci for stage 2 analysis/the window around each site across exposures for stage 2 analysis when GWAS loci were not specified, e.g., 1Mb in either direction (default). 
 * --extract-GWAS-loci extracts a subset of GWAS COJO loci for analysis. The input file format is
