@@ -440,6 +440,15 @@ omicSMRLocusPlot = function(data=SMRData, plotBP=NULL, eprobeNEARBY=NULL, mprobe
     data$Gene=data$Gene[idx,]
     data$Gene=unique(data$Gene)
 
+    ######### extract SNPs in common between data  #############
+    commonlist=intersect(data$GWAS$V1,intersect(data$eQTL$V1,data$meQTL$V1))
+    idx=match(data$GWAS$V1,commonlist,nomatch=0)
+    data$GWAS=data$GWAS[which(idx!=0),]
+    idx=match(data$eQTL$V1,commonlist,nomatch=0)
+    data$eQTL=data$eQTL[which(idx!=0),]
+    idx=match(data$meQTL$V1,commonlist,nomatch=0)
+    data$meQTL=data$meQTL[which(idx!=0),]
+	
     ########## replace the missing HEIDI pvalue as 1e-300 ###########
     data$eSMR$V9[is.na(data$eSMR[,9])] = 1e-300
     data$mSMR$V9[is.na(data$mSMR[,9])] = 1e-300
