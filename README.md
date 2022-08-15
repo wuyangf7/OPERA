@@ -181,7 +181,7 @@ The estimated FPR is 1.15589e-06 for combinatorial associations between 2 exposu
 
 There are 50% GWAS loci were detected to be associated with at least one xQTL data.
 ```
-Note: we suggest a PPA threshold of 0.9 to roughly control the FDR below 0.05. However, if more strigent FPR is required, the increase of PPA threshold can acheive this (e.g., 0.995). 
+Note: we suggest a PPA threshold of 0.9 to roughly control the FDR below 0.05. However, if more strigent FPR is required, OPERA can acheive this by increasing the PPA threshold (e.g., 0.995). 
 
 ## Command line to generate a data file for xQTL plot
 > opera --besd-flist mylist1 --gwas-summary mygwas.ma --bfile mydata --beqtl-summary xQTL1 --out myplot --plot --probe ENSG00000085514 --probe-wind 500 --gene-list glist-hg19
