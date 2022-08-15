@@ -61,7 +61,11 @@ Columns are iteration numbers and posterior samples for each configuration from 
 * --bfile reads individual-level SNP genotype data (in PLINK binary format) from a reference sample for LD estimation, i.e. .bed, .bim, and .fam files. 
 * --extract-snp specifies a snplist (e.g., [Hapmap3 SNP list](https://github.com/wuyangf7/OPERA/blob/main/demo/hapmap.snplist)) to be extracted across LD reference, xQTL data and GWAS summary data, and used for stage 1 analysis. 
 * –-prior-sigma specifies the estimated variance of the non-zero mediated effects for each molecular trait on the complex trait. It can be computed by the variance of the estimated SMR effects of each molecular trait on complex trait at the nominal significance level (i.e., 0.05) adjusting for the estimation errors, e.g., 0.02 (default).
-* --sample-overlap specifies the flag to let OPERA consider the between-study correlations due to overlapping samples. OPERA will automatically output the estimated correlations in .rho file. 
+* --sample-overlap specifies the flag to let OPERA consider the between-study correlations due to overlapping samples. OPERA will automatically output the estimated correlations in .rho file (text format, see below example). 
+```
+1.000000e+00	0.200000e+00
+0.200000e+00	1.000000e+00
+```
 * --opera-smr turns on the flag of using the estimated smr effect rather than the estimated joint smr effect to run the stage 1 analysis.  
 * --pi-wind defines a window centered on the molecular phenotype with smallest number of sites to select no overlap independent loci, e.g., 200 Kb (default). 
 * --thread-num specifies the number of OpenMP threads for parallel computing.
@@ -115,7 +119,7 @@ TestNum	22	105
 * --snp-chr extract the SNPs on target chromosome on across xQTL, GWAS summary data and LD reference data.
 * --probe-chr extract the sites for each exposure on target chromosome for xQTL summary data. 
 * --prior-pi specifies the estimated prior probalities from the stage 1 analysis (i.e., the posterior Mean from stage 1 output, seperated by comma).
-* --rho-file specifies the estimated between-study correlations due to sample overlap from the stage 1 analysis.
+* --rho-file specifies the estimated between-study correlations due to sample overlap from the stage 1 analysis. See the input format for the .rho file above. 
 * --extract-exposure-probe	extracts a subset of exposure sites for analysis.
 * --outcome-wind specifies the window around each GWAS loci for stage 2 analysis/the window around each site across exposures for stage 2 analysis when GWAS loci were not specified, e.g., 1Mb in either direction (default). 
 * --extract-GWAS-loci extracts a subset of GWAS COJO loci for analysis. The input file format is
@@ -136,7 +140,7 @@ ENSG00000242687 rs34631688,rs187375676,rs149211972,rs219813,rs6976207,rs7789895,
 * --opera-smr turn on the flag of runing OPERA analysis using the estimated SMR effect rather than estimated joint-SMR effect. 
 * --thread-num specifies the number of OpenMP threads for parallel computing. 
 
-## Extract the significant associations and estimate FDR
+## Extract the significant associations and estimate false positive rate and false discovery rate
 > opera --ppa-file myopera.ppa --summary-ppa --prior-pi-file myopera.pi --num-file myopera.num --thresh-HEIDI 0.01 --thresh-PP 0.9 --out myopera
 * --ppa-file reads the PPA and HEIDI results estimated from the stage 2 analysis.
 * --prior-pi-file reads the prior probabilities estimated from the stage 1 analysis (i.e., the posterior Mean from stage 1 analysis).
@@ -144,7 +148,8 @@ ENSG00000242687 rs34631688,rs187375676,rs149211972,rs219813,rs6976207,rs7789895,
 * --summary-ppa turns on the flag to extract the significant combinatorial pleiotropic associations of molecular phenotypes with the complex trait. 
 * --thresh-PP specifies significance threshold of PPA (0.9 as default).
 * --thresh-HEIDI specifies significance threshold of heterogenity test (0.01 as default). 
-* --out saves the significant results passed the PPA and HEIDI threshold for any combinatorial associations (text format, see 2 exposures below example), including associations between 1 exposure(s) and 1 outcome
+* --out saves the significant results passed the PPA and HEIDI threshold for any combinatorial associations (text format, see 2 exposures below example), including associations between 1 exposure(s) and 1 outcome. 
+Note: If the proportion of GWAS loci associated with at least one type of xQTL is interested, please input the GWAS loci file through --extract-GWAS-loci flag. Then the program will automatically ouput the proportion of GWAS loci associated with different combination of xQTL data in .prop file.    
 ```
 Chr	Expo1_ID	Expo1_bp	PPA(1)	p_HEIDI(1)
 7	ENSG00000085514	99981436	0.998417	5.470704e-02
@@ -163,7 +168,7 @@ Chr	Expo1_ID	Expo1_bp	Expo2_ID	Expo2_bp	PPA(1,2)	p_HEIDI(1,2)
 7	ENSG00000146828	100444536	cg15140703	99775532	0.951848	1.043300e-01
 ...
 ```
-The output also includes the estimated FDR and false positive rate (FPR) for any combinatorial associations, which are also printed in the log file, for example,
+The output also includes the estimated false discovery rate (FDR) and false positive rate (FPR) for any combinatorial associations, which are also printed in the log file, for example,
 ```
 PPA results for 7 combinatorial associations between 1 exposure(s) and 1 outcome have been extracted and saved in the file myopera_1_exposures_ppa.summary.
 The estimated FDR is 0.025599 for combinatorial associations between 1 exposure(s) and 1 outcome.
@@ -172,6 +177,8 @@ The estimated FPR is 0.0134532 for combinatorial associations between 1 exposure
 PPA results for 12 combinatorial associations between 2 exposure(s) and 1 outcome have been extracted and saved in the file myopera_2_exposures_ppa.summary.
 The estimated FDR is 0.0500069 for combinatorial associations between 2 exposure(s) and 1 outcome.
 The estimated FPR is 1.15589e-06 for combinatorial associations between 2 exposure(s) and 1 outcome.
+
+There are 50% GWAS loci were detected to be associated with at least one xQTL data.
 ```
 Note: we suggest a PPA threshold of 0.9 to roughly control the FDR below 0.05. However, if more strigent FPR is required, the increase of PPA threshold can acheive this (e.g., 0.995). 
 
