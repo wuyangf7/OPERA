@@ -149,6 +149,7 @@ ENSG00000242687 rs34631688,rs187375676,rs149211972,rs219813,rs6976207,rs7789895,
 * --thresh-PP specifies significance threshold of PPA (0.9 as default).
 * --thresh-HEIDI specifies significance threshold of heterogenity test (0.01 as default). 
 * --out saves the significant results passed the PPA and HEIDI threshold for any combinatorial associations (text format, see 2 exposures below example), including associations between 1 exposure(s) and 1 outcome. 
+
 Note: If the proportion of GWAS loci associated with at least one type of xQTL is interested, please input the GWAS loci file through --extract-GWAS-loci flag. Then the program will automatically ouput the proportion of GWAS loci associated with different combination of xQTL data in .prop file.    
 ```
 Chr	Expo1_ID	Expo1_bp	PPA(1)	p_HEIDI(1)
