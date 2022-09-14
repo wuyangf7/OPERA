@@ -148,11 +148,11 @@ The heterogeneity test (i.e., multi-exposure HEIDI) will be automatically perfor
 
 
 ### Other parameters for stage 2 analysis
-> opera --besd-flist mylist --gwas-summary mygwas.ma --bfile mydata --snp-chr 7 --probe-chr 7 --extract-exposure-probe myexposure --sample-overlap --rho-file myopera.rho --outcome-wind 1000 --thresh-PP 0.5 --thresh-SMR 0.05 --print-combo-ppa-res --extract-target-cojo-snps mycojo --extract-GWAS-loci myloci --prior-pi 0.8,0.09,0.09,0.02 --prior-sigma 0.02,0.02 --out myopera --thread-num 3
+> opera --besd-flist mylist --gwas-summary mygwas.ma --bfile mydata --chr 7 --extract-exposure-probe myexposure --sample-overlap --rho-file myopera.rho --outcome-wind 1000 --thresh-ppa 0.5 --thresh-smr 0.05 --thresh-heidi --print-combo-ppa-res --extract-target-cojo-snps mycojo --extract-gwas-loci myloci --prior-pi 0.8,0.09,0.09,0.02 --prior-var 0.02,0.02 --out myopera --thread-num 3
 * --bfile reads individual-level SNP genotype data (in PLINK binary format) from a reference sample for LD estimation. 
-* --snp-chr extract the SNPs on target chromosome on across xQTL, GWAS summary data and LD reference data.
-* --probe-chr extract the sites for each exposure on target chromosome for xQTL summary data. 
+* --chr extract the SNPs and exposure sites on target chromosome on across xQTL, GWAS summary data and LD reference data.
 * --prior-pi specifies the estimated prior probalities from the stage 1 analysis (i.e., the posterior Mean from stage 1 output, seperated by comma).
+* --prior-var specifies the estimated prior variance from the stage 1 analysis (seperated by comma).
 * --rho-file specifies the estimated between-study correlations due to sample overlap from the stage 1 analysis. See the input format for the .rho file above. 
 * --extract-exposure-probe	extracts a subset of exposure sites for analysis.
 * --outcome-wind specifies the window around each GWAS loci for stage 2 analysis/the window around each site across exposures for stage 2 analysis when GWAS loci were not specified, e.g., 1Mb in either direction (default). 
@@ -162,12 +162,12 @@ ENSG00000196367 rs182325057,rs12532598,rs17638906,rs62472014,rs219843,rs18373260
 ENSG00000238109 rs2283015,rs142345619,rs117749026,rs117295696,rs139511767
 ENSG00000242687 rs34631688,rs187375676,rs149211972,rs219813,rs6976207,rs7789895,rs10264067,rs150746244
 ```
-* --thresh-PP specifies significance threshold of PPA to perform heterogeneity test and output the significant results. 
-* --thresh-SMR specifies significance threshold of SMR to perform the OPERA analysis, e.g., 0.05 (default).
-* --thresh-HEIDI specifies significance threshold of single-exposure HEIDI test to perform the OPERA analysis, e.g., 0 (default).
+* --thresh-ppa specifies significance threshold of PPA to perform heterogeneity test and output the significant results. 
+* --thresh-smr specifies significance threshold of SMR to perform the OPERA analysis, e.g., 0.05 (default).
+* --thresh-heidi specifies significance threshold of single-exposure HEIDI test to perform the OPERA analysis, e.g., 0.01 (default).
 * --opera-smr turn on the flag of runing OPERA analysis using the estimated SMR effect rather than estimated joint-SMR effect. 
 * --thread-num specifies the number of OpenMP threads for parallel computing. 
-* --print-combo-ppa-res save the ppa for all the possible combinations in .res file. 
+* --print-combo-ppa-res save the ppa for all the possible combinations in .res file if specified. 
 ```
 Chr	Expo1_ID	Expo1_bp	Expo2_ID	Expo2_bp	PPA(0)	PPA(1)	PPA(2)	PPA(1,2)	p_HEIDI(1)	p_HEIDI(2)	p_HEIDI(1,2)
 7	ENSG00000238109	98596857	cg19636519	99541626	0.180166	0.00832795	0.818993	0.00748651	NA	2.148958e-04	NA
@@ -202,16 +202,3 @@ omicSMRLocusPlot(data=SMRData,esmr_thresh=1e-4,msmr_thresh=1e-4,eprobeNEARBY="EN
 * funcAnnoFile reads the epigenome annotation data from the Roadmap Epigenomics Consortium, which can be downloaded [here](https://www.dropbox.com/s/0rf4hmdjzostuv2/funcAnno.RData?dl=0).
 
 OPERA shares the same data management function and flags with the SMR software, for a full list of option reference, please see [here](https://cnsgenomics.com/software/smr/#OptionsReference). 
-
-
-
-
-
-
-
-
-
-
-
-
-
