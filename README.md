@@ -34,12 +34,15 @@ We collected and prepared multiple public available molecular QTL data for users
 * --besd-flist reads a file to get the full paths of the multiple xQTL BESD files. The input format follows that for the SMR analysis (https://cnsgenomics.com/software/smr/#DataManagement). 
 * --gwas-summary reads summary-level data from GWAS. The input format follows that for GCTA-COJO analysis (http://cnsgenomics.com/software/gcta/#COJO).
 * --mbfile reads a text file with each row representing a PLINK binary file (e.g., one for each chromosome) from a reference sample for LD estimation, i.e. .bed, .bim, and .fam files. The chromosome-wide .fam files are required to contain the same individuals. Note that stage 1 analysis requires the genome-wide LD reference to estimate the global parameters. If the genome-wide genotype data in PLINK format (containing the genotype data for each chromosome) is ready, please switch the flag --bfile to read the standard PLINK binary file as LD reference. 
-* --out saves the estimation of prior proportions from the OPERA stage 1 analysis in .pi file (text format, see example from demo data below).
+* --out saves the estimation of prior proportions from the OPERA stage 1 analysis in .pi file and the estimation of prior variances in .var file (text format, see example from demo data below).
 
 ```
 Posteriors      Pi1(0:0)        Pi2(0:1)        Pi3(1:0)        Pi4(1:1)
 Mean    0.605441        0.168855        0.0743364       0.151368
 SD      0.20765 0.186273        0.134037        0.16549
+```
+```
+Variance        2.000000e-02    2.000000e-02
 ```
 The output includes the posterior mean and SD from MCMC for each possible configuration. The posterior samples from MCMC are also printed in the log file, for example, 
 ```
@@ -71,15 +74,15 @@ Columns are iteration numbers and posterior samples for each configuration from 
 * --thread-num specifies the number of OpenMP threads for parallel computing.
 
 ## Run OPERA for stage 2 analysis and heterogeneity analysis
-> opera --besd-flist mylist --snp-chr 7 --probe-chr 7 --gwas-summary mygwas.ma --bfile mydata --prior-pi-file myopera.pi --out myopera_chr7
+> opera --besd-flist mylist --chr 7 --gwas-summary mygwas.ma --bfile mydata --prior-pi-file myopera.pi --prior-var-file myopera.var --out myopera_chr7
 
 Note: Only the cis-SNPs of each exposure site are used, so the stage 2 analysis can be performed for each chromosome seperately. The genome-wide analysis results can be combined through shell command below,
 > awk 'NR==1 || FNR>1' myopera_chr*.ppa > myopera.ppa  
 > awk 'NR==1 || FNR>1' myopera_chr*.num > myopera.num
-* --snp-chr specifies the SNP chromosome for chromosome-wide opera stage 2 analysis.
-* --probe-chr specifies the exposure sites for chromosome-wide opera stage 2 analysis.
+* --chr specifies the chromosome for SNP and exposure sites for chromosome-wide opera stage 2 analysis.
 * --bfile reads individual-level SNP genotype data (in PLINK binary format) from a reference sample for LD estimation. 
 * --prior-pi-file reads the prior probabilities estimated from the stage 1 analysis (i.e., the posterior Mean from stage 1 analysis).  
+* --prior-var-file reads the prior variances estimated from the stage 1 analysis.  
 * --out saves the PPA and multi-exposure HEIDI test P-values for each possible association hypothesis in .ppa file (text format, see below example).
 
 ```
