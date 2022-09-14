@@ -59,11 +59,11 @@ Iteration       Pi1(0:0)        Pi2(0:1)        Pi3(1:0)        Pi4(1:1)
 Columns are iteration numbers and posterior samples for each configuration from the MCMC.  
 
 ### Other parameters for stage 1 analysis
-> opera --besd-flist mylist --gwas-summary mygwas.ma --bfile mydata --sample-overlap --estimate-pi --extract-snp mysnplist --prior-sigma 0.02,0.02 --pi-wind 100 --out myopera --thread-num 3
+> opera --besd-flist mylist --gwas-summary mygwas.ma --bfile mydata --sample-overlap --estimate-pi --extract-snp mysnplist --prior-var 0.02,0.02 --pi-wind 100 --out myopera --thread-num 3
 
 * --bfile reads individual-level SNP genotype data (in PLINK binary format) from a reference sample for LD estimation, i.e. .bed, .bim, and .fam files. 
 * --extract-snp specifies a snplist (e.g., [Hapmap3 SNP list](https://github.com/wuyangf7/OPERA/blob/main/demo/hapmap.snplist)) to be extracted across LD reference, xQTL data and GWAS summary data, and used for stage 1 analysis. 
-* –-prior-sigma specifies the estimated variance of the non-zero mediated effects for each molecular trait on the complex trait. It can be computed by the variance of the estimated SMR effects of each molecular trait on complex trait at the nominal significance level (i.e., 0.05) adjusting for the estimation errors, e.g., 0.02 (default).
+* –-prior-var specifies the estimated variance of the non-zero mediated effects for each molecular trait on the complex trait. It can be computed by the variance of the estimated SMR effects of each molecular trait on complex trait at the significance level (i.e., FDR < 0.05) adjusting for the estimation errors.
 * --sample-overlap specifies the flag to let OPERA consider the between-study correlations due to overlapping samples. OPERA will automatically output the estimated correlations in .rho file (text format, see below example). 
 ```
 1.000000e+00	0.200000e+00
@@ -74,11 +74,17 @@ Columns are iteration numbers and posterior samples for each configuration from 
 * --thread-num specifies the number of OpenMP threads for parallel computing.
 
 ## Run OPERA for stage 2 analysis and heterogeneity analysis
-> opera --besd-flist mylist --chr 7 --gwas-summary mygwas.ma --bfile mydata --prior-pi-file myopera.pi --prior-var-file myopera.var --out myopera_chr7
+> opera --besd-flist mylist --extract-gwas-loci myloci --chr 7 --gwas-summary mygwas.ma --bfile mydata --prior-pi-file myopera.pi --prior-var-file myopera.var --out myopera_chr7
 
-Note: Only the cis-SNPs of each exposure site are used, so the stage 2 analysis can be performed for each chromosome seperately. The genome-wide analysis results can be combined through shell command below,
-> awk 'NR==1 || FNR>1' myopera_chr*.ppa > myopera.ppa  
-> awk 'NR==1 || FNR>1' myopera_chr*.num > myopera.num
+Note: Only the cis-SNPs of each exposure site are used, so the stage 2 analysis can be performed for each chromosome seperately. The genome-wide analysis results can be combined through shell command below, e.g., for association between single exposure and outcome,
+> awk 'NR==1 || FNR>1' myopera_chr*_1_expos_assoc.ppa > myopera_1_expos_assoc.ppa  
+> awk 'NR==1 || FNR>1' myopera_chr*.smr > myopera.smr
+* --extract-gwas-loci extracts subset of genomic region with GWAS COJO loci (i.e., 2Mb region by default) to perform opera analysis. The input file format is
+```
+Chr     SNP     bp
+7       rs1859788       99971834
+7       rs7810606       143108158
+```
 * --chr specifies the chromosome for SNP and exposure sites for chromosome-wide opera stage 2 analysis.
 * --bfile reads individual-level SNP genotype data (in PLINK binary format) from a reference sample for LD estimation. 
 * --prior-pi-file reads the prior probabilities estimated from the stage 1 analysis (i.e., the posterior Mean from stage 1 analysis).  
@@ -86,14 +92,44 @@ Note: Only the cis-SNPs of each exposure site are used, so the stage 2 analysis 
 * --out saves the PPA and multi-exposure HEIDI test P-values for each possible association hypothesis in .ppa file (text format, see below example).
 
 ```
-Chr	Expo1_ID	Expo1_bp	Expo2_ID	Expo2_bp	PPA(0)	PPA(1)	PPA(2)	PPA(1,2)	p_HEIDI(1)	p_HEIDI(2)	p_HEIDI(1,2)
-7	ENSG00000238109	98596857	cg19636519	99541626	0.180166	0.00832795	0.818993	0.00748651	NA	2.148958e-04	NA
-7	ENSG00000238109	98596857	cg26429636	99573747	0.142143	0.00790015	0.857241	0.00728351	NA	5.926392e-02	NA
-7	ENSG00000146833	99495902	cg08552401	99728793	0.111909	0.0112747	0.887406	0.0105904	NA	9.326696e-06	NA
-7	ENSG00000213413	99817488	cg10547843	99601692	1.58132e-09	1	0.901598	0.901598	7.199497e-03	2.671772e-03	2.200594e-02
+Chr	GWAS_SNP	GWAS_bp	Expo1_ID	Expo1_bp	PPA(1)	p_HEIDI(1)
+7	rs1859788	99971834	cg08582801	99588335	0.929121	8.152293e-02
+7	rs1859788	99971834	cg13210467	99775443	0.999054	1.625980e-01
+7	rs1859788	99971834	cg19116668	99932089	1	1.125248e-01
+7	rs1859788	99971834	cg26429636	99573747	0.915179	5.926392e-02
 ...
 ```
-Columns are chromosome, probe ID for the 1st exposure, probe position for the 1st exposure, probe ID for the 2nd exposure, probe position for the 2nd exposure, PPA for no associations, PPA for the 1st exposure marginal association, PPA for the 2nd exposure marginal association, PPA for the 1st and 2nd exposures joint association, p-value from HEIDI for the 1st exposure association, p-value from HEIDI for the 2nd exposure association, and p-value from HEIDI for the 1st and 2nd exposures joint association. Missing value is represented by "NA". 
+and including associations between 2 exposure(s) and 1 outcome.
+```
+Chr	GWAS_SNP	GWAS_bp	Expo1_ID	Expo1_bp	Expo2_ID	Expo2_bp	PPA(1,2)	p_HEIDI(1,2)
+7	rs1859788	99971834	ENSG00000085514	99981436	cg13210467	99775443	0.998746	1.787164e-02
+7	rs1859788	99971834	ENSG00000146828	100444536	cg01869186	100423987	0.906761	1.641383e-01
+7	rs1859788	99971834	ENSG00000146828	100444536	cg12616177	100434510	0.902426	1.044594e-01
+...
+```
+Columns are chromosome, rs ID for GWAS SNP, physical position for GWAS SNP, probe ID for the 1st exposure, probe position for the 1st exposure, probe ID for the 2nd exposure, probe position for the 2nd exposure, PPA for the 1st and 2nd exposures joint association, and p-value from HEIDI for the 1st and 2nd exposures joint association.  
+
+Note: If gwas loci file is not specified, the program will scan all the possible combinations for exposure sites across the genome. 
+
+The program will automatically ouput the proportion and number of GWAS loci associated with different combination of xQTL data in .prop file (see example below).    
+```
+Overall	Exposures(1)	Exposures(2)	Exposures(1,2)
+0.5	0	0.5	0.5
+1	0	1	1
+```
+The output also includes the estimated false discovery rate (FDR) and false positive rate (FPR) for any combinatorial associations, which are also printed in the log file, for example,
+```
+PPA results for 4 combinatorial associations between 1 exposure(s) and 1 outcome have been extracted and saved in the file /Users/uqywu16/Desktop/mtSMR/software/demo/myopera_1.18_v2_1_expos_assoc.ppa.
+The estimated FDR is 0.0391616 for combinatorial associations between 1 exposure(s) and 1 outcome.
+The estimated FPR is 0.0168247 for combinatorial associations between 1 exposure(s) and 1 outcome.
+
+PPA results for 3 combinatorial associations between 2 exposure(s) and 1 outcome have been extracted and saved in the file /Users/uqywu16/Desktop/mtSMR/software/demo/myopera_1.18_v2_2_expos_assoc.ppa.
+The estimated FDR is 0.0640222 for combinatorial associations between 2 exposure(s) and 1 outcome.
+The estimated FPR is 0.00503074 for combinatorial associations between 2 exposure(s) and 1 outcome.
+
+There are 50% GWAS loci were detected to be associated with at least one xQTL data.
+```
+Note: we suggest a PPA threshold of 0.9 to roughly control the FDR below 0.05. However, if more strigent FPR is required, OPERA can acheive this by increasing the PPA threshold (e.g., 0.995). 
 
 OPERA also automatically outputs the results from the SMR analysis of molecular phenotypes and complex trait in the .smr file
  
@@ -110,14 +146,9 @@ Columns are probe ID, probe chromosome, gene name, probe position, SNP name, SNP
 
 The heterogeneity test (i.e., multi-exposure HEIDI) will be automatically performed for any combinatorial associations passed a PPA threshold (0.9 as default). If the heterogeneity test is not interested, it can be turned off by specifying --heidi-off.
 
-To estimated the false positive rate and false discovery rate, OPERA also automatically outputs the total number of test for different exposure combinations in the .num file
 
-```
-ExpoNum	1_exposure	2_exposures
-TestNum	22	105
-```
 ### Other parameters for stage 2 analysis
-> opera --besd-flist mylist --gwas-summary mygwas.ma --bfile mydata --snp-chr 7 --probe-chr 7 --extract-exposure-probe myexposure --sample-overlap --rho-file myopera.rho --outcome-wind 1000 --thresh-PP 0.5 --thresh-SMR 0.05 --extract-target-cojo-snps mycojo --extract-GWAS-loci myloci --prior-pi 0.8,0.09,0.09,0.02 --prior-sigma 0.02,0.02 --out myopera --thread-num 3
+> opera --besd-flist mylist --gwas-summary mygwas.ma --bfile mydata --snp-chr 7 --probe-chr 7 --extract-exposure-probe myexposure --sample-overlap --rho-file myopera.rho --outcome-wind 1000 --thresh-PP 0.5 --thresh-SMR 0.05 --print-combo-ppa-res --extract-target-cojo-snps mycojo --extract-GWAS-loci myloci --prior-pi 0.8,0.09,0.09,0.02 --prior-sigma 0.02,0.02 --out myopera --thread-num 3
 * --bfile reads individual-level SNP genotype data (in PLINK binary format) from a reference sample for LD estimation. 
 * --snp-chr extract the SNPs on target chromosome on across xQTL, GWAS summary data and LD reference data.
 * --probe-chr extract the sites for each exposure on target chromosome for xQTL summary data. 
@@ -125,12 +156,6 @@ TestNum	22	105
 * --rho-file specifies the estimated between-study correlations due to sample overlap from the stage 1 analysis. See the input format for the .rho file above. 
 * --extract-exposure-probe	extracts a subset of exposure sites for analysis.
 * --outcome-wind specifies the window around each GWAS loci for stage 2 analysis/the window around each site across exposures for stage 2 analysis when GWAS loci were not specified, e.g., 1Mb in either direction (default). 
-* --extract-GWAS-loci extracts a subset of GWAS COJO loci for analysis. The input file format is
-```
-Chr     SNP     bp
-7       rs1859788       99971834
-7       rs7810606       143108158
-```
 * --extract-target-cojo-snps specifies full COJO SNP list for each site of molecular phenotype as the target to compute the joint SMR effect. The input file format is
 ```
 ENSG00000196367 rs182325057,rs12532598,rs17638906,rs62472014,rs219843,rs183732601,rs150746244
@@ -142,49 +167,16 @@ ENSG00000242687 rs34631688,rs187375676,rs149211972,rs219813,rs6976207,rs7789895,
 * --thresh-HEIDI specifies significance threshold of single-exposure HEIDI test to perform the OPERA analysis, e.g., 0 (default).
 * --opera-smr turn on the flag of runing OPERA analysis using the estimated SMR effect rather than estimated joint-SMR effect. 
 * --thread-num specifies the number of OpenMP threads for parallel computing. 
-
-## Extract the significant associations and estimate false positive rate and false discovery rate
-> opera --ppa-file myopera.ppa --summary-ppa --prior-pi-file myopera.pi --num-file myopera.num --thresh-HEIDI 0.01 --thresh-PP 0.9 --out myopera
-* --ppa-file reads the PPA and HEIDI results estimated from the stage 2 analysis.
-* --prior-pi-file reads the prior probabilities estimated from the stage 1 analysis (i.e., the posterior Mean from stage 1 analysis).
-* --num-file reads the number of tests for any exposure combinations performed in the stage 2 analysis.
-* --summary-ppa turns on the flag to extract the significant combinatorial pleiotropic associations of molecular phenotypes with the complex trait. 
-* --thresh-PP specifies significance threshold of PPA (0.9 as default).
-* --thresh-HEIDI specifies significance threshold of heterogenity test (0.01 as default). 
-* --out saves the significant results passed the PPA and HEIDI threshold for any combinatorial associations (text format, see 2 exposures below example), including associations between 1 exposure(s) and 1 outcome. 
-
-Note: If the proportion of GWAS loci associated with at least one type of xQTL is interested, please input the GWAS loci file through --extract-GWAS-loci flag. Then the program will automatically ouput the proportion of GWAS loci associated with different combination of xQTL data in .prop file.    
+* --print-combo-ppa-res save the ppa for all the possible combinations in .res file. 
 ```
-Chr	Expo1_ID	Expo1_bp	PPA(1)	p_HEIDI(1)
-7	ENSG00000085514	99981436	0.998417	5.470704e-02
-7	ENSG00000146828	100444536	0.95185	3.293829e-02
-7	cg01869186	100423987	0.923638	9.337960e-02
-7	cg08582801	99588335	0.990217	8.152293e-02
+Chr	Expo1_ID	Expo1_bp	Expo2_ID	Expo2_bp	PPA(0)	PPA(1)	PPA(2)	PPA(1,2)	p_HEIDI(1)	p_HEIDI(2)	p_HEIDI(1,2)
+7	ENSG00000238109	98596857	cg19636519	99541626	0.180166	0.00832795	0.818993	0.00748651	NA	2.148958e-04	NA
+7	ENSG00000238109	98596857	cg26429636	99573747	0.142143	0.00790015	0.857241	0.00728351	NA	5.926392e-02	NA
+7	ENSG00000146833	99495902	cg08552401	99728793	0.111909	0.0112747	0.887406	0.0105904	NA	9.326696e-06	NA
+7	ENSG00000213413	99817488	cg10547843	99601692	1.58132e-09	1	0.901598	0.901598	7.199497e-03	2.671772e-03	2.200594e-02
 ...
 ```
-and including associations between 2 exposure(s) and 1 outcome.
-```
-Chr	Expo1_ID	Expo1_bp	Expo2_ID	Expo2_bp	PPA(1,2)	p_HEIDI(1,2)
-7	ENSG00000085514	99981436	cg13210467	99775443	0.99814	1.787164e-02
-7	ENSG00000085514	99981436	cg19116668	99932089	0.998417	3.297637e-02
-7	ENSG00000146828	100444536	cg04305808	99614209	0.925821	1.859709e-01
-7	ENSG00000146828	100444536	cg08582801	99588335	0.939578	1.691938e-01
-7	ENSG00000146828	100444536	cg15140703	99775532	0.951848	1.043300e-01
-...
-```
-The output also includes the estimated false discovery rate (FDR) and false positive rate (FPR) for any combinatorial associations, which are also printed in the log file, for example,
-```
-PPA results for 7 combinatorial associations between 1 exposure(s) and 1 outcome have been extracted and saved in the file myopera_1_exposures_ppa.summary.
-The estimated FDR is 0.025599 for combinatorial associations between 1 exposure(s) and 1 outcome.
-The estimated FPR is 0.0134532 for combinatorial associations between 1 exposure(s) and 1 outcome.
-
-PPA results for 12 combinatorial associations between 2 exposure(s) and 1 outcome have been extracted and saved in the file myopera_2_exposures_ppa.summary.
-The estimated FDR is 0.0500069 for combinatorial associations between 2 exposure(s) and 1 outcome.
-The estimated FPR is 1.15589e-06 for combinatorial associations between 2 exposure(s) and 1 outcome.
-
-There are 50% GWAS loci were detected to be associated with at least one xQTL data.
-```
-Note: we suggest a PPA threshold of 0.9 to roughly control the FDR below 0.05. However, if more strigent FPR is required, OPERA can acheive this by increasing the PPA threshold (e.g., 0.995). 
+Columns are chromosome, probe ID for the 1st exposure, probe position for the 1st exposure, probe ID for the 2nd exposure, probe position for the 2nd exposure, PPA for no associations, PPA for the 1st exposure marginal association, PPA for the 2nd exposure marginal association, PPA for the 1st and 2nd exposures joint association, p-value from HEIDI for the 1st exposure association, p-value from HEIDI for the 2nd exposure association, and p-value from HEIDI for the 1st and 2nd exposures joint association. Missing value is represented by "NA". 
 
 ## Command line to generate a data file for xQTL plot
 > opera --besd-flist mylist1 --gwas-summary mygwas.ma --bfile mydata --beqtl-summary xQTL1 --out myplot --plot --probe ENSG00000085514 --probe-wind 500 --gene-list glist-hg19
