@@ -41,11 +41,10 @@ Posteriors      Pi1(0:0)        Pi2(0:1)        Pi3(1:0)        Pi4(1:1)
 Mean    0.605441        0.168855        0.0743364       0.151368
 SD      0.20765 0.186273        0.134037        0.16549
 ```
-The output includes the posterior mean and SD from MCMC for each possible configuration.
 ```
 Variance        2.000000e-02    2.000000e-02
 ```
-The posterior samples from MCMC are also printed in the log file, for example, 
+The .pi output includes the posterior mean and SD from MCMC for each possible configuration. The .var output includes the prior variance for each xQTL data. The posterior samples from MCMC are also printed in the log file, for example, 
 ```
 Iteration       Pi1(0:0)        Pi2(0:1)        Pi3(1:0)        Pi4(1:1)
 0       0.0557406       0.319719        0.0834392       0.541101
