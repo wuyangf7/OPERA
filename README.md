@@ -129,22 +129,7 @@ The estimated FPR is 0.00503074 for combinatorial associations between 2 exposur
 
 There are 50% GWAS loci were detected to be associated with at least one type of xQTL data.
 ```
-Note: we suggest a PPA threshold of 0.9 to roughly control the FDR below 0.05. However, if more strigent FDR or FPR is required and interested, OPERA can acheive this by increasing the PPA threshold (e.g., 0.995). 
-
-OPERA also automatically outputs the results from the SMR analysis of molecular phenotypes and complex trait in the .smr file
- 
-```
-probeID	ProbeChr	Gene	Probe_bp	topSNP	topSNP_chr	topSNP_bp	A1	A2	Freq	b_GWAS	se_GWAS	p_GWAS	b_eQTL	se_eQTL	p_eQTL	b_SMR	se_SMR	p_SMR	p_HEIDI	nsnp_HEIDI
-ENSG00000238109	7	AC004893.10	98596857	rs2283015	7	98600839	G	C	0.0847203	-0.00193708	0.00365864	5.964895e-01	0.711699	0.0382071	1.926562e-77	-0.00272178	0.00514278	5.966378e-01	7.575220e-01	20
-ENSG00000146833	7	TRIM4	99495902	rs2571997	7	99514417	A	C	0.410541	0.00614763	0.00213414	3.969059e-03	-0.690266	0.00715596	0.000000e+00	-0.00890618	0.00309315	3.985252e-03	8.417932e-05	20
-ENSG00000166526	7	ZNF3	99670913	rs67110214	7	99633739	C	G	0.28583	0.00401872	0.0024395	9.948536e-02	-0.0968669	0.0088226	4.801025e-28	-0.041487	0.0254659	1.032880e-01	4.811370e-05	20
-cg03856969	7	AK001533	98600799	rs4729505	7	98601025	C	T	0.0844313	-0.0024541	0.00373076	5.106651e-01	-0.431667	0.0598434	5.462031e-13	0.00568517	0.00867854	5.124136e-01	6.233012e-01	20
-cg10154880	7	AK001533	98603502	rs17720576	7	98616657	A	G	0.0865118	-0.0018608	0.00371972	6.168967e-01	0.489588	0.05912	1.218873e-16	-0.00380076	0.00761151	6.175377e-01	8.987915e-01	20
-...
-```
-Columns are probe ID, probe chromosome, gene name, probe position, SNP name, SNP chromosome, SNP position, the effect (coded) allele, the other allele, frequency of the effect allele (estimated from the reference samples), effect size from GWAS, SE from GWAS, p-value from GWAS, effect size from eQTL study, SE from eQTL study, p-value from eQTL study, effect size from SMR, SE from SMR, p-value from SMR, p-value from HEIDI test, and number of SNPs used in the HEIDI test.
-
-The heterogeneity test (i.e., multi-exposure HEIDI) will be automatically performed for any combinatorial associations passed a PPA threshold (0.9 as default). If the heterogeneity test is not interested, it can be turned off by specifying --heidi-off.
+Note: we suggest a PPA threshold of 0.9 to roughly control the FDR below 0.05. However, if more strigent FDR or FPR is required and interested, OPERA can acheive this by increasing the PPA threshold (e.g., 0.995). The heterogeneity test (i.e., multi-exposure HEIDI) will be automatically performed for any combinatorial associations passed a PPA threshold (0.9 as default). If the heterogeneity test is not interested, it can be turned off by specifying --heidi-off.
 
 
 ### Other parameters for stage 2 analysis
@@ -165,6 +150,17 @@ ENSG00000242687 rs34631688,rs187375676,rs149211972,rs219813,rs6976207,rs7789895,
 * --thresh-heidi specifies significance threshold of single-exposure HEIDI test to perform the OPERA analysis, e.g., 0.01 (default).
 * --opera-smr turns on the flag of runing OPERA analysis using the estimated SMR effect rather than estimated joint-SMR effect. 
 * --thread-num specifies the number of OpenMP threads for parallel computing. 
+* --print-smr-res saves the pairwise smr result for all tested exposure sites in .smr file if specified. 
+```
+probeID	ProbeChr	Gene	Probe_bp	topSNP	topSNP_chr	topSNP_bp	A1	A2	Freq	b_GWAS	se_GWAS	p_GWAS	b_eQTL	se_eQTL	p_eQTL	b_SMR	se_SMR	p_SMR	p_HEIDI	nsnp_HEIDI
+ENSG00000238109	7	AC004893.10	98596857	rs2283015	7	98600839	G	C	0.0847203	-0.00193708	0.00365864	5.964895e-01	0.711699	0.0382071	1.926562e-77	-0.00272178	0.00514278	5.966378e-01	7.575220e-01	20
+ENSG00000146833	7	TRIM4	99495902	rs2571997	7	99514417	A	C	0.410541	0.00614763	0.00213414	3.969059e-03	-0.690266	0.00715596	0.000000e+00	-0.00890618	0.00309315	3.985252e-03	8.417932e-05	20
+ENSG00000166526	7	ZNF3	99670913	rs67110214	7	99633739	C	G	0.28583	0.00401872	0.0024395	9.948536e-02	-0.0968669	0.0088226	4.801025e-28	-0.041487	0.0254659	1.032880e-01	4.811370e-05	20
+cg03856969	7	AK001533	98600799	rs4729505	7	98601025	C	T	0.0844313	-0.0024541	0.00373076	5.106651e-01	-0.431667	0.0598434	5.462031e-13	0.00568517	0.00867854	5.124136e-01	6.233012e-01	20
+cg10154880	7	AK001533	98603502	rs17720576	7	98616657	A	G	0.0865118	-0.0018608	0.00371972	6.168967e-01	0.489588	0.05912	1.218873e-16	-0.00380076	0.00761151	6.175377e-01	8.987915e-01	20
+...
+```
+Columns are probe ID, probe chromosome, gene name, probe position, SNP name, SNP chromosome, SNP position, the effect (coded) allele, the other allele, frequency of the effect allele (estimated from the reference samples), effect size from GWAS, SE from GWAS, p-value from GWAS, effect size from eQTL study, SE from eQTL study, p-value from eQTL study, effect size from SMR, SE from SMR, p-value from SMR, p-value from HEIDI test, and number of SNPs used in the HEIDI test.
 * --print-combo-ppa-res saves the ppa for each possible association hypothesis across all combinations in .res file if specified. 
 ```
 Chr	GWAS_SNP	GWAS_bp	Expo1_ID	Expo1_bp	Expo2_ID	Expo2_bp	PPA(0)	PPA(1)	PPA(2)	PPA(1,2)	p_HEIDI(1)	p_HEIDI(2)	p_HEIDI(1,2)
