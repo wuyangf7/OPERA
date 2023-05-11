@@ -2,13 +2,14 @@
 //  SMR.cpp
 //  SRM_CPP
 //
-//  Created by Yang Wu on 04/06/18.
-//  Copyright (c) 2021 Yang Wu. All rights reserved.
+//  Created by Yang Wu on 06/08/2022.
+//  Copyright (c) 2022 Yang Wu. All rights reserved.
 //
 
 
 #include "StrFunc.h"
 #include "SMR_data.h"
+#include "OPERA.h"
 #include "SMR_data_p1.h"
 #include "SMR_data_p2.h"
 #include "SMR_data_p3.h"
@@ -23,13 +24,12 @@ int xh=0;
 bool forcefrqck = true;
 char* outFileName=NULL;
 
-
 int main(int argc, char** argv) {
    
     cout << "*******************************************************************" << endl;
     cout << "* Omics pleiotropic association (OPERA)" << endl;
-    cout << "* version 1.06"<< endl;
-    cout << "* (C) 2021 Yang Wu, Jian Zeng and Jian Yang" << endl;
+    cout << "* version 1.18"<< endl;
+    cout << "* (C) 2022 Yang Wu, Jian Zeng and Jian Yang" << endl;
     cout << "* The University of Queensland" << endl;
     cout << "* MIT License" << endl;
     cout << "*******************************************************************" << endl;
@@ -44,7 +44,6 @@ int main(int argc, char** argv) {
     tm* now = localtime(&t);
     cout << "Analysis started: "<<now->tm_hour<<":"<<now->tm_min<<":"<< now->tm_sec<<","<<weeks[now->tm_wday]<<" "<<months[(now->tm_mon)]<<" "<<now->tm_mday<<","<<(now->tm_year + 1900)<<endl;
     // cout << "Analysis started: "<< ctime(&t) << endl;
-
     cout << "\nOptions:" << endl;
     try {
         option(argc, argv);
@@ -227,12 +226,13 @@ void option(int option_num, char* option_str[])
     
     bool sampleoverlap = false;
     int minsnpcor = 2;
-    
-    // multi-smr Yang WU, 04.06.2018     
-    // use joint-SMR as default
+    // +++++++++++++++++++++++
+    //  OPERA, YW 05.08.2022   
+    // +++++++++++++++++++++++  
     char* mbFileName=NULL;
     char* piFileName=NULL;
     char* sigmaFileName=NULL;
+    char* rhoFileName=NULL;
     char* numFilename = NULL;
     char* ppaFilename = NULL;
     bool bfileflag = false;    
@@ -241,8 +241,10 @@ void option(int option_num, char* option_str[])
     bool jointsmrflag = true;
     bool operasmrflag = false;
     bool condismrflag = false;    
-    bool multismrflag = false; // to aviod conflict with the old SMR function
+    bool operaflag = false; // to aviod conflict with SMR function
     bool inputlociflag = false;
+    bool printcombppaflag = false;
+    bool printsmrflag = false;
     bool multiexposuresmrflag = true;
     bool multioutcomesmrflag = false;
     //char* outcomelistFileName=NULL;
@@ -251,10 +253,12 @@ void option(int option_num, char* option_str[])
     bool piflag = false;
     bool summaryppaflag= false;
     double thresh_PP = 0.9;
-    double thresh_smr = 0.01;
-    double thresh_heidi = 1e-5;
+    double thresh_PP_out = 0;
+    double thresh_smr = 0.05; //0.01; filter probes
+    double thresh_gwas = 1; //1
+    double thresh_heidi = 0.01; // thresh_heidi_filter = 1e-6 filter probes
     double sigma_def = 0.02;
-    double alpha = 0.1;
+    double alpha_def = 1e-1;
     int piWind = 500;
     outcomePrbWind = 1000;
     string priorstr;
@@ -270,7 +274,7 @@ void option(int option_num, char* option_str[])
     for(int i=0;i<option_num;i++)
     {
         // Plink files for LD from a reference sample
-        if(0==strcmp(option_str[i],"--bfile")){
+        if(0==strcmp(option_str[i],"--bfile")) {
             bFileName=option_str[++i];
             FLAG_VALID_CK("--bfile", bFileName);
             printf("--bfile %s\n",bFileName);
@@ -1028,9 +1032,9 @@ void option(int option_num, char* option_str[])
             sampleoverlap=true;
             printf("--sample-overlap \n");
         }
-
-        // multi-omics SMR starts from here
-        // multi-smr Yang Wu 04.06.2018         
+        // ++++++++++++++++++++++++++++++++++
+        // options for OPERA; YW; 05/08/2022
+        // ++++++++++++++++++++++++++++++++++
         else if(0==strcmp(option_str[i],"--multi-exposure-smr")) {
             multiexposuresmrflag=true;
             printf("--multi-exposure-smr \n");
@@ -1043,35 +1047,43 @@ void option(int option_num, char* option_str[])
             piflag=true;
             printf("--estimate-pi \n");
         }
+        else if(0==strcmp(option_str[i],"--print-combo-ppa-res")){
+            printcombppaflag=true;
+            printf("--print-combo-ppa-res \n");
+        }
+        else if(0==strcmp(option_str[i],"--print-smr-res")){
+            printsmrflag=true;
+            printf("--print-smr-res \n");
+        }        
         else if(0==strcmp(option_str[i],"--summary-ppa")){
             summaryppaflag=true;
             printf("--summary-ppa \n");
             thresh_heidi = 0.01;
         }
-        else if (0 == strcmp(option_str[i], "--thresh-PP")){
+        else if (0 == strcmp(option_str[i], "--thresh-ppa")){
             thresh_PP = atof(option_str[++i]);
-            printf("--thresh-PP %10.2e\n", thresh_PP);
+            printf("--thresh-ppa %10.2e\n", thresh_PP);
             if(thresh_PP<0 || thresh_PP>1)
             {
-                fprintf (stderr, "Error: --thresh-PP should be within the range from 0 to 1.\n");
+                fprintf (stderr, "Error: --thresh-ppa should be within the range from 0 to 1.\n");
                 exit (EXIT_FAILURE);
             }
         }
-        else if (0 == strcmp(option_str[i], "--thresh-SMR")){
+        else if (0 == strcmp(option_str[i], "--thresh-smr")){
             thresh_smr = atof(option_str[++i]);
-            printf("--thresh-SMR %10.2e\n", thresh_smr);
+            printf("--thresh-smr %10.2e\n", thresh_smr);
             if(thresh_smr<0 || thresh_smr>1)
             {
-                fprintf (stderr, "Error: --thresh-SMR should be within the range from 0 to 1.\n");
+                fprintf (stderr, "Error: --thresh-smr should be within the range from 0 to 1.\n");
                 exit (EXIT_FAILURE);
             }
         }
-        else if (0 == strcmp(option_str[i], "--thresh-HEIDI")){
+        else if (0 == strcmp(option_str[i], "--thresh-heidi")){
             thresh_heidi = atof(option_str[++i]);
-            printf("--thresh-HEIDI %10.2e\n", thresh_heidi);
+            printf("--thresh-heidi %10.2e\n", thresh_heidi);
             if(thresh_heidi<0 || thresh_heidi>1)
             {
-                fprintf (stderr, "Error: --thresh-HEIDI should be within the range from 0 to 1.\n");
+                fprintf (stderr, "Error: --thresh-heidi should be within the range from 0 to 1.\n");
                 exit (EXIT_FAILURE);
             }
         }
@@ -1105,10 +1117,10 @@ void option(int option_num, char* option_str[])
              printf("--extract-target-cojo-snps %s\n",targetcojosnplstName);
             FileExist(targetcojosnplstName);
         }
-        else if(0==strcmp(option_str[i],"--extract-GWAS-loci")) {
+        else if(0==strcmp(option_str[i],"--extract-gwas-loci")) {
             GWAScojosnplstName=option_str[++i];
-            FLAG_VALID_CK("--extract-GWAS-loci", GWAScojosnplstName);
-             printf("--extract-GWAS-loci %s\n",GWAScojosnplstName);
+            FLAG_VALID_CK("--extract-gwas-loci", GWAScojosnplstName);
+             printf("--extract-gwas-loci %s\n",GWAScojosnplstName);
             FileExist(GWAScojosnplstName);
             inputlociflag=true;
         }
@@ -1119,6 +1131,24 @@ void option(int option_num, char* option_str[])
             if(piWind<=0 )
             {
                 fprintf (stderr, "Error: --pi-wind should be over 0.\n");
+                exit (EXIT_FAILURE);
+            }
+        }
+        else if(strcmp(option_str[i],"--alpha")==0){
+            alpha_def=atof(option_str[++i]);
+            printf("--alpha %10.2e\n", alpha_def);
+            if(alpha_def<=0)
+            {
+                fprintf (stderr, "Error: --alpha should be over 0.\n");
+                exit (EXIT_FAILURE);
+            }
+        }
+        else if(strcmp(option_str[i],"--sigma")==0){
+            sigma_def=atof(option_str[++i]);
+            printf("--sigma %10.2e\n", sigma_def);
+            if(sigma_def<=0)
+            {
+                fprintf (stderr, "Error: --sigma should be over 0.\n");
                 exit (EXIT_FAILURE);
             }
         }
@@ -1145,30 +1175,43 @@ void option(int option_num, char* option_str[])
             }
             inputpiflag = true;
         }
-        else if(0==strcmp(option_str[i],"--prior-sigma")){
+        else if(0==strcmp(option_str[i],"--prior-var")){
             sigmastr = option_str[++i];
-            // FLAG_VALID_CK("--prior-sigma", sigmastr);
-            printf("--prior-sigma %s\n", sigmastr.c_str());
+            // FLAG_VALID_CK("--prior-var", sigmastr);
+            printf("--prior-var %s\n", sigmastr.c_str());
             if(inputsigmaflag)
             {
-                fprintf (stderr, "Error: --prior-sigma conflicts with --prior-sigma-file, please turn off one.\n");
+                fprintf (stderr, "Error: --prior-var conflicts with --prior-var-file, please turn off one.\n");
                 exit (EXIT_FAILURE);
             }
             inputsigmaflag = true;
         }
-        else if(0==strcmp(option_str[i],"--prior-sigma-file")){
+        else if(0==strcmp(option_str[i],"--prior-var-file")){
             sigmaFileName=option_str[++i];
-            FLAG_VALID_CK("--prior-sigma-file", sigmaFileName);
-            printf("--prior-sigma-file %s\n",sigmaFileName);
+            FLAG_VALID_CK("--prior-var-file", sigmaFileName);
+            printf("--prior-var-file %s\n",sigmaFileName);
             FileExist(sigmaFileName);
             if(inputsigmaflag)
             {
-                fprintf (stderr, "Error: --prior-sigma-file conflicts with --prior-sigma, please turn off one.\n");
+                fprintf (stderr, "Error: --prior-var-file conflicts with --prior-var, please turn off one.\n");
                 exit (EXIT_FAILURE);
             }
             inputsigmaflag = true;
         }
-        // end //
+        else if(0==strcmp(option_str[i],"--rho-file")){
+            rhoFileName=option_str[++i];
+            FLAG_VALID_CK("--rho-file", rhoFileName);
+            printf("--rho-file %s\n",rhoFileName);
+            FileExist(rhoFileName);
+            if(!sampleoverlap)
+            {
+                fprintf (stderr, "Error: please turn on the --sample-overlap flag for stage 2 analysis when inputing the estimated residual correlation matrix.\n");
+                exit (EXIT_FAILURE);
+            }
+        }
+        // ++++++++++++++++++++
+        //  OPERA option end  //
+        // ++++++++++++++++++++
 
         else if(0==strcmp(option_str[i],"--mmecs")){
             minsnpcor=atoi(option_str[++i]);
@@ -1239,9 +1282,11 @@ void option(int option_num, char* option_str[])
     
 #endif
 #endif
-    
-    cout<<endl;
-    if(multiexposuresmrflag || multioutcomesmrflag) multismrflag =true; 
+    // additional option for opera
+    if(thresh_PP_out >= thresh_PP)   thresh_PP_out = thresh_PP;
+    if(multiexposuresmrflag || multioutcomesmrflag) operaflag =true;
+    if(chr!=0 && operaflag) snpchr = chr; prbchr = chr;
+    // from SMR options
     char tmpch[4]="smr";
     if(outFileName == NULL) outFileName=tmpch;
     if(shownflag) shown(eqtlFileName);
@@ -1252,15 +1297,15 @@ void option(int option_num, char* option_str[])
     else if (make_besd_flag && queryfileflg) make_besd_byQfile(queryFileName,outFileName, save_dense_flag, cis_itvl,  trans_itvl,  transThres,  restThres,addn);
     else if (metaflg) meta( eqtlsmaslstName ,outFileName,meta_mtd,pmecs, cis_flag,  cis_itvl);
     
-    else if (combineFlg && !metaflg && !multismrflag) combineBesd(eqtlsmaslstName, outFileName, save_dense_flag, cis_itvl,trans_itvl, transThres, restThres, genouni,addn);
+    else if (combineFlg && !metaflg && !operaflag) combineBesd(eqtlsmaslstName, outFileName, save_dense_flag, cis_itvl,trans_itvl, transThres, restThres, genouni,addn);
     
     else if(save_dense_flag) make_full_besd(outFileName, eqtlFileName, snplstName,problstName,bFlag,make_besd_flag, snplst2exclde, problst2exclde,  cis_itvl,genelistName,  chr, prbchr,  prbname,  fromprbname,  toprbname, prbWind, fromprbkb,  toprbkb, prbwindFlag,  genename, snpchr,  snprs,  fromsnprs,  tosnprs, snpWind, fromsnpkb,  tosnpkb, snpwindFlag, cis_flag,addn);
     else if(make_besd_flag) make_sparse_besd(eqtlFileName, outFileName, cis_itvl,trans_itvl, transThres, restThres,genelistName,  chr, prbchr,  prbname,  fromprbname,  toprbname, prbWind, fromprbkb,  toprbkb, prbwindFlag,  genename, snpchr,  snprs,  fromsnprs,  tosnprs, snpWind, fromsnpkb,  tosnpkb, snpwindFlag, cis_flag, snplstName, problstName,  snplst2exclde,  problst2exclde, qcflag ,qcmtd, z_thresh,extract_cis_only,prbseqregion,ptech,pinsnp,pexsnp,addn);
-    else if(plotflg && eqtlFileName2 != NULL) plot_triple( outFileName,  bFileName, gwasFileName,  eqtlFileName2,eqtlFileName, maf, indilstName,  snplstName, p_hetero, ld_prune, m_hetero ,opt_hetero, indilst2remove,  snplst2exclde,  p_smr,  refSNP,  cis_itvl,  prbname,  prbWind, prbwindFlag,  snpchr,  snprs,  fromsnprs,  tosnprs, snpWind, fromsnpkb,  tosnpkb, snpwindFlag, cis_flag,  geneAnnoName,  pthres_me2esmr,threshpsmrest,new_het_mth,threshphet,opt_slct_flag,ld_min,sampleoverlap,pmecs,minsnpcor,targetsnpproblstName);
-    else if(plotflg) plot_newheidi(outFileName, bFileName,gwasFileName, eqtlFileName, maf,indilstName, snplstName,problstName,bFlag,p_hetero,ld_prune,m_hetero, opt_hetero,indilst2remove, snplst2exclde, problst2exclde,p_smr,refSNP, heidioffFlag,cis_itvl, genelistName,  chr, prbchr,  prbname,  fromprbname,  toprbname, prbWind, fromprbkb,  toprbkb, prbwindFlag,  genename, snpchr,  snprs,  fromsnprs,  tosnprs, snpWind, fromsnpkb,  tosnpkb, snpwindFlag, cis_flag,geneAnnoName,threshpsmrest,new_het_mth, threshphet,ld_min,sampleoverlap,pmecs,minsnpcor);
+    else if(plotflg && eqtlFileName2 != NULL) plot_triple( outFileName,  bFileName, gwasFileName,  eqtlFileName2,eqtlFileName, maf, indilstName,  snplstName, p_hetero, ld_prune, m_hetero ,opt_hetero, indilst2remove,  snplst2exclde,  p_smr,  refSNP,  cis_itvl,  prbname,  prbWind, prbwindFlag,  snpchr,  snprs,  fromsnprs,  tosnprs, snpWind, fromsnpkb,  tosnpkb, snpwindFlag, cis_flag,  geneAnnoName,  pthres_me2esmr,threshpsmrest,new_het_mth,threshphet,opt_slct_flag,ld_min,sampleoverlap,pmecs,minsnpcor,targetsnpproblstName);    
+    // else if(plotflg) plot_newheidi(outFileName, bFileName,gwasFileName, eqtlFileName, maf,indilstName, snplstName,problstName,bFlag,p_hetero,ld_prune,m_hetero, opt_hetero,indilst2remove, snplst2exclde, problst2exclde,p_smr,refSNP, heidioffFlag,cis_itvl, genelistName,  chr, prbchr,  prbname,  fromprbname,  toprbname, prbWind, fromprbkb,  toprbkb, prbwindFlag,  genename, snpchr,  snprs,  fromsnprs,  tosnprs, snpWind, fromsnpkb,  tosnpkb, snpwindFlag, cis_flag,geneAnnoName,threshpsmrest,new_het_mth, threshphet,ld_min,sampleoverlap,pmecs,minsnpcor);
     else if(diffflag) diff(eqtlFileName, eqtlFileName2);
     
-    else if(!interanlflg && eqtlFileName2 != NULL && !multismrflag) smr_e2e(outFileName, bFileName,eqtlFileName2, eqtlFileName, maf,indilstName, snplstName,problstName,oproblstName,eproblstName,bFlag,p_hetero,ld_prune,m_hetero, opt_hetero,indilst2remove, snplst2exclde, problst2exclde,oproblst2exclde,eproblst2exclde,p_smr,refSNP, heidioffFlag,cis_itvl,traitlstName,outcomePrbWind,oprobe, eprobe, oprobe2rm, eprobe2rm,threshpsmrest,new_het_mth,opt_slct_flag,ld_min,cis2all,sampleoverlap,pmecs,minsnpcor,ssmrflg,setWind,ld_prune_multi,targetsnpproblstName,snpproblstName, diff_freq,diff_freq_ratio);
+    else if(!interanlflg && eqtlFileName2 != NULL && !operaflag) smr_e2e(outFileName, bFileName,eqtlFileName2, eqtlFileName, maf,indilstName, snplstName,problstName,oproblstName,eproblstName,bFlag,p_hetero,ld_prune,m_hetero, opt_hetero,indilst2remove, snplst2exclde, problst2exclde,oproblst2exclde,eproblst2exclde,p_smr,refSNP, heidioffFlag,cis_itvl,traitlstName,outcomePrbWind,oprobe, eprobe, oprobe2rm, eprobe2rm,threshpsmrest,new_het_mth,opt_slct_flag,ld_min,cis2all,sampleoverlap,pmecs,minsnpcor,ssmrflg,setWind,ld_prune_multi,targetsnpproblstName,snpproblstName, diff_freq,diff_freq_ratio);
     
     else if(lookup_flag) lookup(outFileName,eqtlFileName, snplstName, problstName, genelistName, plookup, bFlag, chr, prbchr,snpchr, snprs, fromsnprs, tosnprs, prbname, fromprbname, toprbname,snpWind,prbWind,genename,fromsnpkb,tosnpkb,fromprbkb, toprbkb, snpwindFlag, prbwindFlag,cis_flag, cis_itvl);
     else if(count_cis_flag) count_cis(outFileName,eqtlFileName, p_smr, cis_itvl); //output top-SNP in the cis-regions
@@ -1274,20 +1319,17 @@ void option(int option_num, char* option_str[])
     else if(recodeflg) make_cojo(outFileName, eqtlFileName, snplstName, snplst2exclde,  problstName,  problst2exclde,  genelistName, bFlag);
     else if(ssmrflg)  smr_multipleSNP( outFileName,  bFileName, gwasFileName,  eqtlFileName,  maf,indilstName,  snplstName,problstName, bFlag, p_hetero, ld_prune, m_hetero ,opt_hetero, indilst2remove, snplst2exclde,  problst2exclde, p_smr,  refSNP,  heidioffFlag,  cis_itvl, genelistName,  chr, prbchr,  prbname,  fromprbname,  toprbname, prbWind, fromprbkb,  toprbkb, prbwindFlag,  genename, snpchr, snprs,  fromsnprs,  tosnprs, snpWind, fromsnpkb,  tosnpkb, snpwindFlag, cis_flag, setlstName,  geneAnnoName,  setWind,ld_min,threshpsmrest,  sampleoverlap,  pmecs,  minsnpcor,ld_prune_multi, diff_freq,diff_freq_ratio);
     
-    else if(smr_flag && !smr_trans_flag && !multismrflag) smr(outFileName, bFileName,gwasFileName, eqtlFileName, maf,indilstName, snplstName,problstName,bFlag,p_hetero,ld_prune,m_hetero,opt_hetero, indilst2remove, snplst2exclde, problst2exclde,p_smr,refSNP, heidioffFlag,cis_itvl, genelistName,  chr, prbchr,  prbname,  fromprbname,  toprbname, prbWind, fromprbkb,  toprbkb, prbwindFlag,  genename, snpchr,  snprs,  fromsnprs,  tosnprs, snpWind, fromsnpkb,  tosnpkb, snpwindFlag, cis_flag,threshpsmrest,new_het_mth,opt_slct_flag,prbseqregion,ld_min,sampleoverlap,pmecs,minsnpcor,targetsnpproblstName,snpproblstName, diff_freq,diff_freq_ratio);
+    else if(smr_flag && !smr_trans_flag && !operaflag) smr(outFileName, bFileName,gwasFileName, eqtlFileName, maf,indilstName, snplstName,problstName,bFlag,p_hetero,ld_prune,m_hetero,opt_hetero, indilst2remove, snplst2exclde, problst2exclde,p_smr,refSNP, heidioffFlag,cis_itvl, genelistName,  chr, prbchr,  prbname,  fromprbname,  toprbname, prbWind, fromprbkb,  toprbkb, prbwindFlag,  genename, snpchr,  snprs,  fromsnprs,  tosnprs, snpWind, fromsnpkb,  tosnpkb, snpwindFlag, cis_flag,threshpsmrest,new_het_mth,opt_slct_flag,prbseqregion,ld_min,sampleoverlap,pmecs,minsnpcor,targetsnpproblstName,snpproblstName, diff_freq,diff_freq_ratio);
     
     else if (est_effe_spl_size_flg) est_effect_splsize(eqtlsmaslstName,eqtlFileName, snplstName,problstName,snplst2exclde, problst2exclde,p_smr);
     else if(smr_flag && smr_trans_flag) smr_trans_region(outFileName, bFileName,gwasFileName, eqtlFileName,  maf, indilstName, snplstName,problstName, bFlag, p_hetero, ld_prune, m_hetero ,opt_hetero,indilst2remove,snplst2exclde, problst2exclde,  transThres, refSNP,  heidioffFlag, cis_itvl, trans_itvl,genelistName,  chr, prbchr, prbname,  fromprbname,  toprbname, prbWind, fromprbkb,  toprbkb, prbwindFlag, genename,snpchr,snprs,fromsnprs, tosnprs, snpWind, fromsnpkb,  tosnpkb, snpwindFlag, cis_flag, threshpsmrest,  new_het_mth, p_smr,opt_slct_flag,ld_min, diff_freq,diff_freq_ratio);
-    // multi-smr Yang wu 04.06.2018 //
-    else if(multiexposuresmrflag && !interanlflg && eqtlsmaslstName!= NULL && piflag && operasmrflag)  multiexposurepi(outFileName,bFileName,mbFileName,eqtlsmaslstName,gwasFileName,maf, sigmastr, sigma_def, indilstName,  snplstName, problstName, oproblstName, eproblstName,bFlag,p_hetero,ld_prune,m_hetero, opt_hetero, indilst2remove,  snplst2exclde,  problst2exclde,  oproblst2exclde, eproblst2exclde,p_smr, refSNP, heidioffFlag,cis_itvl,piWind,snpchr,prbchr,traitlstName,outcomePrbWind, oprobe, eprobe, oprobe2rm,eprobe2rm, threshpsmrest, new_het_mth,opt_slct_flag,ld_min,cis2all,sampleoverlap,pmecs,minsnpcor,targetcojosnplstName,snpproblstName,diff_freq,diff_freq_ratio); 
-    else if(multiexposuresmrflag && !interanlflg && eqtlsmaslstName!= NULL && piflag && condismrflag)  multiexposurepi_condsmr(outFileName,bFileName,eqtlsmaslstName,gwasFileName,maf, sigmastr, indilstName,  snplstName, problstName, oproblstName, eproblstName,bFlag,p_hetero,ld_prune,m_hetero, opt_hetero, indilst2remove,  snplst2exclde,  problst2exclde,  oproblst2exclde, eproblst2exclde,p_smr, refSNP, heidioffFlag,condismrflag,cis_itvl,piWind,snpchr,prbchr,traitlstName,outcomePrbWind, oprobe, eprobe, oprobe2rm,eprobe2rm, threshpsmrest, new_het_mth,opt_slct_flag,ld_min,cis2all,sampleoverlap,pmecs,minsnpcor,targetcojosnplstName,snpproblstName,diff_freq,diff_freq_ratio);
-    else if(multiexposuresmrflag && !interanlflg && eqtlsmaslstName!= NULL && piflag && jointsmrflag && !inputlociflag)  multiexposurepi_jointsmr(outFileName,bFileName,mbFileName,eqtlsmaslstName,gwasFileName,maf, sigmastr, sigma_def, indilstName,  snplstName, problstName, oproblstName, eproblstName,bFlag,p_hetero,ld_prune,m_hetero, opt_hetero, indilst2remove,  snplst2exclde,  problst2exclde,  oproblst2exclde, eproblst2exclde,p_smr, refSNP, heidioffFlag,jointsmrflag,cis_itvl,piWind,snpchr,prbchr,traitlstName,outcomePrbWind, oprobe, eprobe, oprobe2rm,eprobe2rm, threshpsmrest, new_het_mth,opt_slct_flag,ld_min,cis2all,sampleoverlap,pmecs,minsnpcor,targetcojosnplstName,snpproblstName,diff_freq,diff_freq_ratio); 
-    else if(multiexposuresmrflag && !interanlflg && eqtlsmaslstName!= NULL && piflag && jointsmrflag && inputlociflag)  multiexposurepi_jointsmr_loci(outFileName,bFileName,mbFileName,eqtlsmaslstName,gwasFileName,maf, sigmastr, sigma_def, indilstName,  snplstName, problstName, oproblstName, eproblstName,bFlag,p_hetero,ld_prune,m_hetero, opt_hetero, indilst2remove,  snplst2exclde,  problst2exclde,  oproblst2exclde, eproblst2exclde,p_smr, refSNP, heidioffFlag,jointsmrflag,cis_itvl,piWind,snpchr,prbchr,traitlstName,outcomePrbWind, oprobe, eprobe, oprobe2rm,eprobe2rm, threshpsmrest, new_het_mth,opt_slct_flag,ld_min,cis2all,sampleoverlap,pmecs,minsnpcor,targetcojosnplstName,GWAScojosnplstName,snpproblstName,diff_freq,diff_freq_ratio);     
-    else if(multiexposuresmrflag && !interanlflg && eqtlsmaslstName!= NULL && jointsmrflag && !inputlociflag)  multiexposure_jointsmr(outFileName,bFileName,mbFileName,piFileName,sigmaFileName,eqtlsmaslstName,gwasFileName,maf,priorstr, sigmastr, sigma_def, indilstName,  snplstName, problstName, oproblstName, eproblstName,bFlag,p_hetero,ld_prune,m_hetero, opt_hetero, indilst2remove,  snplst2exclde,  problst2exclde,  oproblst2exclde, eproblst2exclde,p_smr, thresh_PP,thresh_smr,thresh_heidi, refSNP, heidioffFlag,jointsmrflag,operasmrflag,cis_itvl,snpchr,prbchr,traitlstName,outcomePrbWind, oprobe, eprobe, oprobe2rm,eprobe2rm, threshpsmrest, new_het_mth,opt_slct_flag,ld_min,cis2all,sampleoverlap,pmecs,minsnpcor,targetcojosnplstName,snpproblstName,diff_freq,diff_freq_ratio);
-    else if(multiexposuresmrflag && !interanlflg && eqtlsmaslstName!= NULL && jointsmrflag && inputlociflag)  multiexposure_jointsmr_loci(outFileName,bFileName,mbFileName,piFileName,sigmaFileName,eqtlsmaslstName,gwasFileName,maf,priorstr, sigmastr, sigma_def, indilstName,  snplstName, problstName, oproblstName, eproblstName,bFlag,p_hetero,ld_prune,m_hetero, opt_hetero, indilst2remove,  snplst2exclde,  problst2exclde,  oproblst2exclde, eproblst2exclde,p_smr,thresh_PP,thresh_smr,thresh_heidi,refSNP, heidioffFlag,jointsmrflag,operasmrflag,cis_itvl,snpchr,prbchr,traitlstName,outcomePrbWind, oprobe, eprobe, oprobe2rm,eprobe2rm, threshpsmrest, new_het_mth,opt_slct_flag,ld_min,cis2all,sampleoverlap,pmecs,minsnpcor,targetcojosnplstName,GWAScojosnplstName,snpproblstName,diff_freq,diff_freq_ratio);     
-    else if(multiexposuresmrflag && !interanlflg && eqtlsmaslstName!= NULL && !inputlociflag)  multiexposuresmr(outFileName,bFileName,eqtlsmaslstName,gwasFileName,maf,priorstr, sigmastr,sigma_def, indilstName, snplstName, problstName, oproblstName, eproblstName,bFlag,p_hetero,ld_prune,m_hetero, opt_hetero, indilst2remove,  snplst2exclde,  problst2exclde,  oproblst2exclde, eproblst2exclde,p_smr, refSNP, heidioffFlag,cis_itvl,snpchr,prbchr,traitlstName,outcomePrbWind, oprobe, eprobe, oprobe2rm,eprobe2rm, threshpsmrest, new_het_mth,opt_slct_flag,ld_min,cis2all,sampleoverlap,pmecs,minsnpcor,targetcojosnplstName,snpproblstName,diff_freq,diff_freq_ratio); 
-    else if(multiexposuresmrflag && !interanlflg && eqtlsmaslstName!= NULL && inputlociflag)  multiexposuresmr_loci(outFileName,bFileName,eqtlsmaslstName,gwasFileName,maf,priorstr, sigmastr, sigma_def, indilstName,  snplstName, problstName, oproblstName, eproblstName,bFlag,p_hetero,ld_prune,m_hetero, opt_hetero, indilst2remove,  snplst2exclde,  problst2exclde,  oproblst2exclde, eproblst2exclde,p_smr,thresh_PP,refSNP, heidioffFlag,cis_itvl,snpchr,prbchr,traitlstName,outcomePrbWind, oprobe, eprobe, oprobe2rm,eprobe2rm, threshpsmrest, new_het_mth,opt_slct_flag,ld_min,cis2all,sampleoverlap,pmecs,minsnpcor,targetcojosnplstName,GWAScojosnplstName,snpproblstName,diff_freq,diff_freq_ratio); 
-    else if(summaryppaflag)  ppafile_summary(ppaFilename, numFilename, piFileName, outFileName, thresh_PP, thresh_heidi);
-        if(multioutcomesmrflag && !interanlflg && eqtlsmaslstName!= NULL)  multioutcomesmr(outFileName,bFileName,mbFileName,piFileName,sigmaFileName,eqtlFileName,eqtlsmaslstName,gwasFileName,maf,priorstr, sigmastr, indilstName,  snplstName, problstName, oproblstName, eproblstName,bFlag,p_hetero,ld_prune,m_hetero, opt_hetero, indilst2remove,  snplst2exclde,  problst2exclde,  oproblst2exclde, eproblst2exclde,p_smr, refSNP, heidioffFlag,cis_itvl, snpchr,prbchr,traitlstName,outcomePrbWind, oprobe, eprobe, oprobe2rm,eprobe2rm, threshpsmrest, new_het_mth,opt_slct_flag,ld_min,cis2all,sampleoverlap,pmecs,minsnpcor,targetcojosnplstName,snpproblstName,diff_freq,diff_freq_ratio);
+    
+    // opera 05/08/2022 //
+    else if(plotflg && eqtlsmaslstName != NULL) plot_xqtl(outFileName, bFileName, gwasFileName, eqtlFileName, eqtlsmaslstName, maf, indilstName,  snplstName, p_hetero, ld_prune, m_hetero ,opt_hetero, indilst2remove,  snplst2exclde,  p_smr,  refSNP,  cis_itvl,  prbname,  prbWind, prbwindFlag,  snpchr,  snprs,  fromsnprs,  tosnprs, snpWind, fromsnpkb,  tosnpkb, snpwindFlag, cis_flag,  geneAnnoName,  pthres_me2esmr,threshpsmrest,new_het_mth,threshphet,opt_slct_flag,ld_min,sampleoverlap,pmecs,minsnpcor,targetsnpproblstName);
+    else if(plotflg) plot_newheidi(outFileName, bFileName,gwasFileName, eqtlFileName, maf,indilstName, snplstName,problstName,bFlag,p_hetero,ld_prune,m_hetero, opt_hetero,indilst2remove, snplst2exclde, problst2exclde,p_smr,refSNP, heidioffFlag,cis_itvl, genelistName,  chr, prbchr,  prbname,  fromprbname,  toprbname, prbWind, fromprbkb,  toprbkb, prbwindFlag,  genename, snpchr,  snprs,  fromsnprs,  tosnprs, snpWind, fromsnpkb,  tosnpkb, snpwindFlag, cis_flag,geneAnnoName,threshpsmrest,new_het_mth, threshphet,ld_min,sampleoverlap,pmecs,minsnpcor);
+    else if(operaflag && !interanlflg && eqtlsmaslstName!= NULL && piflag && jointsmrflag)  multiexposurepi_jointsmr(outFileName,bFileName,mbFileName,eqtlsmaslstName,gwasFileName,maf, sigmastr, sigma_def, alpha_def, indilstName,  snplstName, problstName, oproblstName, eproblstName,bFlag,p_hetero,ld_prune,m_hetero, opt_hetero, indilst2remove,  snplst2exclde,  problst2exclde,  oproblst2exclde, eproblst2exclde,p_smr, refSNP, heidioffFlag,jointsmrflag,cis_itvl,piWind,snpchr,prbchr,traitlstName,outcomePrbWind, oprobe, eprobe, oprobe2rm,eprobe2rm, threshpsmrest, new_het_mth,opt_slct_flag,ld_min,cis2all,sampleoverlap,pmecs,minsnpcor,targetcojosnplstName,GWAScojosnplstName,snpproblstName,diff_freq,diff_freq_ratio); 
+    else if(operaflag && !interanlflg && eqtlsmaslstName!= NULL && jointsmrflag)  multiexposure_jointsmr(outFileName,bFileName,mbFileName,piFileName,sigmaFileName,rhoFileName,eqtlsmaslstName,gwasFileName,maf,priorstr, sigmastr, sigma_def, indilstName,  snplstName, problstName, oproblstName, eproblstName,bFlag,p_hetero,ld_prune,m_hetero, opt_hetero, indilst2remove,  snplst2exclde,  problst2exclde,  oproblst2exclde, eproblst2exclde,p_smr, thresh_PP,thresh_PP_out, thresh_smr,thresh_gwas,thresh_heidi, refSNP, heidioffFlag,jointsmrflag,operasmrflag,printcombppaflag,printsmrflag,cis_itvl,snpchr,prbchr,traitlstName,outcomePrbWind, oprobe, eprobe, oprobe2rm,eprobe2rm, threshpsmrest, new_het_mth,opt_slct_flag,ld_min,cis2all,sampleoverlap,pmecs,minsnpcor,targetcojosnplstName,GWAScojosnplstName,snpproblstName,diff_freq,diff_freq_ratio);
+    else if(summaryppaflag)  ppafile_summary(ppaFilename, GWAScojosnplstName, numFilename, piFileName, priorstr, outFileName, thresh_PP, thresh_heidi);
+    if(multioutcomesmrflag && !interanlflg && eqtlsmaslstName!= NULL)  multioutcomesmr(outFileName,bFileName,mbFileName,piFileName,sigmaFileName,eqtlFileName,eqtlsmaslstName,gwasFileName,maf,priorstr, sigmastr, indilstName,  snplstName, problstName, oproblstName, eproblstName,bFlag,p_hetero,ld_prune,m_hetero, opt_hetero, indilst2remove,  snplst2exclde,  problst2exclde,  oproblst2exclde, eproblst2exclde,p_smr, refSNP, heidioffFlag,cis_itvl, snpchr,prbchr,traitlstName,outcomePrbWind, oprobe, eprobe, oprobe2rm,eprobe2rm, threshpsmrest, new_het_mth,opt_slct_flag,ld_min,cis2all,sampleoverlap,pmecs,minsnpcor,targetcojosnplstName,snpproblstName,diff_freq,diff_freq_ratio);
     // end //
    }

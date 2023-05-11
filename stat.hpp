@@ -55,7 +55,7 @@ namespace Stat {
     
     class Gamma {
     public:
-        float sample(const float shape, const float scale);
+        double sample(const float shape, const float scale);
     };
     
     class Beta {
@@ -72,7 +72,7 @@ namespace Stat {
     class Dirichlet {
     public:
         Gamma gamma;
-        VectorXf sample(const int n, const VectorXf &irx);
+        VectorXd sample(const int n, const VectorXd &irx);
     };
     
     class NormalZeroMixture {

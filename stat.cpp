@@ -30,7 +30,7 @@ float Stat::InvChiSq::sample(const float df, const float scale){
     return scale/(2.0f*sgamma());
 }
 
-float Stat::Gamma::sample(const float shape, const float scale){
+double Stat::Gamma::sample(const float shape, const float scale){
     gamma_generator sgamma(engine, gamma_distribution(shape, scale));
     return sgamma();
 }
@@ -65,9 +65,8 @@ float Stat::NormalZeroMixture::sample(const float mean, const float variance, co
 }
 
 // Sample Dirichlet
-
-VectorXf Stat::Dirichlet::sample(const int n, const VectorXf &irx){
-    VectorXf ps(n);
+VectorXd Stat::Dirichlet::sample(const int n, const VectorXd &irx){
+    VectorXd ps(n);
     double sx = 0.0;
     for (int i = 0; i < n; i++)
     {

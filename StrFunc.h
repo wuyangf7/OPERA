@@ -56,6 +56,7 @@ namespace StrFunc
     void match_only(const vector<string> &VecA, const vector<string> &VecB, vector<uint32_t> &VecC);
     bool has_suffix(const std::string &str, const std::string &suffix);
     void set_intersect(const vector<string> &VecA, const vector<string> &VecB, vector<string> &VecC);
+    void set_difference(const vector<string> &VecA, const vector<string> &VecB, vector<string> &VecC);
     void set_intersect(const vector<int> &VecA, const vector<int> &VecB, vector<int> &VecC);
     void set_complement(const vector<int> &toRm, const vector<int> &source, vector<int> &VecC);
     bool stringNumCheck(string a, int num);

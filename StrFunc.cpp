@@ -276,6 +276,20 @@ void StrFunc::set_intersect(const vector<string> &VecA, const vector<string> &Ve
     
 }
 
+// vector C returns string in vector A but not in vector B
+void StrFunc::set_difference(const vector<string> &VecA, const vector<string> &VecB, vector<string> &VecC)
+{
+    int i = 0;
+    map<string, int> id_map;
+    map<string, int>::iterator iter;
+    VecC.clear();
+    for (i = 0; i<VecB.size(); i++) id_map.insert(pair<string, int>(VecB[i], i));
+    for (i = 0; i<VecA.size(); i++){
+        iter = id_map.find(VecA[i]);
+        if (iter == id_map.end()) VecC.push_back(VecA[i]);
+    }    
+}
+
 void StrFunc::set_intersect(const vector<int> &VecA, const vector<int> &VecB, vector<int> &VecC)
 {
     int i = 0;
