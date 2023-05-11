@@ -1,5 +1,5 @@
 # OPERA
-This software tool implements the OPERA (Omics PlEiotRopic Association) method to test for combinatorial pleiotropic associations of molecular phenotypes (e.g., expression level of a gene and DNA methylation level at CpG sites) with a complex trait of interest using summary-level data from GWAS and molecular QTL studies. OPERA is a Bayesian generalization of the SMR &amp; HEIDI approach to a multi-omics model, where the molecular phenotypes are considered as exposures and only the complex trait is considered as the outcome. This tool can therefore be used to prioritize molecular phenotypes that mediate the genetic effects for complex trait and further provide mechanistic interpretation of the GWAS signal.
+This software tool implements the OPERA (omics pleiotropic association) method, which allows for testing the combinatorial pleiotropic associations between multiple molecular phenotypes (e.g., expression level of a gene and DNA methylation level at CpG sites) with a complex trait of interest using summary-level data from GWAS and molecular QTL studies. OPERA is a Bayesian extension of the SMR &amp; HEIDI approach to a multi-omics model, where the molecular phenotypes are considered as exposures and the complex trait is considered as the outcome. This tool can therefore be used to prioritize molecular phenotypes that mediate the genetic effects for complex trait and further provide mechanistic interpretation of the GWAS signal.
 
 ## Credits
 * Yang Wu developed the software tool with the support from Ting Qi, Jian Zeng, and Jian Yang.
@@ -10,7 +10,7 @@ This software tool implements the OPERA (Omics PlEiotRopic Association) method t
 If you have any bug reports or questions, please send an email to Yang Wu (y.wu2@uq.edu.au) and Jian Zeng (j.zeng@uq.edu.au) at Institute for Molecular Bioscience, The University of Queensland, and Jian Yang (jian.yang@westlake.edu.cn) at School of Life Sciences, Westlake University.
 
 ## Citations
-Wu Y., Qi T., Wray N.R., Visscher P.M., Zeng J. & Yang J. (2021) Joint analysis of GWAS and multi-omics QTL summary statistics reveals a large fraction of GWAS signals shared with molecular phenotypes. Under review.
+Wu Y., Qi T., Wray N.R., Visscher P.M., Zeng J. & Yang J. (2021) Joint analysis of GWAS and multi-omics QTL summary statistics reveals a large fraction of GWAS signals shared with molecular phenotypes. Cell Genomics.
 
 ## Installation
 To install OPERA, you can download the [opera_Linux.zip](https://github.com/wuyangf7/OPERA/blob/main/opera_Linux.zip) package, which contains a standalone (i.e., statically linked) 64-bit Linux executable file opera_Linux. We strongly recommend using this static executable because it is well-optimized and no further installation is required.
@@ -24,9 +24,11 @@ make
 There are dependencies on your local MKL, BOOST and EIGEN Libraries.
 
 # Tutorial
-The OPERA analysis consists of three steps. OPERA first estimates the global frequencies of each possible association pattern, then computes the posterior probability supporting each configuration by weighting the data likelihood with the estimated global frequencies. We compute the posterior probability of associations (PPA) for any combinatorial sites by summing up the posterior probability of configurations where the site combination present. For results passed the association test with a PPA threshold (e.g., 0.9 by default), OPERA performs the heterogeneity test to reject the associations that are due to linkage. 
+The OPERA analysis consists of three steps. OPERA first estimates the global frequencies of each possible association pattern. It then caculates the posterior probability for each configuration by weighting the data likelihood with the estimated global frequencies. The posterior probability of associations (PPA) for any combinatorial sites is computed by summing up the posterior probability of configurations where the given site combination is present. For associations that passed a PPA signficance threshold (e.g., 0.9 by default), OPERA performs the heterogeneity test to reject the associations that are due to linkage. 
 
-We collected and prepared multiple public available molecular QTL data for users to perform the OPERA analysis with their specific complex trait of interest, which is available for download [here](https://cnsgenomics.com/software/smr/#DataResource). For illustration purpose, we also provide the demonstration [data](https://github.com/wuyangf7/OPERA/tree/main/demo) to run opera analysis with command line below. 
+We have curated and prepared a variety of publicly available molecular QTL data (download [here](https://cnsgenomics.com/software/smr/#DataResource)), which users can use to perform the OPERA analysis with their specific complex trait of interest. For illustration purpose, we provide the demonstration [data](https://github.com/wuyangf7/OPERA/tree/main/demo) that can be used to run opera analysis with command line below. 
+
+To visualize the pleiotropic associations between multiple molecular phenotypes and a complex trait of interest at a GWAS locus of interest, we have provided command line in OPERA and R scripts below. 
 
 ## Run OPERA for stage 1 analysis
 > opera --besd-flist mylist --gwas-summary mygwas.ma --mbfile mybdatalist --estimate-pi --out myopera
