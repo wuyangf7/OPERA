@@ -26,7 +26,7 @@ There are dependencies on your local MKL, BOOST and EIGEN Libraries.
 # Tutorial
 The OPERA analysis consists of three steps. OPERA first estimates the global frequencies of each possible association pattern. It then caculates the posterior probability for each configuration by weighting the data likelihood with the estimated global frequencies. The posterior probability of associations (PPA) for any combinatorial sites is computed by summing up the posterior probability of configurations where the given site combination is present. For associations that passed a PPA signficance threshold (e.g., 0.9 by default), OPERA performs the heterogeneity test to reject the associations that are due to linkage. 
 
-We have curated and prepared a variety of publicly available molecular QTL data (download [here](https://cnsgenomics.com/software/smr/#DataResource)), which users can use to perform the OPERA analysis with their specific complex trait of interest. For illustration purpose, we provide the demonstration [data](https://github.com/wuyangf7/OPERA/tree/main/demo) that can be used to run opera analysis with command line below. 
+We have curated and prepared a variety of publicly available molecular QTL data ([download here](https://cnsgenomics.com/software/smr/#DataResource)), which users can use to perform the OPERA analysis with their specific complex trait of interest. For illustration purpose, we provide the demonstration [data](https://github.com/wuyangf7/OPERA/tree/main/demo) that can be used to run opera analysis with command line below. 
 
 To visualize the pleiotropic associations between multiple molecular phenotypes and a complex trait of interest at a GWAS locus of interest, we have provided command line in OPERA and R scripts below. 
 
