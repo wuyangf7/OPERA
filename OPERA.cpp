@@ -2456,7 +2456,7 @@ namespace SMRDATA
             }
         } else
         {
-            allele_check_multi(etrait_sig,&gdata);
+            allele_check_multi(etrait_sig, &gdata);
         }
         double ngwas = 0.0;
         if(gwasFileName!=NULL)  {
@@ -2682,7 +2682,8 @@ namespace SMRDATA
                     }                    
                     for(int p=0; p<expoNum; p++) {
                         vector<SMRRLT> smrrlts_joint_tmp;
-                        multi_joint_smr_func_v2(smrrlts_joint_tmp, NULL, &bdata, &gdata, esdatabf[p], ngwas, cojolist[p], cis_itvl, heidioffFlag,refSNP,p_hetero,ld_top,m_hetero,p_smr,threshpsmrest,new_het_mth,opt,ld_min,opt_hetero,sampleoverlap,pmecs,minCor);
+                        if(!heidioffFlag) multi_joint_smr_func_v2(smrrlts_joint_tmp, NULL, &bdata, &gdata, esdatabf[p], ngwas, cojolist[p], cis_itvl, heidioffFlag,refSNP,p_hetero,ld_top,m_hetero,p_smr,threshpsmrest,new_het_mth,opt,ld_min,opt_hetero,sampleoverlap,pmecs,minCor);
+                        if(heidioffFlag) smr_heidi_func_opera(smrrlts_joint_tmp, NULL, &bdata,&gdata,&esdatabf[p],cis_itvl, heidioffFlag, refSNP,p_hetero,ld_top, m_hetero , p_smr, threshpsmrest,new_het_mth,opt,ld_min,opt_hetero,sampleoverlap,pmecs,minCor,prb_snp,targetLstflg);
                         smrrlts_joint[p] = smrrlts_joint_tmp[0];
                     }
                     for(int p=0; p<expoNum; p++) {
@@ -2845,7 +2846,7 @@ namespace SMRDATA
         fclose(piiter);
     }
 
-    void multiexposure_jointsmr_old(char* outFileName, char* bFileName, char* mbFileName, char* piFileName, char* sigmaFileName, char* rhoFileName, char* eqtlsmaslstName, char* gwasFileName, double maf,string priorstr,string sigmastr, double sigma_def, char* indilstName, char* snplstName,char* problstName, char* oproblstName,char* eproblstName,bool bFlag,double p_hetero,double ld_top,int m_hetero, int opt_hetero,  char* indilst2remove, char* snplst2exclde, char* problst2exclde, char* oproblst2exclde,char* eproblst2exclde,double p_smr,double thresh_PP,double thresh_PP_out, double thresh_smr,double thresh_gwas,double thresh_heidi, char* refSNP, bool heidioffFlag, bool jointsmrflag, bool operasmrflag, bool printcombppaflag, bool printsmrflag, int cis_itvl,int snpchr,int prbchr,char* traitlstName,int op_wind, char* oprobe, char* eprobe, char* oprobe2rm, char* eprobe2rm, double threshpsmrest, bool new_het_mth, bool opt, double ld_min,bool cis2all, bool sampleoverlap, double pmecs, int minCor, char* targetcojosnplstName, char* GWAScojosnplstName, char* snpproblstName,double afthresh,double percenthresh)
+    void multiexposure_jointsmr_old(char* outFileName, char* bFileName, char* mbFileName, char* piFileName, char* sigmaFileName, char* rhoFileName, char* eqtlsmaslstName, char* gwasFileName, double maf,string priorstr,string sigmastr, double sigma_def, char* indilstName, char* snplstName,char* problstName, char* oproblstName,char* eproblstName,bool bFlag,double p_hetero,double ld_top,int m_hetero, int opt_hetero,  char* indilst2remove, char* snplst2exclde, char* problst2exclde, char* oproblst2exclde,char* eproblst2exclde,double p_smr,double thresh_PP,double thresh_PP_out, double thresh_smr,double thresh_gwas,double thresh_heidi, char* refSNP, bool `Flag, bool jointsmrflag, bool operasmrflag, bool printcombppaflag, bool printsmrflag, int cis_itvl,int snpchr,int prbchr,char* traitlstName,int op_wind, char* oprobe, char* eprobe, char* oprobe2rm, char* eprobe2rm, double threshpsmrest, bool new_het_mth, bool opt, double ld_min,bool cis2all, bool sampleoverlap, double pmecs, int minCor, char* targetcojosnplstName, char* GWAScojosnplstName, char* snpproblstName,double afthresh,double percenthresh)
     {   
         // 1. check flags; eqtlsmaslstName is the included exposure probes and gwasFileName will be the outcome 
         setNbThreads(thread_num);
@@ -4081,11 +4082,19 @@ namespace SMRDATA
                 {                    
                     hdirlts.insert(pair<string, double>(smrrltstmp[j].ProbeID,smrrltstmp[j].p_HET));
                     if(GWAScojosnplstName==NULL) {
-                        if(smrrltstmp[j].p_SMR<=thresh_smr && smrrltstmp[j].p_HET>=thresh_heidi_filter) {
-                            ldata._chr.push_back(smrrltstmp[j].ProbeChr); ldata._bp.push_back(smrrltstmp[j].SNP_bp); // ldata._bp.push_back(smrrltstmp[j].Probe_bp);
-                            ldata._snp_name.push_back(smrrltstmp[j].ProbeID); ldata._include.push_back(ldataLineNum);
-                            ldataLineNum++;
-                        }
+                        if(!heidioffFlag) {
+                            if(smrrltstmp[j].p_SMR<=thresh_smr && smrrltstmp[j].p_HET>=thresh_heidi_filter) {
+                                ldata._chr.push_back(smrrltstmp[j].ProbeChr); ldata._bp.push_back(smrrltstmp[j].SNP_bp); // ldata._bp.push_back(smrrltstmp[j].Probe_bp);
+                                ldata._snp_name.push_back(smrrltstmp[j].ProbeID); ldata._include.push_back(ldataLineNum);
+                                ldataLineNum++;
+                            }
+                        } else {
+                            if(smrrltstmp[j].p_SMR<=thresh_smr) {
+                                ldata._chr.push_back(smrrltstmp[j].ProbeChr); ldata._bp.push_back(smrrltstmp[j].SNP_bp); // ldata._bp.push_back(smrrltstmp[j].Probe_bp);
+                                ldata._snp_name.push_back(smrrltstmp[j].ProbeID); ldata._include.push_back(ldataLineNum);
+                                ldataLineNum++;
+                            }
+                        }                        
                         if(printsmrflag) {
                             outstr=smrrltstmp[j].ProbeID+'\t'+atos(smrrltstmp[j].ProbeChr)+'\t'+smrrltstmp[j].Gene+'\t'+atos(smrrltstmp[j].Probe_bp)+'\t'+smrrltstmp[j].SNP+'\t'+atos(smrrltstmp[j].SNP_Chr)+'\t'+atos(smrrltstmp[j].SNP_bp)+'\t'+smrrltstmp[j].A1+'\t'+smrrltstmp[j].A2+'\t'+atos(smrrltstmp[j].Freq)+'\t'+atos(smrrltstmp[j].b_GWAS)+'\t'+atos(smrrltstmp[j].se_GWAS)+'\t'+dtos(smrrltstmp[j].p_GWAS)+'\t'+atos(smrrltstmp[j].b_eQTL)+'\t'+atos(smrrltstmp[j].se_eQTL)+'\t'+dtos(smrrltstmp[j].p_eQTL)+'\t'+atos(smrrltstmp[j].b_SMR)+'\t'+atos(smrrltstmp[j].se_SMR)+'\t'+dtos(smrrltstmp[j].p_SMR)+'\t'+(smrrltstmp[j].p_HET >= 0 ? dtos(smrrltstmp[j].p_HET) : "NA") + '\t' + (smrrltstmp[j].nsnp > 0 ? atos(smrrltstmp[j].nsnp+1) : "NA") + '\n';
                             if(fputs_checked(outstr.c_str(),smr))
@@ -4152,9 +4161,15 @@ namespace SMRDATA
                     int bptmp=smrrlts[i][j].SNP_bp; // int bptmp=smrrlts[i][j].Probe_bp;
                     if(smrrlts[i][j].ProbeChr==locichr && bptmp>=lowerbounder && bptmp<=upperbounder) 
                     {
-                        if(smrrlts[i][j].p_SMR<=thresh_smr && smrrlts[i][j].p_HET>=thresh_heidi_filter && smrrlts[i][j].p_GWAS<=thresh_gwas) {
-                            smrrltsbf.push_back(smrrlts[i][j]); countNum = countNum + 1;
-                        }                        
+                        if(!heidioffFlag) {
+                            if(smrrlts[i][j].p_SMR<=thresh_smr && smrrlts[i][j].p_HET>=thresh_heidi_filter && smrrlts[i][j].p_GWAS<=thresh_gwas) {
+                                smrrltsbf.push_back(smrrlts[i][j]); countNum = countNum + 1;
+                            } 
+                        } else {
+                            if(smrrlts[i][j].p_SMR<=thresh_smr && smrrlts[i][j].p_GWAS<=thresh_gwas) {
+                                smrrltsbf.push_back(smrrlts[i][j]); countNum = countNum + 1;
+                            }   
+                        }                                             
                         // output GWAS loci pairwise SMR results                        
                         if(GWAScojosnplstName != NULL) {
                             map<string, int>::iterator prb_smr_pos;
@@ -4358,7 +4373,9 @@ namespace SMRDATA
                         if(probNumbf[t] > 0) {
                             int p = t - missexpoNum[t];
                             vector<SMRRLT> smrrlts_joint_tmp;
-                            multi_joint_smr_func_v2(smrrlts_joint_tmp, NULL, &bdata, &gdata, esdata[t], ngwas, cojolist[p], cis_itvl, heidioffFlag,refSNP,p_hetero,ld_top,m_hetero,p_smr,threshpsmrest,new_het_mth,opt,ld_min,opt_hetero,sampleoverlap=false,pmecs,minCor);
+                            // multi_joint_smr_func_v2(smrrlts_joint_tmp, NULL, &bdata, &gdata, esdata[t], ngwas, cojolist[p], cis_itvl, heidioffFlag,refSNP,p_hetero,ld_top,m_hetero,p_smr,threshpsmrest,new_het_mth,opt,ld_min,opt_hetero,sampleoverlap=false,pmecs,minCor);
+                            if(!heidioffFlag) multi_joint_smr_func_v2(smrrlts_joint_tmp, NULL, &bdata, &gdata, esdata[t], ngwas, cojolist[p], cis_itvl, heidioffFlag,refSNP,p_hetero,ld_top,m_hetero,p_smr,threshpsmrest,new_het_mth,opt,ld_min,opt_hetero,sampleoverlap=false,pmecs,minCor);
+                            if(heidioffFlag) smr_heidi_func_opera(smrrlts_joint_tmp, NULL, &bdata,&gdata,&esdata[t],cis_itvl, heidioffFlag, refSNP,p_hetero,ld_top, m_hetero , p_smr, threshpsmrest,new_het_mth,opt,ld_min,opt_hetero,sampleoverlap=false,pmecs,minCor,prb_snp,targetLstflg);
                             smrrlts_joint[p] = smrrlts_joint_tmp[0];
                         }
                     }
@@ -4587,10 +4604,16 @@ namespace SMRDATA
                                 pparltssum = PPAvec[l][p] + itmp->second;
                                 itmp->second = pparltssum;
                                 map<string, long>::iterator itmp0;
-                                itmp0 = outidx.find(prbname);                                
-                                if(itmp0 != outidx.end() && HEIDIvec[l][p]!="NA") { 
-                                    itmp0->second = l;
-                                }
+                                itmp0 = outidx.find(prbname);
+                                if(!heidioffFlag) {
+                                    if(itmp0 != outidx.end() && HEIDIvec[l][p]!="NA") { 
+                                        itmp0->second = l;
+                                    } 
+                                } else {
+                                    if(itmp0 != outidx.end()) {
+                                        itmp0->second = l;
+                                    }
+                                }                                
                                 map<string, long>::iterator itmp1;
                                 itmp1 = pparlts_count.find(prbname);                                
                                 if(itmp1 != pparlts_count.end()) {
@@ -4672,9 +4695,15 @@ namespace SMRDATA
                 itmp->second = pparltssum;
                 map<string, long>::iterator itmp0;
                 itmp0 = outidx.find(prbname);                                
-                if(itmp0 != outidx.end() && HEIDIvecall[l]!="NA") { 
-                    itmp0->second = l;
-                }
+                if(!heidioffFlag) {
+                    if(itmp0 != outidx.end() && HEIDIvecall[l]!="NA") { 
+                        itmp0->second = l;
+                    } 
+                } else {
+                    if(itmp0 != outidx.end()) {
+                        itmp0->second = l;
+                    } 
+                }                
                 map<string, long>::iterator itmp1;
                 itmp1 = pparlts_count.find(prbname);                                
                 if(itmp1 != pparlts_count.end()) {
@@ -4703,23 +4732,44 @@ namespace SMRDATA
                 ppamean = itmp->second/itmp1->second;
             }
             outstr="";
-            if(ppamean >= thresh_PP && HEIDIvecall[ii]!="NA" && stod(HEIDIvecall[ii]) >= thresh_heidi) {
-                for(int j=0;j<Namevecall[ii].size();j++) {
-                    outstr += Namevecall[ii][j] + '\t';
+            if(!heidioffFlag) {
+                if(ppamean >= thresh_PP && HEIDIvecall[ii]!="NA" && stod(HEIDIvecall[ii]) >= thresh_heidi) {
+                    for(int j=0;j<Namevecall[ii].size();j++) {
+                        outstr += Namevecall[ii][j] + '\t';
+                    }
+                    if(GWAScojosnplstName!=NULL) {
+                        ppalocisnps[PPANumall[ii]].push_back(Namevecall[ii][1]); locisnps.push_back(Namevecall[ii][1]);
+                    }                
+                    outstr+=atos(ppamean) +'\t'+ HEIDIvecall[ii]+'\n';
+                    if(fputs_checked(outstr.c_str(), ppa[expofile-1]))
+                    {
+                    printf("ERROR: in writing file %s .\n", ppafile[expofile-1].c_str());
+                    exit(EXIT_FAILURE);
+                    }
+                    // ppasum += (1 - stof(PPAvec[ii][p]));
+                    ppasum[expofile-1] += (1 - ppamean);
+                    itermcount[expofile-1]+=1;
                 }
-                if(GWAScojosnplstName!=NULL) {
-                    ppalocisnps[PPANumall[ii]].push_back(Namevecall[ii][1]); locisnps.push_back(Namevecall[ii][1]);
-                }                
-                outstr+=atos(ppamean) +'\t'+ HEIDIvecall[ii]+'\n';
-                if(fputs_checked(outstr.c_str(), ppa[expofile-1]))
-                {
-                printf("ERROR: in writing file %s .\n", ppafile[expofile-1].c_str());
-                exit(EXIT_FAILURE);
+            } else {
+                if(ppamean >= thresh_PP) {
+                    for(int j=0;j<Namevecall[ii].size();j++) {
+                        outstr += Namevecall[ii][j] + '\t';
+                    }
+                    if(GWAScojosnplstName!=NULL) {
+                        ppalocisnps[PPANumall[ii]].push_back(Namevecall[ii][1]); locisnps.push_back(Namevecall[ii][1]);
+                    }                
+                    outstr+=atos(ppamean) +'\t'+ HEIDIvecall[ii]+'\n';
+                    if(fputs_checked(outstr.c_str(), ppa[expofile-1]))
+                    {
+                    printf("ERROR: in writing file %s .\n", ppafile[expofile-1].c_str());
+                    exit(EXIT_FAILURE);
+                    }
+                    // ppasum += (1 - stof(PPAvec[ii][p]));
+                    ppasum[expofile-1] += (1 - ppamean);
+                    itermcount[expofile-1]+=1;
                 }
-                // ppasum += (1 - stof(PPAvec[ii][p]));
-                ppasum[expofile-1] += (1 - ppamean);
-                itermcount[expofile-1]+=1;
-            }                                                       
+            }
+            
         }
         // 10. count the actual number of test for different number of exposures
         vector<int> testNum;
