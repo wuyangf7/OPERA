@@ -7,7 +7,7 @@ This software tool implements the OPERA (omics pleiotropic association) method, 
 * The software is programmed and maintained by Yang Wu.
 
 ## Questions and Help Requests
-If you have any bug reports or questions, please send an email to Yang Wu (wuyangf7@ucla.edu) and Jian Zeng (j.zeng@uq.edu.au) at Institute for Molecular Bioscience, The University of Queensland, and Jian Yang (jian.yang@westlake.edu.cn) at School of Life Sciences, Westlake University.
+If you have any bug reports or questions, please send an email to Yang Wu (yang.wu@scu.edu.cn) at West China Hospital, Sichuan University  and Jian Zeng (j.zeng@uq.edu.au) at Institute for Molecular Bioscience, The University of Queensland, and Jian Yang (jian.yang@westlake.edu.cn) at School of Life Sciences, Westlake University.
 
 ## Citations
 Wu Y., Qi T., Wray N.R., Visscher P.M., Zeng J. & Yang J. (2023) Joint analysis of GWAS and multi-omics QTL summary statistics reveals a large fraction of GWAS signals shared with molecular phenotypes. Cell Genomics.
