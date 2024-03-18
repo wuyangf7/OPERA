@@ -24,31 +24,33 @@ CXXFLAGS = -w -O3 -m64 -fopenmp -I $(BOOST) -I $(EIGEN_PATH) -DEIGEN_NO_DEBUG -s
 LIB += -static -lz -lgomp
 
 HDR += CommFunc.h \
-	   cdflib.h \
-	   dcdflib.h \
-           SMR.h \
-	   ipmpar.h \
-           StatFunc.h \
-           StrFunc.h \
-            SMR_data.h \
-            SMR_plot.h \
-            SMR_data_p1.h \
-            SMR_data_p2.h \
-	   stat.hpp \
-	   bfile.hpp \
-           SMR_data_p3.h 
+			 cdflib.h \
+			 dcdflib.h \
+       SMR.h \
+	     ipmpar.h \
+       StatFunc.h \
+       StrFunc.h \
+       SMR_data.h \
+       SMR_plot.h \
+       SMR_data_p1.h \
+       SMR_data_p2.h \
+	   	 stat.hpp \
+	     bfile.hpp \
+       SMR_data_p3.h \
+			 OPERA.h
 SRC = SMR.cpp \
-           CommFunc.cpp \
-           SMR_data.cpp \
-	   dcdflib.cpp \
-           StatFunc.cpp \
-           StrFunc.cpp	\
-           SMR_plot.cpp \
-           SMR_data_p1.cpp \
-           SMR_data_p2.cpp \
-	   stat.cpp \
-	   bfile.cpp \
-           SMR_data_p3.cpp 
+      CommFunc.cpp \
+      SMR_data.cpp \
+	    dcdflib.cpp \
+      StatFunc.cpp \
+      StrFunc.cpp	\
+      SMR_plot.cpp \
+      SMR_data_p1.cpp \
+      SMR_data_p2.cpp \
+	    stat.cpp \
+	    bfile.cpp \
+      SMR_data_p3.cpp \
+			OPERA.cpp
 OBJ = $(SRC:.cpp=.o)
 
 all : $(OUTPUT) 
