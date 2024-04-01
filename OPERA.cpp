@@ -4116,7 +4116,8 @@ namespace SMRDATA
             fclose(smr);
         }
 
-        printf("\nPerforming multi-exposure OPERA analysis (including multi-exposure HEIDI tests) ... \n");
+        if(!heidioffFlag) printf("\nPerforming multi-exposure OPERA analysis (including multi-exposure HEIDI tests) ... \n");
+        if(heidioffFlag) printf("\nPerforming multi-exposure OPERA analysis only ... \n");
         if(probNum.size()!=expoNum) {
             throw("ERROR: The number of exposure probes with significant instrument are less than the number of specified priors.\n");
             exit(EXIT_FAILURE);
@@ -4327,7 +4328,8 @@ namespace SMRDATA
                 // idxcomb_smrrltsbf_last = idxcomb_smrrltsbf;
                 
                 //if(esdatabf.size()!=0 && esdatabf.size()!= expoNumLoci) { continue; }
-                if(findcount!= expoNumLoci) { continue; }
+                if(heidioffFlag && !jointsmrflag) findcount = expoNumLoci;
+                if(findcount != expoNumLoci) { continue; }
 
                 // 8.1 perform joint-SMR analysis or extract the SMR effect                
                 vector<SMRRLT> smrrlts_joint(expoNumLoci);
@@ -4499,7 +4501,7 @@ namespace SMRDATA
                             long idxtmp = combines[cc][t] + postmp;
                             idxcomb_smrrltsbf[t_new] = idxtmp;
                             postmp = postmp + probNumbf[t];
-                            if(!heidioffFlag || jointsmrflag) {
+                            if(! heidioffFlag || jointsmrflag) {
                                 if(idxcomb_smrrltsbf[t_new] != idxcomb_smrrltsbf_last[t_new]) {
                                     esdata[t]._include.clear();
                                     map<string, int>::iterator itt;
