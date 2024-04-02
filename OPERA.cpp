@@ -4105,7 +4105,10 @@ namespace SMRDATA
                         }                        
                     }
                 }            
-            } else { probNum.push_back(0); }
+            } else { 
+                probNum.push_back(0);
+                smrrlts.push_back(smrrltstmp);
+            }
         }
         if(GWAScojosnplstName==NULL && printsmrflag) {
             for(int k=0;k<probNum.size();k++)
@@ -4118,10 +4121,10 @@ namespace SMRDATA
 
         if(!heidioffFlag) printf("\nPerforming multi-exposure OPERA analysis (including multi-exposure HEIDI tests) ... \n");
         if(heidioffFlag) printf("\nPerforming multi-exposure OPERA analysis only ... \n");
-        if(probNum.size()!=expoNum) {
-            throw("ERROR: The number of exposure probes with significant instrument are less than the number of specified priors.\n");
-            exit(EXIT_FAILURE);
-        }
+        //if(probNum.size()!=expoNum) {
+            //throw("ERROR: The number of exposure probes with significant instrument are less than the number of specified priors.\n");
+            //exit(EXIT_FAILURE);
+        //}
 
         // 8. loop with each SMR < 0.05 loci and test all possible combinations at each probe loci;
         double cr=0;  long PPANum = combmarg.size() - 1;
@@ -4159,36 +4162,38 @@ namespace SMRDATA
                 int countNum = 0;
                 for(int j=0;j<probNum[i];j++)
                 {
-                    int bptmp=smrrlts[i][j].SNP_bp; // int bptmp=smrrlts[i][j].Probe_bp;
-                    if(smrrlts[i][j].ProbeChr==locichr && bptmp>=lowerbounder && bptmp<=upperbounder) 
-                    {
-                        if(!heidioffFlag) {
-                            if(smrrlts[i][j].p_SMR<=thresh_smr && smrrlts[i][j].p_HET>=thresh_heidi_filter && smrrlts[i][j].p_GWAS<=thresh_gwas) {
-                                smrrltsbf.push_back(smrrlts[i][j]); countNum = countNum + 1;
-                            } 
-                        } else {
-                            if(smrrlts[i][j].p_SMR<=thresh_smr && smrrlts[i][j].p_GWAS<=thresh_gwas) {
-                                smrrltsbf.push_back(smrrlts[i][j]); countNum = countNum + 1;
-                            }   
-                        }                                             
-                        // output GWAS loci pairwise SMR results                        
-                        if(GWAScojosnplstName != NULL) {
-                            map<string, int>::iterator prb_smr_pos;
-                            prb_smr_pos = smrrltsprbs.find(smrrlts[i][j].ProbeID);
-                            if(prb_smr_pos == smrrltsprbs.end()) {
-                                if(printsmrflag) {
-                                    itemcountsmr = itemcountsmr + 1;
-                                    outstr=smrrlts[i][j].ProbeID+'\t'+atos(smrrlts[i][j].ProbeChr)+'\t'+smrrlts[i][j].Gene+'\t'+atos(smrrlts[i][j].Probe_bp)+'\t'+smrrlts[i][j].SNP+'\t'+atos(smrrlts[i][j].SNP_Chr)+'\t'+atos(smrrlts[i][j].SNP_bp)+'\t'+smrrlts[i][j].A1+'\t'+smrrlts[i][j].A2+'\t'+atos(smrrlts[i][j].Freq)+'\t'+atos(smrrlts[i][j].b_GWAS)+'\t'+atos(smrrlts[i][j].se_GWAS)+'\t'+dtos(smrrlts[i][j].p_GWAS)+'\t'+atos(smrrlts[i][j].b_eQTL)+'\t'+atos(smrrlts[i][j].se_eQTL)+'\t'+dtos(smrrlts[i][j].p_eQTL)+'\t'+atos(smrrlts[i][j].b_SMR)+'\t'+atos(smrrlts[i][j].se_SMR)+'\t'+dtos(smrrlts[i][j].p_SMR)+'\t'+(smrrlts[i][j].p_HET >= 0 ? dtos(smrrlts[i][j].p_HET) : "NA") + '\t' + (smrrlts[i][j].nsnp > 0 ? atos(smrrlts[i][j].nsnp+1) : "NA") + '\n';
-                                    if(fputs_checked(outstr.c_str(),smr))
-                                    {
-                                        printf("ERROR: in writing file %s .\n", smrfile.c_str());
-                                        exit(EXIT_FAILURE);
-                                    }
-                                    smrrltsprbs.insert(pair<string, int> (smrrlts[i][j].ProbeID, itemcountsmr));  
-                                }                                                          
-                            }                            
-                        }                    
-                    }                   
+                    if(probNum[i] > 0) {                    
+                        int bptmp=smrrlts[i][j].SNP_bp; // int bptmp=smrrlts[i][j].Probe_bp;
+                        if(smrrlts[i][j].ProbeChr==locichr && bptmp>=lowerbounder && bptmp<=upperbounder) 
+                        {
+                            if(!heidioffFlag) {
+                                if(smrrlts[i][j].p_SMR<=thresh_smr && smrrlts[i][j].p_HET>=thresh_heidi_filter && smrrlts[i][j].p_GWAS<=thresh_gwas) {
+                                    smrrltsbf.push_back(smrrlts[i][j]); countNum = countNum + 1;
+                                } 
+                            } else {
+                                if(smrrlts[i][j].p_SMR<=thresh_smr && smrrlts[i][j].p_GWAS<=thresh_gwas) {
+                                    smrrltsbf.push_back(smrrlts[i][j]); countNum = countNum + 1;
+                                }   
+                            }                                             
+                            // output GWAS loci pairwise SMR results                        
+                            if(GWAScojosnplstName != NULL) {
+                                map<string, int>::iterator prb_smr_pos;
+                                prb_smr_pos = smrrltsprbs.find(smrrlts[i][j].ProbeID);
+                                if(prb_smr_pos == smrrltsprbs.end()) {
+                                    if(printsmrflag) {
+                                        itemcountsmr = itemcountsmr + 1;
+                                        outstr=smrrlts[i][j].ProbeID+'\t'+atos(smrrlts[i][j].ProbeChr)+'\t'+smrrlts[i][j].Gene+'\t'+atos(smrrlts[i][j].Probe_bp)+'\t'+smrrlts[i][j].SNP+'\t'+atos(smrrlts[i][j].SNP_Chr)+'\t'+atos(smrrlts[i][j].SNP_bp)+'\t'+smrrlts[i][j].A1+'\t'+smrrlts[i][j].A2+'\t'+atos(smrrlts[i][j].Freq)+'\t'+atos(smrrlts[i][j].b_GWAS)+'\t'+atos(smrrlts[i][j].se_GWAS)+'\t'+dtos(smrrlts[i][j].p_GWAS)+'\t'+atos(smrrlts[i][j].b_eQTL)+'\t'+atos(smrrlts[i][j].se_eQTL)+'\t'+dtos(smrrlts[i][j].p_eQTL)+'\t'+atos(smrrlts[i][j].b_SMR)+'\t'+atos(smrrlts[i][j].se_SMR)+'\t'+dtos(smrrlts[i][j].p_SMR)+'\t'+(smrrlts[i][j].p_HET >= 0 ? dtos(smrrlts[i][j].p_HET) : "NA") + '\t' + (smrrlts[i][j].nsnp > 0 ? atos(smrrlts[i][j].nsnp+1) : "NA") + '\n';
+                                        if(fputs_checked(outstr.c_str(),smr))
+                                        {
+                                            printf("ERROR: in writing file %s .\n", smrfile.c_str());
+                                            exit(EXIT_FAILURE);
+                                        }
+                                        smrrltsprbs.insert(pair<string, int> (smrrlts[i][j].ProbeID, itemcountsmr));  
+                                    }                                                          
+                                }                            
+                            }                    
+                        }                   
+                    }                
                 }                        
                 probNumbf[i] = countNum;                                                
             }
@@ -4481,8 +4486,8 @@ namespace SMRDATA
                 bool sigflag = false, sigoutflag = false; vector<int> sigcomb;
                 
                 for(int i=1;i<combmarg.size();i++) {
-                    if(PIP[i]>=thresh_PP) { sigflag = true; sigcomb.push_back(i); }
-                    if(PIP[i]>=thresh_PP_out) { sigoutflag = true;}
+                    if(PIP[i]>thresh_PP) { sigflag = true; sigcomb.push_back(i); }
+                    if(PIP[i]>thresh_PP_out) { sigoutflag = true;}
                 }
                 // get Namevec, PPAvec, HEIDIvec for section 8.4;
                 vector<float> PPAtmp;
