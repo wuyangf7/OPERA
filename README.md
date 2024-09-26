@@ -1,4 +1,4 @@
-# OPERA
+![image](https://github.com/user-attachments/assets/866c0855-5edd-4a10-a158-226000925fcf)# OPERA
 This software tool implements the OPERA (omics pleiotropic association) method, which allows for testing the combinatorial pleiotropic associations between multiple molecular phenotypes (e.g., expression level of a gene and DNA methylation level at CpG sites) with a complex trait of interest using summary-level data from GWAS and molecular QTL studies. OPERA is a Bayesian extension of the SMR &amp; HEIDI approach to a multi-omics model, where the molecular phenotypes are considered as exposures and the complex trait is considered as the outcome. This tool can therefore be used to prioritize molecular phenotypes that mediate the genetic effects for complex trait and further provide mechanistic interpretation of the GWAS signal.
 
 ## Credits
@@ -188,7 +188,7 @@ Columns are chromosome, rs ID for GWAS SNP, physical position for GWAS SNP, prob
 * --probe-wind specifies a window to extract the exposure site in the window
 * --gene-list specifies a gene range list, which is available for download [here](https://github.com/wuyangf7/OPERA/blob/main/demo/glist-hg19).
 
-To generate the loucs omics plot with extracted file, please see the omics SMR plot page (https://plot.cnsgenomics.com/omicsplot/).
+To generate the loucs omics plot with extracted file, please see the omics SMR plot page (https://yanglab.westlake.edu.cn/software/smr/#OmicsSMRplot).
 
 We also provide an [R scirpt](https://github.com/wuyangf7/OPERA/blob/main/demo/plot/plot_OmicsSMR_xQTL.r) to plot the omics SMR plot as presented in Wu et al.. Please see the demo plot below.  
 
