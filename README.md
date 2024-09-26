@@ -1,4 +1,4 @@
-![image](https://github.com/user-attachments/assets/866c0855-5edd-4a10-a158-226000925fcf)# OPERA
+OPERA
 This software tool implements the OPERA (omics pleiotropic association) method, which allows for testing the combinatorial pleiotropic associations between multiple molecular phenotypes (e.g., expression level of a gene and DNA methylation level at CpG sites) with a complex trait of interest using summary-level data from GWAS and molecular QTL studies. OPERA is a Bayesian extension of the SMR &amp; HEIDI approach to a multi-omics model, where the molecular phenotypes are considered as exposures and the complex trait is considered as the outcome. This tool can therefore be used to prioritize molecular phenotypes that mediate the genetic effects for complex trait and further provide mechanistic interpretation of the GWAS signal.
 
 ## Credits
